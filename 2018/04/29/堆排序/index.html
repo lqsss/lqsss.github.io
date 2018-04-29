@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="sort," />
 
 
 
@@ -79,18 +79,19 @@
 
 
 
-<meta name="description" content="堆排序 title: 堆排序tag: sort categories: programming practice##什么叫堆 ###满二叉树、完全二叉树  满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树 完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树###堆堆（二叉堆）可以视为一">
+<meta name="description" content="什么叫堆满二叉树、完全二叉树 满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树 完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树 堆堆（二叉堆）可以视为一棵完全的二叉树，除了最底层，其他每一层都是满的。因此可以用数组来储存。  Parent(i) = floor(i/2)，i 的父节">
+<meta name="keywords" content="sort">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Lqsss&#39;s Blog">
+<meta property="og:title" content="堆排序">
 <meta property="og:url" content="http://yoursite.com/2018/04/29/堆排序/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="堆排序 title: 堆排序tag: sort categories: programming practice##什么叫堆 ###满二叉树、完全二叉树  满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树 完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树###堆堆（二叉堆）可以视为一">
+<meta property="og:description" content="什么叫堆满二叉树、完全二叉树 满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树 完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树 堆堆（二叉堆）可以视为一棵完全的二叉树，除了最底层，其他每一层都是满的。因此可以用数组来储存。  Parent(i) = floor(i/2)，i 的父节">
 <meta property="og:locale" content="default">
 <meta property="og:image" content="http://p7w3aazzn.bkt.clouddn.com/%E4%BA%8C%E5%8F%89%E5%A0%86.png">
-<meta property="og:updated_time" content="2018-04-29T11:33:03.800Z">
+<meta property="og:updated_time" content="2018-04-29T11:36:36.088Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Lqsss&#39;s Blog">
-<meta name="twitter:description" content="堆排序 title: 堆排序tag: sort categories: programming practice##什么叫堆 ###满二叉树、完全二叉树  满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树 完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树###堆堆（二叉堆）可以视为一">
+<meta name="twitter:title" content="堆排序">
+<meta name="twitter:description" content="什么叫堆满二叉树、完全二叉树 满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树 完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树 堆堆（二叉堆）可以视为一棵完全的二叉树，除了最底层，其他每一层都是满的。因此可以用数组来储存。  Parent(i) = floor(i/2)，i 的父节">
 <meta name="twitter:image" content="http://p7w3aazzn.bkt.clouddn.com/%E4%BA%8C%E5%8F%89%E5%A0%86.png">
 
 
@@ -127,7 +128,7 @@
 
 
 
-  <title> | Lqsss's Blog</title>
+  <title>堆排序 | Lqsss's Blog</title>
   
 
 
@@ -291,7 +292,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline"></h1>
+          <h1 class="post-title" itemprop="name headline">堆排序</h1>
         
 
         <div class="post-meta">
@@ -303,7 +304,7 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-29T19:32:50+08:00">
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-29T19:36:23+08:00">
                 2018-04-29
               </time>
             
@@ -313,6 +314,28 @@
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/programming-practice/" itemprop="url" rel="index">
+                    <span itemprop="name">programming practice</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -335,7 +358,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  641 字
+                  629 字
                 </span>
               
 
@@ -372,33 +395,28 @@
       
 
       
-        <h1 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h1><hr>
-<p>title: 堆排序<br>tag: sort</p>
-<h2 id="categories-programming-practice"><a href="#categories-programming-practice" class="headerlink" title="categories: programming practice"></a>categories: programming practice</h2><p>##什么叫堆</p>
-<p>###满二叉树、完全二叉树</p>
-<ul>
+        <h2 id="什么叫堆"><a href="#什么叫堆" class="headerlink" title="什么叫堆"></a>什么叫堆</h2><h3 id="满二叉树、完全二叉树"><a href="#满二叉树、完全二叉树" class="headerlink" title="满二叉树、完全二叉树"></a>满二叉树、完全二叉树</h3><ul>
 <li>满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树</li>
-<li><p>完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树<br>###堆<br>堆（二叉堆）可以视为一棵完全的二叉树，除了最底层，其他每一层都是满的。因此可以用数组来储存。<br><img src="http://p7w3aazzn.bkt.clouddn.com/%E4%BA%8C%E5%8F%89%E5%A0%86.png" alt=""></p>
+<li><p>完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树</p>
+<h3 id="堆"><a href="#堆" class="headerlink" title="堆"></a>堆</h3><p>堆（二叉堆）可以视为一棵完全的二叉树，除了最底层，其他每一层都是满的。因此可以用数组来储存。<br><img src="http://p7w3aazzn.bkt.clouddn.com/%E4%BA%8C%E5%8F%89%E5%A0%86.png" alt=""></p>
 </li>
 <li><p>Parent(i) = floor(i/2)，i 的父节点下标</p>
 </li>
 <li>Left(i) = 2i，i 的左子节点下标</li>
 <li>Right(i) = 2i + 1，i 的右子节点下标</li>
 </ul>
-<p>###二叉堆分类</p>
-<ul>
+<h3 id="二叉堆分类"><a href="#二叉堆分类" class="headerlink" title="二叉堆分类"></a>二叉堆分类</h3><ul>
 <li>最大堆：堆顶元素最大，下面的子结构的父节点元素比左右子节点元素大于或等于</li>
 <li>最小堆：堆顶元素最小，下面的子结构的父节点元素比左右子节点元素小于或等于</li>
 </ul>
-<p>##堆排序<br>思想：</p>
+<h2 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h2><p>思想：</p>
 <ol>
 <li>构成最大堆</li>
 <li>取出栈顶元素</li>
 <li>重新将剩下元素构成最大堆</li>
 <li>反复此过程，直到最后一个元素</li>
 </ol>
-<p>##代码</p>
-<ul>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><ul>
 <li><p>sort</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//堆排序入口</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">sort</span><span class="params">(<span class="keyword">int</span>[] array)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//构建最大堆</span></span><br><span class="line">    buildMaxHeep(array);</span><br><span class="line">    <span class="comment">//进行沉淀</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = array.length - <span class="number">1</span>; i &gt; <span class="number">0</span>; i--) &#123;</span><br><span class="line">        swap(array, i, <span class="number">0</span>); <span class="comment">//交换最大堆顶和堆底</span></span><br><span class="line">        maxHeap(array, i, <span class="number">0</span>); <span class="comment">//重新对0-&gt;i进行最大堆</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 </li>
@@ -416,7 +434,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">swap</span><span class="params">(<span class="keyword">int</span>[] array, <span class="keyword">int</span> i, <span class="keyword">int</span> maxNode)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> tmp = array[i];</span><br><span class="line">    array[i] = array[maxNode];</span><br><span class="line">    array[maxNode] = tmp;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 </li>
 </ul>
-<p>##参考<br><a href="http://bubkoo.com/2014/01/14/sort-algorithm/heap-sort/" target="_blank" rel="noopener">常见排序算法 - 堆排序 (Heap Sort)</a></p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="http://bubkoo.com/2014/01/14/sort-algorithm/heap-sort/" target="_blank" rel="noopener">常见排序算法 - 堆排序 (Heap Sort)</a></p>
 
       
     </div>
@@ -431,6 +449,12 @@
     
 
     <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/sort/" rel="tag"><i class="fa fa-tag"></i> sort</a>
+          
+        </div>
       
 
       
@@ -541,7 +565,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-count">3</span>
                   <span class="site-state-item-name">categories</span>
                 </a>
               </div>
@@ -552,7 +576,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-count">3</span>
                   <span class="site-state-item-name">tags</span>
                 </a>
               </div>
@@ -627,7 +651,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#堆排序"><span class="nav-number">1.</span> <span class="nav-text">堆排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#categories-programming-practice"><span class="nav-number">1.1.</span> <span class="nav-text">categories: programming practice</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#什么叫堆"><span class="nav-number">1.</span> <span class="nav-text">什么叫堆</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#满二叉树、完全二叉树"><span class="nav-number">1.1.</span> <span class="nav-text">满二叉树、完全二叉树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#堆"><span class="nav-number">1.2.</span> <span class="nav-text">堆</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二叉堆分类"><span class="nav-number">1.3.</span> <span class="nav-text">二叉堆分类</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#堆排序"><span class="nav-number">2.</span> <span class="nav-text">堆排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码"><span class="nav-number">3.</span> <span class="nav-text">代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
             
 
           </div>
@@ -661,7 +685,7 @@
     
       <span class="post-meta-item-text">Site words total count&#58;</span>
     
-    <span title="Site words total count">877</span>
+    <span title="Site words total count">865</span>
   
 </div>
 
