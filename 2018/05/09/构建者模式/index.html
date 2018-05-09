@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="ProtoBuf," />
+  <meta name="keywords" content="builder pattern," />
 
 
 
@@ -79,20 +79,18 @@
 
 
 
-<meta name="description" content="ProtoBuf如何生成相关的java类">
-<meta name="keywords" content="ProtoBuf">
+<meta name="description" content="什么构建者模式 什么时候用构建者模式">
+<meta name="keywords" content="builder pattern">
 <meta property="og:type" content="article">
-<meta property="og:title" content="ProtoBuf生成">
-<meta property="og:url" content="http://yoursite.com/2018/05/02/protobuf/index.html">
+<meta property="og:title" content="builder pattern">
+<meta property="og:url" content="http://yoursite.com/2018/05/09/构建者模式/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="ProtoBuf如何生成相关的java类">
+<meta property="og:description" content="什么构建者模式 什么时候用构建者模式">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/_%7BJY%5D_4%7BR0$6LTXFC74580K.png">
-<meta property="og:updated_time" content="2018-05-02T06:54:38.060Z">
+<meta property="og:updated_time" content="2018-05-09T12:02:11.435Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="ProtoBuf生成">
-<meta name="twitter:description" content="ProtoBuf如何生成相关的java类">
-<meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/_%7BJY%5D_4%7BR0$6LTXFC74580K.png">
+<meta name="twitter:title" content="builder pattern">
+<meta name="twitter:description" content="什么构建者模式 什么时候用构建者模式">
 
 
 
@@ -122,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/05/02/protobuf/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/05/09/构建者模式/"/>
 
 
 
 
 
-  <title>ProtoBuf生成 | Lqsss's Blog</title>
+  <title>builder pattern | Lqsss's Blog</title>
   
 
 
@@ -275,7 +273,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/02/protobuf/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/09/构建者模式/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="lqsss">
@@ -292,7 +290,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">ProtoBuf生成</h1>
+          <h1 class="post-title" itemprop="name headline">builder pattern</h1>
         
 
         <div class="post-meta">
@@ -304,8 +302,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-02T14:43:27+08:00">
-                2018-05-02
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-09T20:02:03+08:00">
+                2018-05-09
               </time>
             
 
@@ -327,8 +325,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/tools/" itemprop="url" rel="index">
-                    <span itemprop="name">tools</span>
+                  <a href="/categories/design-pattern/" itemprop="url" rel="index">
+                    <span itemprop="name">design pattern</span>
                   </a>
                 </span>
 
@@ -358,7 +356,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  183 字
+                  422 字
                 </span>
               
 
@@ -374,7 +372,7 @@
                   <span class="post-meta-item-text">Reading time &asymp;</span>
                 
                 <span title="Reading time">
-                  1 分钟
+                  2 分钟
                 </span>
               
             </div>
@@ -395,32 +393,24 @@
       
 
       
-        <p>ProtoBuf如何生成相关的java类<br><a id="more"></a></p>
-<h2 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h2><ol>
-<li><p>下载Protocol Buffers<br><a href="https://github.com/google/protobuf/releases/tag/v3.5.1" target="_blank" rel="noopener">Protocol Buffers v3.5.1</a></p>
-</li>
-<li><p>下载protoc.exe<br><a href="http://central.maven.org/maven2/com/google/protobuf/protoc/3.5.1/" target="_blank" rel="noopener">protoc.exe</a></p>
-</li>
-<li><p>将protoc.exe放在刚刚下载Protocol Buffers的src文件夹下<br>D:\ChromeDownload\protobuf-java-3.5.1\protobuf-3.5.1\src</p>
-</li>
-<li><p>配置环境变量<br>Path： …;D:\ChromeDownload\protobuf-java-3.5.1\protobuf-3.5.1\src</p>
-</li>
+        <ol>
+<li>什么构建者模式</li>
+<li>什么时候用构建者模式<a id="more"></a>
+<h2 id="构建者模式"><a href="#构建者模式" class="headerlink" title="构建者模式"></a>构建者模式</h2></li>
+<li>意义：将一个复杂的构建与其表示相分离，使得同样的构建过程可以创建不同的表示。</li>
+<li>时机：当构造参数大量的时候</li>
 </ol>
-<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><ol>
-<li><p>BrokerMessage.proto文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto3&quot;;</span><br><span class="line"></span><br><span class="line">option java_outer_classname = &quot;BrokerMessage&quot;;  //对外输出的Class名</span><br><span class="line"></span><br><span class="line">option java_package = &quot;com.cug.liqiushi.client.vo&quot;;  //指定包名</span><br></pre></td></tr></table></figure>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><ul>
+<li><p>Product</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Product</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> String parm1;</span><br><span class="line">    <span class="keyword">private</span> String parm2;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Product <span class="title">freshProduct</span><span class="params">(WorkerBuilder.ProductParms productParms)</span></span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.parm1 = productParms.parm1;</span><br><span class="line">        <span class="keyword">this</span>.parm2 = productParms.parm2;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"Product [parm1="</span> + parm1 + <span class="string">", parm2="</span> + parm2 + <span class="string">"]"</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>cmd生成对应.java文件</p>
+<li><p>WorkerBuilder</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WorkerBuilder</span> </span>&#123;</span><br><span class="line">    <span class="comment">//持有产品的引用</span></span><br><span class="line">    Product product = <span class="keyword">new</span> Product();</span><br><span class="line">    <span class="comment">//参数内部类,隐藏构建逻辑</span></span><br><span class="line">    ProductParms productParms = <span class="keyword">new</span> ProductParms();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> WorkerBuilder <span class="title">setParm1</span><span class="params">(String parm1)</span> </span>&#123;</span><br><span class="line">        productParms.setParm1(parm1);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> WorkerBuilder <span class="title">setParm2</span><span class="params">(String parm2)</span> </span>&#123;</span><br><span class="line">        productParms.setParm2(parm2);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Product <span class="title">build</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> product.freshProduct(productParms);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">//实际set参数的内部类</span></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">ProductParms</span> </span>&#123;</span><br><span class="line">        <span class="keyword">public</span> String parm1;</span><br><span class="line">        <span class="keyword">public</span> String parm2;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setParm1</span><span class="params">(String parm1)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.parm1 = parm1;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setParm2</span><span class="params">(String parm2)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.parm2 = parm2;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 </li>
-</ol>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\lqs&gt;protoc -I E:\IdeaProjects\BRMQ\client\src\main\resources --java_out</span><br><span class="line">=E:\IdeaProjects\BRMQ\client\src\main\java E:\IdeaProjects\BRMQ\client\src\main\resources\BrokerMessage.proto</span><br></pre></td></tr></table></figure>
-<p>rule: </p>
-<ol>
-<li>protoc -I 输入文件(包含.proto的文件夹) </li>
-<li>–java out= 目标文件夹</li>
-<li>.proto文件的路径</li>
-</ol>
-<p><img src="http://op7scj9he.bkt.clouddn.com/_%7BJY%5D_4%7BR0$6LTXFC74580K.png" alt="demo"></p>
+</ul>
+<h2 id="构建者模式-vs-工厂模式"><a href="#构建者模式-vs-工厂模式" class="headerlink" title="构建者模式 vs. 工厂模式"></a>构建者模式 vs. 工厂模式</h2><blockquote>
+<p>工厂方法模式注重的是<strong>整体对象的创建方法</strong>，而建造者模式注重的是部件构建的过程，<strong>旨在通过一步一步地精确构造创建出一个复杂的对象。</strong>我们举个简单例子来说明两者的差异，如要制造一个超人，如果使用工厂方法模式，直接产生出来的就是一个力大无穷、能够飞翔、内裤外穿的超人；而如果使用建造者模式，则需要组装手、头、脚、躯干等部分，然后再把内裤外穿，于是一个超人就诞生了。</p>
+</blockquote>
 
       
     </div>
@@ -438,7 +428,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/ProtoBuf/" rel="tag"><i class="fa fa-tag"></i> ProtoBuf</a>
+            <a href="/tags/builder-pattern/" rel="tag"><i class="fa fa-tag"></i> builder pattern</a>
           
         </div>
       
@@ -451,8 +441,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/04/30/ArrayList/" rel="next" title="ArrayList源码分析(JDK1.8)">
-                <i class="fa fa-chevron-left"></i> ArrayList源码分析(JDK1.8)
+              <a href="/2018/05/09/为什么需要内部类/" rel="next" title="内部类">
+                <i class="fa fa-chevron-left"></i> 内部类
               </a>
             
           </div>
@@ -460,10 +450,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/05/05/并发知识/" rel="prev" title="并发知识补充">
-                并发知识补充 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -641,7 +627,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#环境准备"><span class="nav-number">1.</span> <span class="nav-text">环境准备</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#测试"><span class="nav-number">2.</span> <span class="nav-text">测试</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#构建者模式"><span class="nav-number">1.</span> <span class="nav-text">构建者模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码"><span class="nav-number">2.</span> <span class="nav-text">代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#构建者模式-vs-工厂模式"><span class="nav-number">3.</span> <span class="nav-text">构建者模式 vs. 工厂模式</span></a></li></ol></div>
             
 
           </div>
