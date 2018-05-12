@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="sort," />
+  <meta name="keywords" content="lock,zookeeper," />
 
 
 
@@ -79,20 +79,18 @@
 
 
 
-<meta name="description" content="什么叫堆满二叉树、完全二叉树 满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树 完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树  堆堆（二叉堆）可以视为一棵完全的二叉树，除了最底层，其他每一层都是满的。因此可以用数组来储存。  Parent(i) = floor(i/2)，i 的父">
-<meta name="keywords" content="sort">
+<meta name="description" content="分布式锁应用场景 Curator实现的demo 原理解析 存在的问题分析 简单实现">
+<meta name="keywords" content="lock,zookeeper">
 <meta property="og:type" content="article">
-<meta property="og:title" content="堆排序">
-<meta property="og:url" content="http://yoursite.com/2018/04/29/堆排序/index.html">
+<meta property="og:title" content="分布式锁实现 - zookeeper">
+<meta property="og:url" content="http://yoursite.com/2018/05/12/分布式锁-zookeeper/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="什么叫堆满二叉树、完全二叉树 满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树 完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树  堆堆（二叉堆）可以视为一棵完全的二叉树，除了最底层，其他每一层都是满的。因此可以用数组来储存。  Parent(i) = floor(i/2)，i 的父">
+<meta property="og:description" content="分布式锁应用场景 Curator实现的demo 原理解析 存在的问题分析 简单实现">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="http://p7w3aazzn.bkt.clouddn.com/%E4%BA%8C%E5%8F%89%E5%A0%86.png">
-<meta property="og:updated_time" content="2018-04-29T11:39:57.802Z">
+<meta property="og:updated_time" content="2018-05-12T05:19:20.899Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="堆排序">
-<meta name="twitter:description" content="什么叫堆满二叉树、完全二叉树 满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树 完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树  堆堆（二叉堆）可以视为一棵完全的二叉树，除了最底层，其他每一层都是满的。因此可以用数组来储存。  Parent(i) = floor(i/2)，i 的父">
-<meta name="twitter:image" content="http://p7w3aazzn.bkt.clouddn.com/%E4%BA%8C%E5%8F%89%E5%A0%86.png">
+<meta name="twitter:title" content="分布式锁实现 - zookeeper">
+<meta name="twitter:description" content="分布式锁应用场景 Curator实现的demo 原理解析 存在的问题分析 简单实现">
 
 
 
@@ -122,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/04/29/堆排序/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/05/12/分布式锁-zookeeper/"/>
 
 
 
 
 
-  <title>堆排序 | Lqsss's Blog</title>
+  <title>分布式锁实现 - zookeeper | Lqsss's Blog</title>
   
 
 
@@ -275,7 +273,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/29/堆排序/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/12/分布式锁-zookeeper/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="lqsss">
@@ -292,7 +290,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">堆排序</h1>
+          <h1 class="post-title" itemprop="name headline">分布式锁实现 - zookeeper</h1>
         
 
         <div class="post-meta">
@@ -304,8 +302,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-29T19:39:47+08:00">
-                2018-04-29
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-12T13:19:06+08:00">
+                2018-05-12
               </time>
             
 
@@ -327,8 +325,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/programming-practice/" itemprop="url" rel="index">
-                    <span itemprop="name">programming practice</span>
+                  <a href="/categories/distributed/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed</span>
                   </a>
                 </span>
 
@@ -358,7 +356,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  629 字
+                  857 字
                 </span>
               
 
@@ -374,7 +372,7 @@
                   <span class="post-meta-item-text">Reading time &asymp;</span>
                 
                 <span title="Reading time">
-                  3 分钟
+                  4 分钟
                 </span>
               
             </div>
@@ -395,46 +393,37 @@
       
 
       
-        <h2 id="什么叫堆"><a href="#什么叫堆" class="headerlink" title="什么叫堆"></a>什么叫堆</h2><h3 id="满二叉树、完全二叉树"><a href="#满二叉树、完全二叉树" class="headerlink" title="满二叉树、完全二叉树"></a>满二叉树、完全二叉树</h3><ul>
-<li>满二叉树：一棵深度为 k，且有 2的k次方 - 1 个节点称之为满二叉树</li>
-<li>完全二叉树：深度为k，有n个节点的二叉树，当且仅当其每一个节点都与深度为 k 的满二叉树中序号为 1 至 n 的节点对应时，称之为完全二叉树</li>
-</ul>
-<h3 id="堆"><a href="#堆" class="headerlink" title="堆"></a>堆</h3><p>堆（二叉堆）可以视为一棵完全的二叉树，除了最底层，其他每一层都是满的。因此可以用数组来储存。<br><img src="http://p7w3aazzn.bkt.clouddn.com/%E4%BA%8C%E5%8F%89%E5%A0%86.png" alt=""></p>
-<ul>
-<li>Parent(i) = floor(i/2)，i 的父节点下标</li>
-<li>Left(i) = 2i，i 的左子节点下标</li>
-<li>Right(i) = 2i + 1，i 的右子节点下标</li>
-</ul>
-<h3 id="二叉堆分类"><a href="#二叉堆分类" class="headerlink" title="二叉堆分类"></a>二叉堆分类</h3><ul>
-<li>最大堆：堆顶元素最大，下面的子结构的父节点元素比左右子节点元素大于或等于</li>
-<li>最小堆：堆顶元素最小，下面的子结构的父节点元素比左右子节点元素小于或等于</li>
-</ul>
-<h2 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h2><p>思想：</p>
-<ol>
-<li>构成最大堆</li>
-<li>取出栈顶元素</li>
-<li>重新将剩下元素构成最大堆</li>
-<li>反复此过程，直到最后一个元素</li>
+        <ol>
+<li>分布式锁应用场景</li>
+<li>Curator实现的demo</li>
+<li>原理解析</li>
+<li>存在的问题分析</li>
+<li>简单实现<a id="more"></a>
+<h2 id="分布式锁应用场景"><a href="#分布式锁应用场景" class="headerlink" title="分布式锁应用场景"></a>分布式锁应用场景</h2></li>
+<li>在单机情况下，我们代码管理一台机器上的多进程或者多线程进入临界区，进程通常用互斥锁，信号量，而多线程使用lock接口或者JVM层面的synchronized。</li>
+<li>而集群里多个节点的情况下，需要通过socket通信知道其他节点的状态，保证一个时刻下只有一个节点能进入临界区。</li>
 </ol>
-<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><ul>
-<li><p>sort</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//堆排序入口</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">sort</span><span class="params">(<span class="keyword">int</span>[] array)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//构建最大堆</span></span><br><span class="line">    buildMaxHeep(array);</span><br><span class="line">    <span class="comment">//进行沉淀</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = array.length - <span class="number">1</span>; i &gt; <span class="number">0</span>; i--) &#123;</span><br><span class="line">        swap(array, i, <span class="number">0</span>); <span class="comment">//交换最大堆顶和堆底</span></span><br><span class="line">        maxHeap(array, i, <span class="number">0</span>); <span class="comment">//重新对0-&gt;i进行最大堆</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>构建最大堆</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">buildMaxHeep</span><span class="params">(<span class="keyword">int</span>[] array)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (array == <span class="keyword">null</span> || array.length &lt;= <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//从中间往前开始遍历，结构稳定</span></span><br><span class="line">    <span class="keyword">int</span> half = (array.length - <span class="number">1</span>) / <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = half; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        maxHeap(array, array.length, i);  <span class="comment">//递归：比较交换</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-<p><strong>Q：为什么从中间开始往前调整，可以完成整个二叉堆到最大堆的工作？</strong></p>
-<p>A：层数为k（深度）的一层没有子节点，不需要判断是否是满足最大堆的结构</p>
-<ul>
-<li><p>调整最大堆</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">maxHeap</span><span class="params">(<span class="keyword">int</span>[] array, <span class="keyword">int</span> length, <span class="keyword">int</span> i)</span> </span>&#123;</span><br><span class="line">     <span class="keyword">int</span> left = i * <span class="number">2</span> + <span class="number">1</span>;</span><br><span class="line">     <span class="keyword">int</span> right = i * <span class="number">2</span> + <span class="number">2</span>;</span><br><span class="line">     <span class="keyword">int</span> maxNode = i;</span><br><span class="line"></span><br><span class="line">     <span class="keyword">if</span> (left &lt;length&amp;&amp;array[left] &gt; array[i] ) &#123;</span><br><span class="line">         maxNode = left;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">if</span> (right &lt; length&amp;&amp;array[right] &gt; array[maxNode] ) &#123;</span><br><span class="line">         maxNode = right;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">if</span> (maxNode != i) &#123;</span><br><span class="line">         <span class="comment">//说明左右子节点比当前i节点大</span></span><br><span class="line">         <span class="comment">//swap</span></span><br><span class="line">         swap(array, i, maxNode);</span><br><span class="line">         maxHeap(array, length, maxNode); <span class="comment">//继续递归maxNode，跟它的下面比较</span></span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>swap</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">swap</span><span class="params">(<span class="keyword">int</span>[] array, <span class="keyword">int</span> i, <span class="keyword">int</span> maxNode)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> tmp = array[i];</span><br><span class="line">    array[i] = array[maxNode];</span><br><span class="line">    array[maxNode] = tmp;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="http://bubkoo.com/2014/01/14/sort-algorithm/heap-sort/" target="_blank" rel="noopener">常见排序算法 - 堆排序 (Heap Sort)</a></p>
+<h2 id="基于Curator实现的demo"><a href="#基于Curator实现的demo" class="headerlink" title="基于Curator实现的demo"></a>基于Curator实现的demo</h2><p>zookeeper分布锁InterProcessMutex<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="comment">//创建zookeeper的客户端</span></span><br><span class="line">    RetryPolicy retryPolicy = <span class="keyword">new</span> ExponentialBackoffRetry(<span class="number">1000</span>, <span class="number">3</span>);</span><br><span class="line">    CuratorFramework client = CuratorFrameworkFactory.newClient(<span class="string">"10.21.41.181:2181,10.21.42.47:2181,10.21.49.252:2181"</span>, retryPolicy);</span><br><span class="line">    client.start();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//创建分布式锁, 锁空间的根节点路径为/curator/lock</span></span><br><span class="line">    InterProcessMutex mutex = <span class="keyword">new</span> InterProcessMutex(client, <span class="string">"/curator/lock"</span>);</span><br><span class="line">    mutex.acquire();</span><br><span class="line">    <span class="comment">//获得了锁, 进行业务流程</span></span><br><span class="line">    System.out.println(<span class="string">"Enter mutex"</span>);</span><br><span class="line">    <span class="comment">//完成业务流程, 释放锁</span></span><br><span class="line">    mutex.release();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//关闭客户端</span></span><br><span class="line">    client.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="原理解析"><a href="#原理解析" class="headerlink" title="原理解析"></a>原理解析</h2><ol>
+<li>创建一个持久存在的父路径,假设/lock，CreateMode.PERSISTENT</li>
+<li>每个节点在/lock下注册/lock/pid-，CreateMode.EPHEMERAL_SEQUENTIAL（短暂有序的节点)，例如/lock/pid-0000000001、pid-0000000002…会在尾部加上10位数</li>
+<li>核心：如果当前节点是集群中最小的id，则获取锁。如果不是则等待。</li>
+<li>实现：在获取锁的时候，检查自己是否为集群中最小的id，如果不是，则监听自己的前一位机器的情况(exits())，如果是则获取；</li>
+<li>实现：如果监听到了删除事件，则重复4</li>
+</ol>
+<h2 id="存在的问题分析"><a href="#存在的问题分析" class="headerlink" title="存在的问题分析"></a>存在的问题分析</h2><ol>
+<li>“惊群效应”：每个子节点注册watcher监听/lock下的子节点，zk服务器会对所有服务器发送通知，网络io过大。</li>
+<li>网络问题：如果当前最小id的节点获取了锁，但因为网络原因导致session超时，临时路径被删除，这时候下一个节点会监听到而获取到锁，此时会有多个节点进入临界区。</li>
+<li>在注册watcher的时候，上一个路径已经删除，那么这个事件不是永远都不触发？</li>
+</ol>
+<p>解决：</p>
+<ol>
+<li>每个节点只用监听自己的前一个节点的删除事件</li>
+<li>需要设置一个恰当的session超时时间</li>
+<li>ZooKeeper保证查询和监听是一个原子操作，客户端查询数据之后的所有数据变化都能收到监听</li>
+</ol>
+<h2 id="网上参考的实现"><a href="#网上参考的实现" class="headerlink" title="网上参考的实现"></a>网上参考的实现</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">checkMinPath</span><span class="params">()</span> <span class="keyword">throws</span> KeeperException, InterruptedException </span>&#123;</span><br><span class="line">      List&lt;String&gt; subNodes = zk.getChildren(GROUP_PATH, <span class="keyword">false</span>);</span><br><span class="line">      Collections.sort(subNodes);</span><br><span class="line">      <span class="comment">//判断此节点</span></span><br><span class="line">      <span class="keyword">int</span> index = subNodes.indexOf(selfPath.substring(GROUP_PATH.length() + <span class="number">1</span>));</span><br><span class="line">      <span class="keyword">switch</span> (index) &#123;</span><br><span class="line">          <span class="keyword">case</span> -<span class="number">1</span>: &#123;</span><br><span class="line">              System.out.println(PREFIX_OF_THREAD + <span class="string">"本节点已不在了..."</span> + selfPath);</span><br><span class="line">              <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">case</span> <span class="number">0</span>: &#123;</span><br><span class="line">              System.out.println(PREFIX_OF_THREAD + <span class="string">"子节点中，我最小，可以获得锁了！哈哈"</span> + selfPath);</span><br><span class="line">              <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">default</span>: &#123;</span><br><span class="line">              <span class="keyword">this</span>.waitPath = GROUP_PATH + <span class="string">"/"</span> + subNodes.get(index - <span class="number">1</span>);</span><br><span class="line">              System.out.println(PREFIX_OF_THREAD + <span class="string">"排在我前面的节点是 "</span> + waitPath);</span><br><span class="line">              <span class="keyword">try</span> &#123;</span><br><span class="line">                  zk.getData(waitPath, <span class="keyword">true</span>, <span class="keyword">new</span> Stat());</span><br><span class="line">                  <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">              &#125; <span class="keyword">catch</span> (KeeperException e) &#123;</span><br><span class="line">                  <span class="keyword">if</span> (zk.exists(waitPath, <span class="keyword">false</span>) == <span class="keyword">null</span>) &#123;</span><br><span class="line">                      System.out.println(PREFIX_OF_THREAD + <span class="string">"排在我前面的"</span> + waitPath + <span class="string">"已消失 "</span>);</span><br><span class="line">                      <span class="keyword">return</span> checkMinPath();</span><br><span class="line">                  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                      <span class="keyword">throw</span> e;</span><br><span class="line">                  &#125;</span><br><span class="line">              &#125;</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://www.zhihu.com/question/65946103" target="_blank" rel="noopener">如何能通俗的讲解Zookeeper分布式锁的应用场景？</a><br><a href="https://www.cnblogs.com/520playboy/p/6441651.html" target="_blank" rel="noopener">curator教程二——分布式锁</a><br><a href="http://www.dengshenyu.com/java/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/2017/10/23/zookeeper-distributed-lock.html" target="_blank" rel="noopener">基于Zookeeper的分布式锁</a></p>
 
       
     </div>
@@ -452,7 +441,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/sort/" rel="tag"><i class="fa fa-tag"></i> sort</a>
+            <a href="/tags/lock/" rel="tag"><i class="fa fa-tag"></i> lock</a>
+          
+            <a href="/tags/zookeeper/" rel="tag"><i class="fa fa-tag"></i> zookeeper</a>
           
         </div>
       
@@ -465,8 +456,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/04/28/2018-04-28/" rel="next" title="5月计划">
-                <i class="fa fa-chevron-left"></i> 5月计划
+              <a href="/2018/05/09/工厂模式/" rel="next" title="factory pattern">
+                <i class="fa fa-chevron-left"></i> factory pattern
               </a>
             
           </div>
@@ -474,10 +465,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/04/30/ThreadLocal/" rel="prev" title="ThreadLocal和弱引用">
-                ThreadLocal和弱引用 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -655,7 +642,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#什么叫堆"><span class="nav-number">1.</span> <span class="nav-text">什么叫堆</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#满二叉树、完全二叉树"><span class="nav-number">1.1.</span> <span class="nav-text">满二叉树、完全二叉树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#堆"><span class="nav-number">1.2.</span> <span class="nav-text">堆</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二叉堆分类"><span class="nav-number">1.3.</span> <span class="nav-text">二叉堆分类</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#堆排序"><span class="nav-number">2.</span> <span class="nav-text">堆排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码"><span class="nav-number">3.</span> <span class="nav-text">代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#分布式锁应用场景"><span class="nav-number">1.</span> <span class="nav-text">分布式锁应用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于Curator实现的demo"><span class="nav-number">2.</span> <span class="nav-text">基于Curator实现的demo</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#原理解析"><span class="nav-number">3.</span> <span class="nav-text">原理解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#存在的问题分析"><span class="nav-number">4.</span> <span class="nav-text">存在的问题分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#网上参考的实现"><span class="nav-number">5.</span> <span class="nav-text">网上参考的实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
             
 
           </div>
