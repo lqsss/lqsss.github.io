@@ -90,7 +90,7 @@
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/%E5%9B%BE%E4%B8%80.JPG">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/%E5%9B%BE%E4%BA%8C.JPG">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/IMG_1857.JPG">
-<meta property="og:updated_time" content="2018-05-14T03:07:33.852Z">
+<meta property="og:updated_time" content="2018-05-14T03:13:09.847Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="BRMQ记录">
 <meta name="twitter:description" content="BRMQ的开发记录，其中包括以下几点：  日常进度 问题小结 资料整理 学习总结（在开发过程中收获的知识）  本文档目的出于对BMRQ的一个记录，供自己观看，以时间轴顺序记载，写的比较简洁。">
@@ -306,7 +306,7 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-14T11:07:26+08:00">
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-14T11:13:03+08:00">
                 2018-05-14
               </time>
             
@@ -360,7 +360,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  2,154 字
+                  2,182 字
                 </span>
               
 
@@ -405,14 +405,13 @@
 <li>学习总结（在开发过程中收获的知识）</li>
 </ol>
 <p>本文档目的出于对BMRQ的一个记录，供自己观看，以时间轴顺序记载，写的比较简洁。<br><a id="more"></a></p>
-<h2 id="5-8之前"><a href="#5-8之前" class="headerlink" title="5.8之前"></a>5.8之前</h2><p>架构设计：参照一些现在主流mq，</p>
-<ol>
+<h2 id="5-8之前"><a href="#5-8之前" class="headerlink" title="5.8之前"></a>5.8之前</h2><h3 id="架构设计：参照一些现在主流mq，"><a href="#架构设计：参照一些现在主流mq，" class="headerlink" title="架构设计：参照一些现在主流mq，"></a>架构设计：参照一些现在主流mq，</h3><ol>
 <li>消费群组</li>
 <li>根据订阅topic pull/push</li>
 <li>对topic进行分区</li>
 <li>整个架构通过zookeeper来进行协同</li>
 </ol>
-<h2 id="想法演变"><a href="#想法演变" class="headerlink" title="想法演变"></a>想法演变</h2><p><strong>问题关键在于</strong> broker（消息代理）上搭载着我们的Raft算法，如图中部broker集群（1L2F,Raft集群通常是3个节点,1领导人，2follwer）,<strong>怎么和我们的队列来进行结合。（图中的apply过程）</strong></p>
+<h3 id="想法演变"><a href="#想法演变" class="headerlink" title="想法演变"></a>想法演变</h3><p><strong>问题关键在于</strong> broker（消息代理）上搭载着我们的Raft算法，如图中部broker集群（1L2F,Raft集群通常是3个节点,1领导人，2follwer）,<strong>怎么和我们的队列来进行结合。（图中的apply过程）</strong></p>
 <h3 id="最开始的想法"><a href="#最开始的想法" class="headerlink" title="最开始的想法"></a>最开始的想法</h3><p><img src="http://op7scj9he.bkt.clouddn.com/%E5%9B%BE%E4%B8%80.JPG" alt=""></p>
 <ol>
 <li>我们用三个节点（broker集群）仅仅只搭载Raft算法，然后用多个节点针对某一个topic进行分区（1个节点对应1个分区），然后Raft集群和消息存储节点之间进行通信，broker节点通过Raft算法保证broker集群有着4个分区的replication？<br><strong>不行：</strong></li>
@@ -427,6 +426,7 @@
 <li>可能需要改变Raft算法，因为我们的Raft只有一个leader，多个follower，而此处的猜想是每个分区消息对应一个leader，1个节点可能有多个分区leader。<strong>实力不够！</strong></li>
 </ol>
 <h3 id="最终敲定"><a href="#最终敲定" class="headerlink" title="最终敲定"></a>最终敲定</h3><p>topic下的一个分区消息存储在一个broker集群里（当然也可以多个分区存储在一个集群啦），broker集群里的每个节点有着相同的分区副本。<br><img src="http://op7scj9he.bkt.clouddn.com/IMG_1857.JPG" alt=""><br>如图，我们的producer生产一个topic-0的消息，根据zookeeper上注册的一些节点信息，producer找到了shardId为1的broker集群，接下来就是Raft的功劳啦！！</p>
+<h3 id="ProtoBuf"><a href="#ProtoBuf" class="headerlink" title="ProtoBuf"></a>ProtoBuf</h3><p>学习了一下谷歌的ProtoBuf，引用到项目中。<br>记录的一篇配置文章<a href="https://lqsss.github.io/2018/05/02/protobuf/" target="_blank" rel="noopener">ProtoBuf生成</a></p>
 <h3 id="其他问题"><a href="#其他问题" class="headerlink" title="其他问题"></a>其他问题</h3><ol>
 <li>cg（consumer group）</li>
 </ol>
@@ -729,7 +729,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#5-8之前"><span class="nav-number">1.</span> <span class="nav-text">5.8之前</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#想法演变"><span class="nav-number">2.</span> <span class="nav-text">想法演变</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#最开始的想法"><span class="nav-number">2.1.</span> <span class="nav-text">最开始的想法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#思考了一下"><span class="nav-number">2.2.</span> <span class="nav-text">思考了一下</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最终敲定"><span class="nav-number">2.3.</span> <span class="nav-text">最终敲定</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他问题"><span class="nav-number">2.4.</span> <span class="nav-text">其他问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考"><span class="nav-number">2.5.</span> <span class="nav-text">参考</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-8"><span class="nav-number">3.</span> <span class="nav-text">5.8</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#进度"><span class="nav-number">3.1.</span> <span class="nav-text">进度</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考-1"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#收获的其他知识"><span class="nav-number">4.1.</span> <span class="nav-text">收获的其他知识</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-10"><span class="nav-number">5.</span> <span class="nav-text">5.10</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#进度-1"><span class="nav-number">5.1.</span> <span class="nav-text">进度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#下一步"><span class="nav-number">5.2.</span> <span class="nav-text">下一步</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#收获知识点"><span class="nav-number">5.3.</span> <span class="nav-text">收获知识点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考-2"><span class="nav-number">5.4.</span> <span class="nav-text">参考</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-11"><span class="nav-number">6.</span> <span class="nav-text">5.11</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-12"><span class="nav-number">7.</span> <span class="nav-text">5.12</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#进度-2"><span class="nav-number">7.1.</span> <span class="nav-text">进度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他"><span class="nav-number">7.2.</span> <span class="nav-text">其他</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-13"><span class="nav-number">8.</span> <span class="nav-text">5.13</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#进度-3"><span class="nav-number">8.1.</span> <span class="nav-text">进度</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#5-8之前"><span class="nav-number">1.</span> <span class="nav-text">5.8之前</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#架构设计：参照一些现在主流mq，"><span class="nav-number">1.1.</span> <span class="nav-text">架构设计：参照一些现在主流mq，</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#想法演变"><span class="nav-number">1.2.</span> <span class="nav-text">想法演变</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最开始的想法"><span class="nav-number">1.3.</span> <span class="nav-text">最开始的想法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#思考了一下"><span class="nav-number">1.4.</span> <span class="nav-text">思考了一下</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最终敲定"><span class="nav-number">1.5.</span> <span class="nav-text">最终敲定</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ProtoBuf"><span class="nav-number">1.6.</span> <span class="nav-text">ProtoBuf</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他问题"><span class="nav-number">1.7.</span> <span class="nav-text">其他问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考"><span class="nav-number">1.8.</span> <span class="nav-text">参考</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-8"><span class="nav-number">2.</span> <span class="nav-text">5.8</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#进度"><span class="nav-number">2.1.</span> <span class="nav-text">进度</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考-1"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#收获的其他知识"><span class="nav-number">3.1.</span> <span class="nav-text">收获的其他知识</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-10"><span class="nav-number">4.</span> <span class="nav-text">5.10</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#进度-1"><span class="nav-number">4.1.</span> <span class="nav-text">进度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#下一步"><span class="nav-number">4.2.</span> <span class="nav-text">下一步</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#收获知识点"><span class="nav-number">4.3.</span> <span class="nav-text">收获知识点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考-2"><span class="nav-number">4.4.</span> <span class="nav-text">参考</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-11"><span class="nav-number">5.</span> <span class="nav-text">5.11</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-12"><span class="nav-number">6.</span> <span class="nav-text">5.12</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#进度-2"><span class="nav-number">6.1.</span> <span class="nav-text">进度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他"><span class="nav-number">6.2.</span> <span class="nav-text">其他</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-13"><span class="nav-number">7.</span> <span class="nav-text">5.13</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#进度-3"><span class="nav-number">7.1.</span> <span class="nav-text">进度</span></a></li></ol></li></ol></div>
             
 
           </div>
@@ -763,7 +763,7 @@
     
       <span class="post-meta-item-text">Site words total count&#58;</span>
     
-    <span title="Site words total count">19.6k</span>
+    <span title="Site words total count">19.7k</span>
   
 </div>
 
