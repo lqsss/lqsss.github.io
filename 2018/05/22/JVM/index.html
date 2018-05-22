@@ -79,21 +79,21 @@
 
 
 
-<meta name="description" content="什么是JVMJVM是一种软件模拟出来的计算机，它用于执行Java程序，有一套非常严格的技术规范。Java语言编译程序只需要生成在JVM上运行的目标代码（字节码），JVM在执行字节码时，再把字节码解释成具体平台上的机器指令，这是Java跨平台特性的依赖基础。 JVM结构  程序计数器是一块较小的内存空间，是线程的私有内存。它可以看做是当前线程所执行的    字节码的行号指示器。在虚拟机的概念模型里面">
+<meta name="description" content="JVM知识小结">
 <meta name="keywords" content="JVM">
 <meta property="og:type" content="article">
 <meta property="og:title" content="JVM总结">
 <meta property="og:url" content="http://yoursite.com/2018/05/22/JVM/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="什么是JVMJVM是一种软件模拟出来的计算机，它用于执行Java程序，有一套非常严格的技术规范。Java语言编译程序只需要生成在JVM上运行的目标代码（字节码），JVM在执行字节码时，再把字节码解释成具体平台上的机器指令，这是Java跨平台特性的依赖基础。 JVM结构  程序计数器是一块较小的内存空间，是线程的私有内存。它可以看做是当前线程所执行的    字节码的行号指示器。在虚拟机的概念模型里面">
+<meta property="og:description" content="JVM知识小结">
 <meta property="og:locale" content="default">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/1526909141%281%29.jpg">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/F$WYFXQ%7DVN_%7BP8M%25_334BS2.png">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180522165242.png">
-<meta property="og:updated_time" content="2018-05-22T11:45:47.230Z">
+<meta property="og:updated_time" content="2018-05-22T12:13:44.030Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM总结">
-<meta name="twitter:description" content="什么是JVMJVM是一种软件模拟出来的计算机，它用于执行Java程序，有一套非常严格的技术规范。Java语言编译程序只需要生成在JVM上运行的目标代码（字节码），JVM在执行字节码时，再把字节码解释成具体平台上的机器指令，这是Java跨平台特性的依赖基础。 JVM结构  程序计数器是一块较小的内存空间，是线程的私有内存。它可以看做是当前线程所执行的    字节码的行号指示器。在虚拟机的概念模型里面">
+<meta name="twitter:description" content="JVM知识小结">
 <meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/1526909141%281%29.jpg">
 
 
@@ -306,7 +306,7 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-22T19:45:37+08:00">
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-22T20:13:39+08:00">
                 2018-05-22
               </time>
             
@@ -360,7 +360,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  5,383 字
+                  5,388 字
                 </span>
               
 
@@ -397,7 +397,8 @@
       
 
       
-        <h2 id="什么是JVM"><a href="#什么是JVM" class="headerlink" title="什么是JVM"></a>什么是JVM</h2><p>JVM是一种软件模拟出来的计算机，它用于执行Java程序，有一套非常严格的技术规范。Java语言编译程序只需要生成在JVM上运行的目标代码（字节码），JVM在执行字节码时，再把字节码解释成具体平台上的机器指令，这是Java跨平台特性的依赖基础。</p>
+        <p>JVM知识小结<br><a id="more"></a></p>
+<h2 id="什么是JVM"><a href="#什么是JVM" class="headerlink" title="什么是JVM"></a>什么是JVM</h2><p>JVM是一种软件模拟出来的计算机，它用于执行Java程序，有一套非常严格的技术规范。Java语言编译程序只需要生成在JVM上运行的目标代码（字节码），JVM在执行字节码时，再把字节码解释成具体平台上的机器指令，这是Java跨平台特性的依赖基础。</p>
 <h2 id="JVM结构"><a href="#JVM结构" class="headerlink" title="JVM结构"></a>JVM结构</h2><p><img src="http://op7scj9he.bkt.clouddn.com/1526909141%281%29.jpg" alt=""></p>
 <ol>
 <li>程序计数器是一块较小的内存空间，是线程的私有内存。它可以看做是当前线程所执行的    字节码的行号指示器。在虚拟机的概念模型里面（仅是在概念模型，各种虚拟机可能会通过一些更高效的方法实现），<strong>字节码解释器工作时就是通过改变这个计数器的值来选取下一条需要执行的字节码指令，分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</strong></li>
@@ -419,7 +420,9 @@
 </ol>
 <h2 id="堆和栈的区别"><a href="#堆和栈的区别" class="headerlink" title="堆和栈的区别"></a>堆和栈的区别</h2><ol>
 <li>堆内存用来存放由 new 创建的对象和数组，在堆中分配的内存，由 Java 虚拟机的自动垃圾回收器来管理。</li>
-<li>栈中的引用变量指向堆内存中的变量,<strong>存取速度比堆要快</strong><h2 id="Java内存溢出和内存泄漏"><a href="#Java内存溢出和内存泄漏" class="headerlink" title="Java内存溢出和内存泄漏"></a>Java内存溢出和内存泄漏</h2></li>
+<li>栈中的引用变量指向堆内存中的变量,<strong>存取速度比堆要快</strong></li>
+</ol>
+<h2 id="Java内存溢出和内存泄漏"><a href="#Java内存溢出和内存泄漏" class="headerlink" title="Java内存溢出和内存泄漏"></a>Java内存溢出和内存泄漏</h2><ol>
 <li>内存溢出（out of memory），是指程序在申请内存时，没有足够的内存空间供其使用，出现out of memory；比如申请了一个integer，但给它存了long才能存下的数，那就是内存溢出。</li>
 <li>内存泄露（memory leak），是指程序在申请内存后，无法释放已申请的内存空间，一次内存泄露危害可以忽略，但内存泄露堆积后果很严重，无论多少内存,迟早会被占光。memory leak会最终会导致out of memory。</li>
 </ol>
