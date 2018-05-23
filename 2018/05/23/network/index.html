@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="summary," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="网络知识总结">
+<meta name="keywords" content="summary">
+<meta property="og:type" content="article">
+<meta property="og:title" content="网络">
+<meta property="og:url" content="http://yoursite.com/2018/05/23/network/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="网络知识总结">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-a86c0d6ac857c3bf.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-3a73f69eb7f83808.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-2f8b817560c58f21.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-dc5cb2cd8d550945.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2018-05-23T11:15:37.469Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="网络">
+<meta name="twitter:description" content="网络知识总结">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/5753761-a86c0d6ac857c3bf.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/05/23/network/"/>
+
+
+
+
+
+  <title>网络 | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Lqsss's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-schedule">
+          <a href="/schedule/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-calendar"></i> <br />
+            
+            Schedule
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/23/network/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://op7scj9he.bkt.clouddn.com/%E4%B8%8B%E8%BD%BD.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">网络</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-23T19:15:32+08:00">
+                2018-05-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/network/" itemprop="url" rel="index">
+                    <span itemprop="name">network</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Words count in article&#58;</span>
+                
+                <span title="Words count in article">
+                  3,423 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Reading time &asymp;</span>
+                
+                <span title="Reading time">
+                  12 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>网络知识总结<br><a id="more"></a></p>
+<h2 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h2><h3 id="三次握手"><a href="#三次握手" class="headerlink" title="三次握手"></a>三次握手</h3><p><img src="http://upload-images.jianshu.io/upload_images/5753761-a86c0d6ac857c3bf.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<ul>
+<li>A:发送SYN请求 告诉B “我要连接了”</li>
+<li>B:SYN、ACK ack = x+1，告诉A “哦 我知道了，你能听到我的话”</li>
+<li>A:ACK 告诉B “可以听到！我要发数据了！！”</li>
+<li>A在发送ACK后，进入ESTABLISHED，B在接受到ACK后进入ESTABLISHED</li>
+</ul>
+<h3 id="为什么要这样设计"><a href="#为什么要这样设计" class="headerlink" title="为什么要这样设计"></a>为什么要这样设计</h3><blockquote>
+<p>保持通信双方的信息对称，使通信双方处于同步状态</p>
+</blockquote>
+<p>保证双方都能发数据，也能收数据。</p>
+<ol>
+<li>如果当初的TCP设计的是两次握手，</li>
+</ol>
+<ul>
+<li>A发送SYN，B接收到 返回对A请求的确认，自身进入ESTABLISHED状态，A收到，进入ESTABLISHED （ok）</li>
+<li>A发送SYN，B接收到返回对A请求的确认，自身进入ESTABLISHED状态，[SYN ACK]由于网络原因，而停滞。A以为SYN发送失败，则重传一个SYN，此时B再返回[SYN ACK]，A收到，双方都进入ESTABLISHED ，进行传输数据。假设此连接在通信结束后，释放连接资源，而此时第一次在网络停滞但未被丢弃的SYN包抵达了，B又进入ESTABLISHED，而此时A已经CLOSE，B一直没有释放连接资源，苦苦等待，因此浪费了资源。</li>
+</ul>
+<ol start="2">
+<li>假设四次握手的过程是这样：</li>
+</ol>
+<ul>
+<li>A-&gt;B SYN</li>
+<li>B-&gt;A ACK</li>
+<li>B-&gt;A SYN</li>
+<li>A-&gt;B ACK</li>
+</ul>
+<p>中间二三步可以合并一起，B既确认A（表示能收），发ACK给B，试试能不能发，四次没有必要，三步就可以确保双方的收发，建立连接。</p>
+<h3 id="终止"><a href="#终止" class="headerlink" title="终止"></a>终止</h3><p><img src="http://upload-images.jianshu.io/upload_images/5753761-3a73f69eb7f83808.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h3 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h3><ul>
+<li>A主动关闭方，B被动关闭方</li>
+<li>A放送[FIN] 一个中断请求给B，”我要关闭啦！！！”</li>
+<li>B收到FIN，发送ACK，告诉A，”我知道了你要关闭了，你还需要等我下，可能还有要发送的数据”，通知应用程序。</li>
+<li>A收到 进入FIN_WAIT_1</li>
+<li>B进入CLOSE_WAIT状态（被动关闭），已经没有要发送的工作了，发送一个[FIN ACK]，”我没什么要发的，可以关闭啦”</li>
+<li>A收到进入FIN_WAIT_2，此时也得发送一个ACK确认，”收到了你的关闭请求”，进入TIME_WAIT状态，等待一个2MSL时间</li>
+<li>B收到了ACK，进入CLOSED，A在2MSL的时间段内没有收到FIN，确保最后一次ACK发送到B，这下放心地关闭了</li>
+</ul>
+<h3 id="为什么要这样设计-1"><a href="#为什么要这样设计-1" class="headerlink" title="为什么要这样设计"></a>为什么要这样设计</h3><blockquote>
+<p>用来保障通讯双方可以安全的回收TCP通信的系统资源(全双工关闭)</p>
+</blockquote>
+<p>关闭连接时，当收到对方的FIN报文时，仅仅表示对方不再发送数据了但是还能接收数据，己方也未必全部数据都发送给对方了，所以己方可以立即close，也可以发送一些数据给对方后，再发送FIN报文给对方来表示同意现在关闭连接，因此，己方ACK和FIN一般都会分开发送。</p>
+<p><strong>为什么有TIME_WAIT状态</strong><br>A发送对于B发送的FIN数据的一个ACK，A并不知道B是否接到自己的ACK，如果B没有接受到ACK，超时重传会再次接受到B的FIN。所有A需要等待；<br>而B作为被动关闭方，在收到ACK确认后，表明了双方达成了同步，所以B可以安心释放资源，无需等待。<br><strong>为什么要2msl</strong></p>
+<blockquote>
+<p>maximum segment lifetime(最大分节生命期）,这是一个IP数据包能在互联网上生存的最长时间，超过这个时间将在网络中消失。</p>
+</blockquote>
+<p>要取这两种情况等待时间的最大值，以应对最坏的情况发生，这个最坏情况是：去向ACK消息最大存活时间（MSL) + 来向FIN消息的最大存活时间(MSL)。</p>
+<h3 id="可靠"><a href="#可靠" class="headerlink" title="可靠"></a>可靠</h3><p>TCP的可靠传输在于：</p>
+<ul>
+<li>解决了乱序</li>
+<li>超时重传</li>
+<li>拥塞控制</li>
+<li>流量控制</li>
+</ul>
+<ol>
+<li>乱序和丢失：Sequence Number是包的序号，解决乱序，ACK解决丢包。</li>
+<li>超时重传：对每一个包设置有超时重传定时器，在一定时间内没有收到ACK，则重新发送</li>
+<li>拥塞控制：滑动窗口协议解决</li>
+</ol>
+<h4 id="滑动窗口协议"><a href="#滑动窗口协议" class="headerlink" title="滑动窗口协议"></a>滑动窗口协议</h4><ul>
+<li>“窗口”对应的是一段可以被发送者发送的字节序列，其连续的范围称之为”窗口”；</li>
+<li>“滑动”则是指这段“允许发送的范围”是可以随着发送的过程而变化的，方式就是按顺序”滑动”。</li>
+<li>发送缓冲区：应用层需要发送的所有数据都被放进了发送者的发送缓冲区，发送窗口是发送缓存中的一部分</li>
+</ul>
+<p>已发送并收到确认的数据：不在发送窗口中，缓冲区中删除<br>已发送未收到确认的数据：在发送窗口中<br>未发送：在发送窗口中<br>不允许发送：在窗口外</p>
+<p>每次成功发送数据之后，发送窗口就会在发送缓冲区中按顺序移动，将新的数据包含到窗口中准备发送；接收窗口乱序的包先暂存下来。</p>
+<h4 id="拥塞控制"><a href="#拥塞控制" class="headerlink" title="拥塞控制"></a>拥塞控制</h4><p>&nbsp;&nbsp;&nbsp;&nbsp;网络中的链路容量和交换结点中的缓存和处理机都有着工作的极限，当网络的需求超过它们的工作极限时，就出现了拥塞。<strong>拥塞控制就是防止过多的数据注入到网络中</strong>，这样可以使网络中的路由器或链路不致过载。常用的方法就是：</p>
+<ul>
+<li><p>慢开始、拥塞避免</p>
+</li>
+<li><p>快重传、快恢复</p>
+</li>
+</ul>
+<p>一切的基础还是慢开始，这种方法的思路是这样的：</p>
+<ol>
+<li><p>发送方维持一个叫做“拥塞窗口”的变量，<strong>该变量和接收端口共同决定了发送者的发送窗口；</strong></p>
+</li>
+<li><p>当主机开始发送数据时，避免一下子将大量字节注入到网络，造成或者增加拥塞，选择发送一个1字节的试探报文；</p>
+</li>
+<li><p>当收到第一个字节的数据的确认后，就发送2个字节的报文；</p>
+</li>
+<li><p>若再次收到2个字节的确认，则发送4个字节，依次<strong>递增2的指数级；</strong></p>
+</li>
+<li><p>最后会达到一个提前预设的“慢开始门限”，比如24，即一次发送了24个分组，此时遵循下面的条件判定：</p>
+</li>
+</ol>
+<ul>
+<li><p>cwnd &lt; ssthresh， 继续使用慢开始算法；</p>
+</li>
+<li><p>cwnd &gt; ssthresh，停止使用慢开始算法，改用拥塞避免算法；</p>
+</li>
+<li><p>cwnd = ssthresh，既可以使用慢开始算法，也可以使用拥塞避免算法；</p>
+</li>
+</ul>
+<ol start="6">
+<li><p>所谓拥塞避免算法就是：每经过一个往返时间RTT就把发送方的拥塞窗口+1，即让拥塞窗口缓慢地增大，按照线性规律增长；</p>
+</li>
+<li><p>当出现网络拥塞，比如丢包时，将慢开始门限设为原先的一半，然后将cwnd设为1，执行慢开始算法（较低的起点，指数级增长）；</p>
+</li>
+</ol>
+<p><img src="http://upload-images.jianshu.io/upload_images/5753761-2f8b817560c58f21.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<hr>
+<p>拥塞：网络中的链路容量和交换结点中的缓存和处理机都有着工作的极限。网络的需求超过它们的工作极限时，就出现了拥塞。<br>拥塞窗口(发送方才有)：发送方取拥塞窗口与通告窗口中的最小值作为发送上限。<br>慢启动：维护一个拥塞窗口，开始时1、2、4…指数递增（慢启动算法），发送方开始时发送一个报文段，然后等待ACK。当收到该ACK时，拥塞窗口从1增加为2，即可以发送两个报文段。当收到这两个报文段的ACK时，拥塞窗口就增加为4。这是一种指数增加的关系。<br>拥塞避免算法：当慢启动一段时间后，拥塞窗口达到了”慢开启门限”,拥塞窗口在一个RTT进行线性缓慢+1的增长。<br>出现拥塞之后：慢开始门限设置为此时拥塞窗口的一半，然后将cwnd设为1，执行慢开始算法（较低的起点，指数级增长）。</p>
+<hr>
+<blockquote>
+<p>如果数据包丢失了，TCP将会使用定时器来要求传输暂停,在暂停的这段时间内，没有新的或复制的数据包被发送</p>
+</blockquote>
+<ol>
+<li><p>接收方建立这样的机制，如果一个包丢失，则对后续的包继续发送针对该包的重传请求；</p>
+</li>
+<li><p>一旦发送方接收到三个一样的确认，就知道该包之后出现了错误，立刻重传该包；</p>
+</li>
+<li><p>此时发送方开始执行“快恢复”算法：</p>
+<p> 3.1 慢开始门限减半；</p>
+<p> 3.2 cwnd设为慢开始门限减半后的数值；</p>
+<p> 3.3 执行拥塞避免算法（高起点，线性增长）；</p>
+</li>
+</ol>
+<p><img src="http://upload-images.jianshu.io/upload_images/5753761-dc5cb2cd8d550945.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<hr>
+<p>快重传：因为拥塞情况而出现丢包的情况，为了不用等待超时重传时间，当收到3个dup ack，发送方立刻重传该包<br>快恢复：此时慢开始门限减半，拥塞窗口从减半后的数值开始，执行拥塞避免算法。</p>
+<hr>
+<h2 id="IP"><a href="#IP" class="headerlink" title="IP"></a>IP</h2><blockquote>
+<p>面向无连接和不可靠的传输功能</p>
+</blockquote>
+<h3 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h3><ol>
+<li>IP协议提供了IP地址，并将源目IP地址夹带在通信数据包里面，为路由器指明通信方向；</li>
+<li>数据包分片和组装功能</li>
+<li>防止数据包环路</li>
+</ol>
+<h3 id="MSS"><a href="#MSS" class="headerlink" title="MSS"></a>MSS</h3><p>MSS就是TCP数据包每次能够传输的最大数据分段</p>
+<h3 id="MTU"><a href="#MTU" class="headerlink" title="MTU"></a>MTU</h3><p>最大传输单元，最大传输单元这个参数通常与通信接口有关（网络接口卡、串口等）。</p>
+<p>TCP/IP协议中除了IP分片还有TCP分段，并且协议栈是优先做TCP分段，因为IP分片的处理效率是很低的。<br>1、TCP：TCP协议下发包，<strong>协议栈优先做TCP分段，保证ip层需要发送的数据不会因为超过MTU而做IP分片。</strong><br>2、UDP：UDP协议传输层没有分段的功能，只能依靠IP分片来发送较大的数据段。</p>
+<h3 id="路由器"><a href="#路由器" class="headerlink" title="路由器"></a>路由器</h3><p>ip协议选择适合的路线传送，ip切分的不同数据包经过不同的路线（路由器）到达最后的终点，其中路由器相当于一个快递公司在每个城市的中转站点。<br>路由器根据数据包的IP地址查找路由表（地图），然后以接力棒的方式逐跳转发直到目标服务器；</p>
+<h2 id="链路层"><a href="#链路层" class="headerlink" title="链路层"></a>链路层</h2><p>链路层-数据帧附加上了源mac地址，目的mac地址等信息</p>
+<h3 id="ip地址和mac"><a href="#ip地址和mac" class="headerlink" title="ip地址和mac"></a>ip地址和mac</h3><ul>
+<li>ip地址是ip协议提供的一种统一的地址格式，它为互联网上的每一个网络和每一台主机分配一个逻辑地址，可以随时变动。</li>
+<li>mac地址：物理地址，网卡芯片里的地址<blockquote>
+<p>二层基于MAC地址转发数据帧，三层基于IP地址转发报文</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="当你在浏览器中输入Google-com并且按下回车之后发生了什么？"><a href="#当你在浏览器中输入Google-com并且按下回车之后发生了什么？" class="headerlink" title="当你在浏览器中输入Google.com并且按下回车之后发生了什么？"></a>当你在浏览器中输入Google.com并且按下回车之后发生了什么？</h2><h3 id="DNS域名解析"><a href="#DNS域名解析" class="headerlink" title="DNS域名解析"></a>DNS域名解析</h3><ol>
+<li>检查浏览器中是否缓存有此域名对应的ip地址</li>
+<li>检查本地host文件是否存有该域名和ip的映射关系</li>
+<li>如果上述都没有，就首先会找TCP/ip参数中设置的首选DNS服务器(本地服务器)查询，这中间会有ARP过程</li>
+</ol>
+<h4 id="ARP"><a href="#ARP" class="headerlink" title="ARP"></a>ARP</h4><p>我们知道本地DNS服务器的IP地址，但是需要知道它的mac地址</p>
+<ol>
+<li>通过子网掩码判断DNS服务器与本机是否处于同一子网</li>
+<li>查看本地ARP缓存表是否存有ip-mac的映射关系,如果没有进行下面<br>3.1 处于同一子网：对目的IP进行APR请求</li>
+</ol>
+<ul>
+<li>本机连接了交换机（mac-port表），通过交换机广播ARP请求{源ip、源mac、目的ip}</li>
+<li>局域网中的机器收到请求发现ip不是自己的，则丢弃；如果发现目的ip是自己，则将mac封到帧单播ARP应答，并且ARP缓存表缓存对方的ip-mac</li>
+<li>源主机收到回复，缓存到ARP缓存表里。</li>
+</ul>
+<p>3.2 不处于同一子网：需要默认网关中转，然后对目的IP进行APR请求</p>
+<ul>
+<li>如果ARP缓存表里没有默认网关的mac，需要首先对网关进行ARP查询（路由器与交换机相连）</li>
+<li>将帧{目的ip，路由器mac}转发给路由器，上面有路由表（端口和ip网段的对应）决定了下一跳，帧发生改变{目的ip，下一跳的mac地址}</li>
+<li>当路由器不停地转发（解封、修改mac、包装），找到了目的ip的网段，如果路由器上有ARP缓存表，则直接返回，否则广播ARP请求。<br><strong>整个过程包含mac学习（交换机上的mac-port）</strong></li>
+</ul>
+<ol start="4">
+<li>找到了本地DNS的mac地址后，对本地DNS进行DNS请求</li>
+<li>如果本地DNS没有映射存储的话，需要继续递归查询，向跟高级地进行查询</li>
+</ol>
+<blockquote>
+<p>查询分为两种：递归式查询：dns客户端最终要么得到结果，要么返回错误；迭代查询：dns客户端每次得到的不一定是最终结果。</p>
+</blockquote>
+<p>例子：查询<a href="http://www.cs.cmu.edu" target="_blank" rel="noopener">www.cs.cmu.edu</a><br>迭代查询：</p>
+<ul>
+<li>向root服务器（edu）查询<a href="http://www.cmu.edu，返回cmu.edu" target="_blank" rel="noopener">www.cmu.edu，返回cmu.edu</a></li>
+<li>向cmu.edu服务器查询，得到cs.cmu.edu</li>
+<li>最终向cs.cmu.edu服务器查询</li>
+</ul>
+<blockquote>
+<p>查询协议：向DNS 服务器发送 UDP 请求包，如果响应包太大，会使用 TCP 协议</p>
+</blockquote>
+<ol start="6">
+<li>与目的ip进行TCP三次握手连接<ul>
+<li>包装端口-&gt; 包装ip-&gt;包装mac,如果mac没有需要ARP</li>
+</ul>
+</li>
+<li>http协议传输数据</li>
+<li>接下来就是浏览器的事情了，渲染dom树（html、css、js）</li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/summary/" rel="tag"><i class="fa fa-tag"></i> summary</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/22/JVM/" rel="next" title="JVM总结">
+                <i class="fa fa-chevron-left"></i> JVM总结
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="http://op7scj9he.bkt.clouddn.com/%E4%B8%8B%E8%BD%BD.jpg"
+                alt="lqsss" />
+            
+              <p class="site-author-name" itemprop="name">lqsss</p>
+              <p class="site-description motion-element" itemprop="description">There's no place like 127.0.0.1</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/lqsss" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="513447887@gmail.com" target="_blank" title="E-Mail">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/chuckie_li" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://www.jianshu.com/u/908009220354" target="_blank" title="Jianshu">
+                      
+                        <i class="fa fa-fw fa-globe"></i>Jianshu</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://example.com/" title="fushengni" target="_blank">fushengni</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#TCP"><span class="nav-number">1.</span> <span class="nav-text">TCP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#三次握手"><span class="nav-number">1.1.</span> <span class="nav-text">三次握手</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#为什么要这样设计"><span class="nav-number">1.2.</span> <span class="nav-text">为什么要这样设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#终止"><span class="nav-number">1.3.</span> <span class="nav-text">终止</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#过程"><span class="nav-number">1.4.</span> <span class="nav-text">过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#为什么要这样设计-1"><span class="nav-number">1.5.</span> <span class="nav-text">为什么要这样设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#可靠"><span class="nav-number">1.6.</span> <span class="nav-text">可靠</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#滑动窗口协议"><span class="nav-number">1.6.1.</span> <span class="nav-text">滑动窗口协议</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#拥塞控制"><span class="nav-number">1.6.2.</span> <span class="nav-text">拥塞控制</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IP"><span class="nav-number">2.</span> <span class="nav-text">IP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#功能"><span class="nav-number">2.1.</span> <span class="nav-text">功能</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MSS"><span class="nav-number">2.2.</span> <span class="nav-text">MSS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MTU"><span class="nav-number">2.3.</span> <span class="nav-text">MTU</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#路由器"><span class="nav-number">2.4.</span> <span class="nav-text">路由器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#链路层"><span class="nav-number">3.</span> <span class="nav-text">链路层</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ip地址和mac"><span class="nav-number">3.1.</span> <span class="nav-text">ip地址和mac</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#当你在浏览器中输入Google-com并且按下回车之后发生了什么？"><span class="nav-number">4.</span> <span class="nav-text">当你在浏览器中输入Google.com并且按下回车之后发生了什么？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#DNS域名解析"><span class="nav-number">4.1.</span> <span class="nav-text">DNS域名解析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ARP"><span class="nav-number">4.1.1.</span> <span class="nav-text">ARP</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">32.7k</span>
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
