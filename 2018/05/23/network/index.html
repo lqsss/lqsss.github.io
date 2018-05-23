@@ -91,7 +91,7 @@
 <meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-3a73f69eb7f83808.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 <meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-2f8b817560c58f21.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 <meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-dc5cb2cd8d550945.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
-<meta property="og:updated_time" content="2018-05-23T11:15:37.469Z">
+<meta property="og:updated_time" content="2018-05-23T11:19:47.981Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="网络">
 <meta name="twitter:description" content="网络知识总结">
@@ -307,7 +307,7 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-23T19:15:32+08:00">
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-23T19:19:38+08:00">
                 2018-05-23
               </time>
             
@@ -361,7 +361,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  3,423 字
+                  3,425 字
                 </span>
               
 
@@ -549,16 +549,17 @@
 <h4 id="ARP"><a href="#ARP" class="headerlink" title="ARP"></a>ARP</h4><p>我们知道本地DNS服务器的IP地址，但是需要知道它的mac地址</p>
 <ol>
 <li>通过子网掩码判断DNS服务器与本机是否处于同一子网</li>
-<li>查看本地ARP缓存表是否存有ip-mac的映射关系,如果没有进行下面<br>3.1 处于同一子网：对目的IP进行APR请求</li>
+<li>查看本地ARP缓存表是否存有ip-mac的映射关系,如果没有进行下面</li>
+<li>ARP<br> 3.1 处于同一子网：对目的IP进行APR请求</li>
 </ol>
 <ul>
 <li>本机连接了交换机（mac-port表），通过交换机广播ARP请求{源ip、源mac、目的ip}</li>
 <li>局域网中的机器收到请求发现ip不是自己的，则丢弃；如果发现目的ip是自己，则将mac封到帧单播ARP应答，并且ARP缓存表缓存对方的ip-mac</li>
-<li>源主机收到回复，缓存到ARP缓存表里。</li>
-</ul>
-<p>3.2 不处于同一子网：需要默认网关中转，然后对目的IP进行APR请求</p>
-<ul>
-<li>如果ARP缓存表里没有默认网关的mac，需要首先对网关进行ARP查询（路由器与交换机相连）</li>
+<li><p>源主机收到回复，缓存到ARP缓存表里。</p>
+<p>  3.2 不处于同一子网：需要默认网关中转，然后对目的IP进行APR请求</p>
+</li>
+<li><p>如果ARP缓存表里没有默认网关的mac，需要首先对网关进行ARP查询（路由器与交换机相连）</p>
+</li>
 <li>将帧{目的ip，路由器mac}转发给路由器，上面有路由表（端口和ip网段的对应）决定了下一跳，帧发生改变{目的ip，下一跳的mac地址}</li>
 <li>当路由器不停地转发（解封、修改mac、包装），找到了目的ip的网段，如果路由器上有ARP缓存表，则直接返回，否则广播ARP请求。<br><strong>整个过程包含mac学习（交换机上的mac-port）</strong></li>
 </ul>
