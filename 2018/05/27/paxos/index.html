@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="distributed," />
 
 
 
@@ -79,16 +79,18 @@
 
 
 
-<meta name="description" content="There&apos;s no place like 127.0.0.1">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Lqsss&#39;s Blog">
-<meta property="og:url" content="http://yoursite.com/categories/concurrency/index.html">
+<meta name="description" content="Paxos共识算法的简单认识（不带证明）">
+<meta name="keywords" content="distributed">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Basic Paxos">
+<meta property="og:url" content="http://yoursite.com/2018/05/27/paxos/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="There&apos;s no place like 127.0.0.1">
+<meta property="og:description" content="Paxos共识算法的简单认识（不带证明）">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2018-05-27T03:34:15.102Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Lqsss&#39;s Blog">
-<meta name="twitter:description" content="There&apos;s no place like 127.0.0.1">
+<meta name="twitter:title" content="Basic Paxos">
+<meta name="twitter:description" content="Paxos共识算法的简单认识（不带证明）">
 
 
 
@@ -118,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/categories/concurrency/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/05/27/paxos/"/>
 
 
 
 
 
-  <title>Category: concurrency | Lqsss's Blog</title>
+  <title>Basic Paxos | Lqsss's Blog</title>
   
 
 
@@ -143,7 +145,7 @@
     
   
 
-  <div class="container sidebar-position-left ">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -257,55 +259,239 @@
           <div id="content" class="content">
             
 
-  
-  
-  
-  <div class="post-block category">
+  <div id="posts" class="posts-expand">
+    
 
-    <div id="posts" class="posts-collapse">
-      <div class="collection-title">
-        <h1>concurrency<small>Category</small>
-        </h1>
-      </div>
+  
 
-      
-        
+  
+  
+  
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/27/paxos/">
 
-      <h2 class="post-title">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://op7scj9he.bkt.clouddn.com/%E4%B8%8B%E8%BD%BD.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
         
-            <a class="post-title-link" href="/2018/05/05/并发知识/" itemprop="url">
-              
-                <span itemprop="name">并发知识补充</span>
-              
-            </a>
         
-      </h2>
+          <h1 class="post-title" itemprop="name headline">Basic Paxos</h1>
+        
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2018-05-05T21:43:50+08:00"
-              content="2018-05-05" >
-          05-05
-        </time>
-      </div>
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-27T11:34:10+08:00">
+                2018-05-27
+              </time>
+            
 
-    </header>
-  </article>
+            
 
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/consenus/" itemprop="url" rel="index">
+                    <span itemprop="name">consenus</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Words count in article&#58;</span>
+                
+                <span title="Words count in article">
+                  894 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Reading time &asymp;</span>
+                
+                <span title="Reading time">
+                  3 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Paxos共识算法的简单认识（不带证明）<br><a id="more"></a></p>
+<h2 id="共识算法-consenus"><a href="#共识算法-consenus" class="headerlink" title="共识算法(consenus)"></a>共识算法(consenus)</h2><ol>
+<li>分布式系统的容错机制？<br>多个数据副本(replication) 起到一个数据冗余的作用。</li>
+<li>共识算法解决一个什么样的问题？<br>state machine replication的一致性。状态机上存储的可以是log，value，或者指令。</li>
+<li>最终一致性和强一致性？<br>分布式里的一致性(consistency)话题是一个老生常谈的问题，但是这个一致性并不能笼统地说明此处的一致性，对于数据副本，我们最好使用共识（consenus）来形容。</li>
+</ol>
+<ul>
+<li>最终一致性指的是在不同的副本在最终达成相同的状态。</li>
+<li>这里的强一致性对于client的角度来看，向系统写入什么，读出来的也会是什么。<blockquote>
+<p>当分布式系统中更新操作完成之后，任何多个进程或线程，访问系统都会获得最新的值。</p>
+</blockquote>
+</li>
+</ul>
+<p><a href="https://www.zhihu.com/question/275845393/answer/383419685" target="_blank" rel="noopener">请问分布式事务一致性与raft或paxos协议解决的一致性问题是同一回事吗？</a></p>
+<h2 id="角色"><a href="#角色" class="headerlink" title="角色"></a>角色</h2><ol>
+<li>acceptor:议案接受者，value存储的节点</li>
+<li>proposer:议案的发起者，接受client发出指令请求，执行一个请求转发</li>
+<li>learner:议案记录者，通过的议案会被记录下来，并且同步到所有acceptor</li>
+</ol>
+<h2 id="两个阶段"><a href="#两个阶段" class="headerlink" title="两个阶段"></a>两个阶段</h2><ul>
+<li>prepare阶段：判断proposer的议案候选资格</li>
+</ul>
+<ol>
+<li>多个proposer向acceptor发起议案投票请求<code>Prapare(n)</code>,这里n指的是议案编号(proposer number)，议案编号唯一。</li>
+<li>acceptor保存的是之前最大的议案编号(accepted_proposer_num)，以及接受的议案(accepted_value)，某个acceptor收到请求，首先判断传来的议案编号是否大于存储的议案编号，首次acceptor里accepted_proposer_num是null<br> 2.1 如果大于，则获取acceptor的授权，修改accepted_proposer_num为n，返回accepted_proposer_num和上一个存储的状态值(accepted_value)<br> 2.2 如果小于，则拒绝proposer的请求。</li>
+</ol>
+<p>proposer收到大部分的acceptor的返回，它就有进入第二阶段的权利，并计算其中最大的议案编号所对应的议案内容。</p>
+<ul>
+<li>accept阶段：讨论proposer提出的议案是否通过</li>
+</ul>
+<ol>
+<li>proposer给第一阶段授权的acceptor发起accept(n,V)请求<br> 1.1 var为第一阶段计算的议案内容，如果var存在，则此次议案的内容则为var<br> 1.2 如果var不存在，则议案内容为V，提交上去。</li>
+<li>acceptor接收proposer的accept请求，首先判断收到的议案号与存储当前最大的议案号的大小关系<br> 2.1 如果小于，则直接拒绝<br> 2.2 等于，设置accepted_value为V</li>
+</ol>
+<p><strong>不会出现大于的情况。</strong></p>
+<h2 id="核心点"><a href="#核心点" class="headerlink" title="核心点"></a>核心点</h2><ol>
+<li>acceptor只能接受大于等于当前最大的议案编号，否则拒绝。</li>
+<li>paxos是一个多数派协议，proposer在第一阶段收到N/2+1个授权，才能进入第二阶段，在第二阶段收到大部分赋值ack，表明大部分的acceptor存储了这个状态，才能算此次议案通过。</li>
+<li>已经确认最终保持一致的状态，不会再改变。后面就算存在议案编号更大的议案请求，当它发现大多数acceptor都已经存储了某个具体的value，自然也将此次请求改为{n,value};只有当proposer发现大多数acceptor里的value为null时，才将自己提案中的V对授权过的acceptor发出更新请求{n,V}。<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><a href="https://blog.csdn.net/yinwenjie/article/details/61933266" target="_blank" rel="noopener">架构设计：系统存储（24）——数据一致性与Paxos算法（中）</a></li>
+</ol>
 
       
     </div>
+    
+    
+    
 
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/distributed/" rel="tag"><i class="fa fa-tag"></i> distributed</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/23/network/" rel="next" title="网络">
+                <i class="fa fa-chevron-left"></i> 网络
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
   </div>
   
   
   
+  </article>
 
-  
 
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -313,6 +499,10 @@
 
 
           
+
+  
+
+
 
         </div>
         
@@ -333,8 +523,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -440,6 +639,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#共识算法-consenus"><span class="nav-number">1.</span> <span class="nav-text">共识算法(consenus)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#角色"><span class="nav-number">2.</span> <span class="nav-text">角色</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#两个阶段"><span class="nav-number">3.</span> <span class="nav-text">两个阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#核心点"><span class="nav-number">4.</span> <span class="nav-text">核心点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -582,6 +797,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
 
   
 
