@@ -83,14 +83,18 @@
 <meta name="keywords" content="distributed">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Basic Paxos">
-<meta property="og:url" content="http://yoursite.com/2018/05/27/paxos/index.html">
+<meta property="og:url" content="http://yoursite.com/2018/05/28/paxos/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
 <meta property="og:description" content="Paxos共识算法的简单认识（不带证明）">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-05-27T03:34:15.102Z">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/1.JPG">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/2.JPG">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/3.JPG">
+<meta property="og:updated_time" content="2018-05-27T16:15:15.679Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Basic Paxos">
 <meta name="twitter:description" content="Paxos共识算法的简单认识（不带证明）">
+<meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/1.JPG">
 
 
 
@@ -120,7 +124,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/05/27/paxos/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/05/28/paxos/"/>
 
 
 
@@ -273,7 +277,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/27/paxos/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/28/paxos/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="lqsss">
@@ -302,8 +306,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-27T11:34:10+08:00">
-                2018-05-27
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-28T00:15:07+08:00">
+                2018-05-28
               </time>
             
 
@@ -356,7 +360,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  894 字
+                  1,435 字
                 </span>
               
 
@@ -372,7 +376,7 @@
                   <span class="post-meta-item-text">Reading time &asymp;</span>
                 
                 <span title="Reading time">
-                  3 分钟
+                  5 分钟
                 </span>
               
             </div>
@@ -428,11 +432,62 @@
 <li>acceptor接收proposer的accept请求，首先判断收到的议案号与存储当前最大的议案号的大小关系<br> 2.1 如果小于，则直接拒绝<br> 2.2 等于，设置accepted_value为V</li>
 </ol>
 <p><strong>不会出现大于的情况。</strong></p>
+<h2 id="图解"><a href="#图解" class="headerlink" title="图解"></a>图解</h2><p>Acceptor：&lt; accepted_proposer_num,accepted_value&gt;,last_proposer_num</p>
+<p><img src="http://op7scj9he.bkt.clouddn.com/1.JPG" alt=""></p>
+<ul>
+<li>prepare</li>
+</ul>
+<ol>
+<li>ProposerA发出议案编号为#1的授权请求（希望Acceptor能够投票讨论这个议案）给集群中所有Acceptor</li>
+<li>由于是系统启动初期，此时Acceptor的accepted_proposer_num,accepted_value为{null,null}，last_proposer_num此时修改为#1</li>
+<li>返回ack{ok，&lt; null,null&gt;}，给予Proposer权利进入第二阶段（投票赋值阶段）</li>
+<li>ProposerA收到超过N/2+1的ack，确认自己有赋值的权利</li>
+</ol>
+<hr>
+<p><img src="http://op7scj9he.bkt.clouddn.com/2.JPG" alt=""></p>
+<ul>
+<li>ProposerA的accept阶段</li>
+</ul>
+<ol>
+<li>ProposerA向Acceptor1发起赋值请求&lt; #1,v1&gt;,Acceptor：&lt; #1,v1&gt;,#1</li>
+</ol>
+<ul>
+<li>ProposerB在ProposerA的accept期间（还未向Acceptor2、3发起赋值请求），进入prepare阶段</li>
+</ul>
+<ol>
+<li>ProposerB向Acceptor1、2发起议案编号为#2的授权请求</li>
+<li>Acceptor1发现#2&gt;#1(下文的核心点1),修改last_proposer_num为#2，此时Acceptor1状态为&lt;#1,v1&gt;,#2</li>
+<li>Acceptor1返回ack{ok，&lt; #1，v1&gt;}，给予ProposerB权利进入第二阶段（投票赋值阶段）</li>
+<li>Acceptor2返回ProposerB一个ack{ok，&lt; null,null&gt;}，给予ProposerB权利进入第二阶段（投票赋值阶段）</li>
+<li>ProposerB收到多数派的授权，更新收到的value（核心点3），收到的value：Acceptor1的v1，Acceptor2的null，于是第二阶段要赋值的value为v1；(如果收到的多数派的value为null的话，则第二阶段要赋值的value为自己本身要提交的v2)</li>
+</ol>
+<hr>
+<p><img src="http://op7scj9he.bkt.clouddn.com/3.JPG" alt=""></p>
+<ul>
+<li>ProposerB的accept阶段 （ProposerB只会向Acceptor1、2发出请求）</li>
+</ul>
+<ol>
+<li>这时Acceptor1、2收到了来自ProposerB的赋值请求&lt; #2,v1&gt;</li>
+<li>Acceptor1修改状态&lt; #2,v1&gt;,#2,返回ACK{ok,#2,v1}</li>
+<li>Acceptor2由&lt; null,null&gt;,#2更新为&lt; #2,v1&gt;,#2,返回ACK{ok,#2,v1}</li>
+<li>ProposerB收到多数派的ACK，赋值成功</li>
+</ol>
+<ul>
+<li>ProposerA的accept阶段</li>
+</ul>
+<ol>
+<li>这时Acceptor2、3收到了来自ProposerA的赋值请求&lt; #1,v1&gt;</li>
+<li>Acceptor2发现收到的请求议案编号为#1&lt;#2(核心点3)，拒绝此次请求</li>
+<li>Acceptor3由&lt; null,null&gt;,#1更新为&lt; #1,v1&gt;,#1,返回ACK{ok,#1,v1}</li>
+<li>ProposerB收到多数派的ACK，赋值成功</li>
+</ol>
+<p>这里我们看出ProposerA、B都赋值成功，然而并不冲突，整个集群保持了一致的状态（value:v1）。当集群中的大多数保持了一致，就确定了一致，由learn记录这个value，完成整个集群的同步，达到最终一致。</p>
 <h2 id="核心点"><a href="#核心点" class="headerlink" title="核心点"></a>核心点</h2><ol>
 <li>acceptor只能接受大于等于当前最大的议案编号，否则拒绝。</li>
 <li>paxos是一个多数派协议，proposer在第一阶段收到N/2+1个授权，才能进入第二阶段，在第二阶段收到大部分赋值ack，表明大部分的acceptor存储了这个状态，才能算此次议案通过。</li>
-<li>已经确认最终保持一致的状态，不会再改变。后面就算存在议案编号更大的议案请求，当它发现大多数acceptor都已经存储了某个具体的value，自然也将此次请求改为{n,value};只有当proposer发现大多数acceptor里的value为null时，才将自己提案中的V对授权过的acceptor发出更新请求{n,V}。<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><a href="https://blog.csdn.net/yinwenjie/article/details/61933266" target="_blank" rel="noopener">架构设计：系统存储（24）——数据一致性与Paxos算法（中）</a></li>
+<li>已经确认最终保持一致的状态，不会再改变。后面就算存在议案编号更大的议案请求，当它发现大多数acceptor都已经存储了某个具体的value，自然也将此次请求改为{n,value};只有当proposer发现大多数acceptor里的value为null时，才将自己提案中的V对授权过的acceptor发出更新请求{n,V}。</li>
 </ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.csdn.net/yinwenjie/article/details/61933266" target="_blank" rel="noopener">架构设计：系统存储（24）——数据一致性与Paxos算法（中）</a></p>
 
       
     </div>
@@ -649,7 +704,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#共识算法-consenus"><span class="nav-number">1.</span> <span class="nav-text">共识算法(consenus)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#角色"><span class="nav-number">2.</span> <span class="nav-text">角色</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#两个阶段"><span class="nav-number">3.</span> <span class="nav-text">两个阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#核心点"><span class="nav-number">4.</span> <span class="nav-text">核心点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#共识算法-consenus"><span class="nav-number">1.</span> <span class="nav-text">共识算法(consenus)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#角色"><span class="nav-number">2.</span> <span class="nav-text">角色</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#两个阶段"><span class="nav-number">3.</span> <span class="nav-text">两个阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#图解"><span class="nav-number">4.</span> <span class="nav-text">图解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#核心点"><span class="nav-number">5.</span> <span class="nav-text">核心点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
             
 
           </div>
@@ -683,7 +738,7 @@
     
       <span class="post-meta-item-text">Site words total count&#58;</span>
     
-    <span title="Site words total count">33.6k</span>
+    <span title="Site words total count">34.1k</span>
   
 </div>
 
