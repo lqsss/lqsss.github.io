@@ -90,7 +90,7 @@
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/1.JPG">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/2.JPG">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/3.JPG">
-<meta property="og:updated_time" content="2018-05-27T16:15:15.679Z">
+<meta property="og:updated_time" content="2018-05-27T16:21:10.254Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Basic Paxos">
 <meta name="twitter:description" content="Paxos共识算法的简单认识（不带证明）">
@@ -306,7 +306,7 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-28T00:15:07+08:00">
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-28T00:21:06+08:00">
                 2018-05-28
               </time>
             
@@ -360,7 +360,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  1,435 字
+                  1,461 字
                 </span>
               
 
@@ -376,7 +376,7 @@
                   <span class="post-meta-item-text">Reading time &asymp;</span>
                 
                 <span title="Reading time">
-                  5 分钟
+                  6 分钟
                 </span>
               
             </div>
@@ -432,7 +432,7 @@
 <li>acceptor接收proposer的accept请求，首先判断收到的议案号与存储当前最大的议案号的大小关系<br> 2.1 如果小于，则直接拒绝<br> 2.2 等于，设置accepted_value为V</li>
 </ol>
 <p><strong>不会出现大于的情况。</strong></p>
-<h2 id="图解"><a href="#图解" class="headerlink" title="图解"></a>图解</h2><p>Acceptor：&lt; accepted_proposer_num,accepted_value&gt;,last_proposer_num</p>
+<h2 id="图解"><a href="#图解" class="headerlink" title="图解"></a>图解</h2><h3 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h3><p>Acceptor：&lt;accepted_proposer_num,accepted_value&gt;,last_proposer_num(prepare_proposer_num)<br>prepare请求: {proposer_num}<br>prepare对应的ACK:{ok,&lt; accepted_proposer_num,accepted_value&gt;}<br>accept请求:{proposer_num,value}<br>accept对应的ACK:{ok,&lt; accepted_proposer_num,accepted_value&gt;}</p>
 <p><img src="http://op7scj9he.bkt.clouddn.com/1.JPG" alt=""></p>
 <ul>
 <li>prepare</li>
@@ -704,7 +704,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#共识算法-consenus"><span class="nav-number">1.</span> <span class="nav-text">共识算法(consenus)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#角色"><span class="nav-number">2.</span> <span class="nav-text">角色</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#两个阶段"><span class="nav-number">3.</span> <span class="nav-text">两个阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#图解"><span class="nav-number">4.</span> <span class="nav-text">图解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#核心点"><span class="nav-number">5.</span> <span class="nav-text">核心点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#共识算法-consenus"><span class="nav-number">1.</span> <span class="nav-text">共识算法(consenus)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#角色"><span class="nav-number">2.</span> <span class="nav-text">角色</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#两个阶段"><span class="nav-number">3.</span> <span class="nav-text">两个阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#图解"><span class="nav-number">4.</span> <span class="nav-text">图解</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#结构"><span class="nav-number">4.1.</span> <span class="nav-text">结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#核心点"><span class="nav-number">5.</span> <span class="nav-text">核心点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
             
 
           </div>
@@ -738,7 +738,7 @@
     
       <span class="post-meta-item-text">Site words total count&#58;</span>
     
-    <span title="Site words total count">34.1k</span>
+    <span title="Site words total count">34.2k</span>
   
 </div>
 
