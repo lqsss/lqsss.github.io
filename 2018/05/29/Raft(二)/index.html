@@ -88,7 +88,7 @@
 <meta property="og:description" content="Raft的领导选举讨论">
 <meta property="og:locale" content="default">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/raft1.png">
-<meta property="og:updated_time" content="2018-05-29T14:22:16.310Z">
+<meta property="og:updated_time" content="2018-05-29T14:24:38.343Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Raft(二) leader election">
 <meta name="twitter:description" content="Raft的领导选举讨论">
@@ -304,7 +304,7 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-29T22:22:04+08:00">
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-29T22:24:34+08:00">
                 2018-05-29
               </time>
             
@@ -358,7 +358,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  1,548 字
+                  1,550 字
                 </span>
               
 
@@ -436,7 +436,7 @@
 <blockquote>
 <p>我们一般说Raft是强一致性的算法，是从client的视角来看待问题的</p>
 </blockquote>
-<h2 id="Raft中的领导的强地位"><a href="#Raft中的领导的强地位" class="headerlink" title="Raft中的领导的强地位"></a>Raft中的领导的强地位</h2><p>前面bb了那么多强一致性，现在步入正题。Raft算法保证leader的强地位，client读写都通过leader。leader收到集群中大部分的复制成功ack，则直接apply到状态机，在复制的过程中同步所有副本。多个client并发情况下，同时读leader，必然读到的是apply到状态机的安全状态（之后其他节点都会是这个状态），保证client视角的强一致性。</p>
+<h2 id="Raft中的领导的强地位"><a href="#Raft中的领导的强地位" class="headerlink" title="Raft中的领导的强地位"></a>Raft中的领导的强地位</h2><p>前面bb了那么多强一致性，现在步入正题。Raft算法保证leader的强领导地位，client读写都通过leader。leader收到集群中大部分的复制成功ack，则直接apply到状态机，在复制的过程中同步所有副本。多个client并发情况下，同时读leader，必然读到的是apply到状态机的安全状态（之后其他节点都会是这个状态），保证client视角的强一致性。</p>
 <h2 id="Raft三种节点"><a href="#Raft三种节点" class="headerlink" title="Raft三种节点"></a>Raft三种节点</h2><p>在谈领导选举前，需要谈一下Raft集群中的三种节点成员</p>
 <ul>
 <li>follower</li>
