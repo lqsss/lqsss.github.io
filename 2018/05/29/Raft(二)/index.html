@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="hash,consistency," />
+  <meta name="keywords" content="consenus," />
 
 
 
@@ -79,21 +79,20 @@
 
 
 
-<meta name="description" content="场景：分布式缓存解决：缓存服务器的动态变化时，系统伸缩性">
-<meta name="keywords" content="hash,consistency">
+<meta name="description" content="Raft的领导选举讨论">
+<meta name="keywords" content="consenus">
 <meta property="og:type" content="article">
-<meta property="og:title" content="一致性哈希算法">
-<meta property="og:url" content="http://yoursite.com/2018/05/15/一致性hash/index.html">
+<meta property="og:title" content="Raft(二) leader election">
+<meta property="og:url" content="http://yoursite.com/2018/05/29/Raft(二)/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="场景：分布式缓存解决：缓存服务器的动态变化时，系统伸缩性">
+<meta property="og:description" content="Raft的领导选举讨论">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/20140411001033656.png">
-<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/20140411001211062.png">
-<meta property="og:updated_time" content="2018-05-15T12:48:05.117Z">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/raft1.png">
+<meta property="og:updated_time" content="2018-05-29T14:22:16.310Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="一致性哈希算法">
-<meta name="twitter:description" content="场景：分布式缓存解决：缓存服务器的动态变化时，系统伸缩性">
-<meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/20140411001033656.png">
+<meta name="twitter:title" content="Raft(二) leader election">
+<meta name="twitter:description" content="Raft的领导选举讨论">
+<meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/raft1.png">
 
 
 
@@ -123,13 +122,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/05/15/一致性hash/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/05/29/Raft(二)/"/>
 
 
 
 
 
-  <title>一致性哈希算法 | Lqsss's Blog</title>
+  <title>Raft(二) leader election | Lqsss's Blog</title>
   
 
 
@@ -276,7 +275,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/15/一致性hash/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/29/Raft(二)/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="lqsss">
@@ -293,7 +292,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">一致性哈希算法</h1>
+          <h1 class="post-title" itemprop="name headline">Raft(二) leader election</h1>
         
 
         <div class="post-meta">
@@ -305,8 +304,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-15T20:47:58+08:00">
-                2018-05-15
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-29T22:22:04+08:00">
+                2018-05-29
               </time>
             
 
@@ -359,7 +358,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  1,448 字
+                  1,548 字
                 </span>
               
 
@@ -396,69 +395,85 @@
       
 
       
-        <p>场景：分布式缓存<br>解决：缓存服务器的动态变化时，系统伸缩性<br><a id="more"></a></p>
-<h2 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h2><p>缓存的目的就是 提高速度，改善用户体验，减轻后端服务器压力。存在的多台服务器，我们需要哈希命中，路由到某个缓存服务器上取数据。</p>
-<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>如果我们通过对缓存项键值进行普通的取余hash，来命中哪台服务器上存有我们所需要的缓存数据，比如我们有三台存储图片缓存服务器：</p>
-<ol>
-<li>hash(图片)%3</li>
-<li>服务器(0,1,2),命中后进行存储和取出</li>
-</ol>
-<p><strong>情况：如果其中一台缓存服务器故障，我们需要移除掉</strong><br><strong>导致：大量的缓存项会无效，导致缓存雪崩，一时间内会导致后端服务系统压力过大</strong><br><strong>分析：该算法使用节点数取余的方法，强依赖node的数目，当节点数目发生改变时，会导致大量缓存项无效,映射到与之前不一样的节点上</strong></p>
-<h2 id="系统伸缩性"><a href="#系统伸缩性" class="headerlink" title="系统伸缩性"></a>系统伸缩性</h2><p>这里就需要谈及一个名词”系统伸缩性”</p>
-<blockquote>
-<p>是指通过不断向集群中加入服务器的手段来缓解不断上升的用户并发访问压力和不断增长的数据存储需求</p>
-</blockquote>
-<h3 id="衡量架构伸缩性的指标"><a href="#衡量架构伸缩性的指标" class="headerlink" title="衡量架构伸缩性的指标"></a>衡量架构伸缩性的指标</h3><ol>
-<li><p>是否可用多台服务器架构集群</p>
-</li>
-<li><p>是否容易向服务器中添加新的服务器</p>
-</li>
-<li><p>加入的服务器是否可以提供和原服务器无差别的服务</p>
-</li>
-<li><p>集群中容纳的总服务器是否有限制</p>
-</li>
-</ol>
-<p>下面我们进入正题！DHT！！</p>
-<h2 id="一致性哈希算法（DHT）"><a href="#一致性哈希算法（DHT）" class="headerlink" title="一致性哈希算法（DHT）"></a>一致性哈希算法（DHT）</h2><ol>
-<li>按照常用的hash算法映射到一个2^32的哈希桶，0~(2^32)-1的数字空间中，形成了一个hash闭合的环形。</li>
-<li>对服务器的地址进行hash后对2^32取模，映射到环上。</li>
-<li>对数据对象进行相同的hash后对2^32取模得到key</li>
-<li>key按照顺时针的方向，在环找寻最近的节点，这个节点就是存储对象的节点</li>
-</ol>
-<p>让我们看下集群的动态变化，对整个系统的影响。</p>
-<h3 id="移除节点"><a href="#移除节点" class="headerlink" title="移除节点"></a>移除节点</h3><p><img src="http://op7scj9he.bkt.clouddn.com/20140411001033656.png" alt=""></p>
-<blockquote>
-<p>object3因为NODE2的移除，现在映射到NODE3，其他数据映射不变</p>
-</blockquote>
-<h3 id="增加节点"><a href="#增加节点" class="headerlink" title="增加节点"></a>增加节点</h3><p><img src="http://op7scj9he.bkt.clouddn.com/20140411001211062.png" alt=""></p>
-<blockquote>
-<p>NODE4的增加，object2映射到NODE2，其他数据映射不变</p>
-</blockquote>
-<p><strong>优点：服务器的数量如果发生改变，并不是所有缓存都会失效，而是只有部分缓存会失效，前端的缓存仍然能分担整个系统的压力，而不至于所有压力都在同一时间集中到后端服务器上。</strong></p>
-<h2 id="hash环的偏斜"><a href="#hash环的偏斜" class="headerlink" title="hash环的偏斜"></a>hash环的偏斜</h2><ul>
-<li>问题：可能会出现服务器节点映射到hash环上比较集中</li>
-<li>结果：换上映射的数据根据之前的规则顺时针靠近最近的节点，会出现负载不均的情况</li>
-<li>解决：虚拟节点</li>
+        <p>Raft的领导选举讨论<br><a id="more"></a></p>
+<h2 id="Raft的领导地位"><a href="#Raft的领导地位" class="headerlink" title="Raft的领导地位"></a>Raft的领导地位</h2><h2 id="一致性分析"><a href="#一致性分析" class="headerlink" title="一致性分析"></a>一致性分析</h2><p>集群机器的每个节点需要保持一致性，注意这里需要强一致性，这就不得不谈到副本一致性模型。这里是之前在简书记录的相关知识，第二篇暂时空缺（没时间，哈哈哈）<br><a href="https://www.jianshu.com/p/dcead11b3da9" target="_blank" rel="noopener">分布式系统复制和一致性（1）模型分析</a><br><a href="https://www.jianshu.com/p/174f4d514bef" target="_blank" rel="noopener">分布式系统复制和一致性（2）复制管理</a></p>
+<h3 id="看待副本一致性问题的角度"><a href="#看待副本一致性问题的角度" class="headerlink" title="看待副本一致性问题的角度"></a>看待副本一致性问题的角度</h3><p><strong>从不同的角度看：</strong></p>
+<ul>
+<li>客户端：一致性主要指的是多并发访问时更新过的数据如何获取的问题</li>
+<li>服务端：更新如何复制分布到整个系统</li>
 </ul>
-<h3 id="虚拟节点"><a href="#虚拟节点" class="headerlink" title="虚拟节点"></a>虚拟节点</h3><blockquote>
-<p>“虚拟节点”是”实际节点”（实际的物理服务器）在hash环上的复制品,一个实际节点可以对应多个虚拟节点，使缓存对象更均匀的分布在哈希环上。</p>
-</blockquote>
-<p>例如创建N个虚拟节点<br>实现：</p>
+<p><strong>不同的一致性：</strong></p>
+<ul>
+<li>客户端的视角</li>
+</ul>
 <ol>
-<li>在ip地址后面加上后缀（例如：ip：port#virN），然后对此进行hash计算，映射到环上</li>
-<li><p>跟之前操作一样，顺时针获取节点路径，然后substring后缀之前的地址。</p>
-<h2 id="判断哈希算法好坏"><a href="#判断哈希算法好坏" class="headerlink" title="判断哈希算法好坏"></a>判断哈希算法好坏</h2><p>一致性hash算法提出了在动态变化的Cache环境中，判定哈希算法好坏的四个定义：</p>
-</li>
-<li><p>平衡性(Balance)：平衡性是指哈希的结果能够尽可能分布到所有的缓冲中去，这样可以使得所有的缓冲空间都得到利用。很多哈希算法都能够满足这一条件。</p>
-</li>
-<li><p>单调性(Monotonicity)：单调性是指如果已经有一些内容通过哈希分派到了相应的缓冲中，又有新的缓冲加入到系统中。哈希的结果应能够保证原有已分配的内容可以被映射到原有的或者新的缓冲中去，而不会被映射到旧的缓冲集合中的其他缓冲区。</p>
-</li>
-<li><p>分散性(Spread)：在分布式环境中，终端有可能看不到所有的缓冲，而是只能看到其中的一部分。当终端希望通过哈希过程将内容映射到缓冲上时，由于不同终端所见的缓冲范围有可能不同，从而导致哈希的结果不一致，最终的结果是相同的内容被不同的终端映射到不同的缓冲区中。这种情况显然是应该避免的，因为它导致相同内容被存储到不同缓冲中去，降低了系统存储的效率。分散性的定义就是上述情况发生的严重程度。好的哈希算法应能够尽量避免不一致的情况发生，也就是尽量降低分散性。</p>
-</li>
-<li><p>负载(Load)：负载问题实际上是从另一个角度看待分散性问题。既然不同的终端可能将相同的内容映射到不同的缓冲区中，那么对于一个特定的缓冲区而言，也可能被不同的用户映射为不同 的内容。与分散性一样，这种情况也是应当避免的，因此好的哈希算法应能够尽量降低缓冲的负荷。</p>
-</li>
+<li>强一致性：关系型数据库，要求更新过的数据能被后续的访问都能看到</li>
+<li>弱一致性：如果能容忍后续的部分或者全部访问不到</li>
+<li>最终一致性：如果经过一段时间后要求能访问到更新后的数据</li>
 </ol>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.csdn.net/justloveyou_/article/details/78313649" target="_blank" rel="noopener">白话解析：一性哈希算法 consistent hashing</a><br><a href="https://www.cnblogs.com/xrq730/p/5186728.html" target="_blank" rel="noopener">对一致性Hash算法，Java代码实现的深入研究</a></p>
+<ul>
+<li>服务端的视角<br>如何尽快将更新后的数据分布到整个系统，降低达到最终一致性的时间窗口，是提高系统的可用度和用户体验非常重要的方面。</li>
+</ul>
+<p><strong>复制的方式</strong></p>
+<ul>
+<li>同步：主节点保证所有的备份节点写入成功，才可以算写成功</li>
+<li>异步：主节点收到client的写请求后。。。在没有保证所有节点写入，就可以返回client写成功。<br>比较：</li>
+<li>同步：</li>
+</ul>
+<ol>
+<li>如果一个备份节点宕掉的话，就需要等待（当然现在有很多解决办法）</li>
+<li>整体同步复制，性能差，时延高</li>
+<li>优点：实现简单！可靠！</li>
+</ol>
+<ul>
+<li>异步：</li>
+</ul>
+<ol>
+<li>副本不会实时一致性</li>
+<li>NWR协议(控制一致性的一种策略)</li>
+</ol>
+<p><strong>Raft算法在复制的过程中方式是异步的，最终一致性，这是从服务端的角度来看；从客户端向集群读写数据来看，是强一致性，读取的数据必定是最新更新的数据，安全的数据</strong></p>
+<blockquote>
+<p>我们一般说Raft是强一致性的算法，是从client的视角来看待问题的</p>
+</blockquote>
+<h2 id="Raft中的领导的强地位"><a href="#Raft中的领导的强地位" class="headerlink" title="Raft中的领导的强地位"></a>Raft中的领导的强地位</h2><p>前面bb了那么多强一致性，现在步入正题。Raft算法保证leader的强地位，client读写都通过leader。leader收到集群中大部分的复制成功ack，则直接apply到状态机，在复制的过程中同步所有副本。多个client并发情况下，同时读leader，必然读到的是apply到状态机的安全状态（之后其他节点都会是这个状态），保证client视角的强一致性。</p>
+<h2 id="Raft三种节点"><a href="#Raft三种节点" class="headerlink" title="Raft三种节点"></a>Raft三种节点</h2><p>在谈领导选举前，需要谈一下Raft集群中的三种节点成员</p>
+<ul>
+<li>follower</li>
+<li>candidate</li>
+<li>leader</li>
+</ul>
+<p>一般情况下，只有一个leader，其他节点全是follower。<br>leader：处理所有的客户端请求（如果一个客户端和follower联系，那follower会把请求重定向给leader）<br>follower：不会发送任何请求，只是简单的响应来自leader或者candidate的请求，复制log和apply到自身的状态机。<br>candidate： 选举时期，来描述选举新leader</p>
+<h2 id="选举细节"><a href="#选举细节" class="headerlink" title="选举细节"></a>选举细节</h2><blockquote>
+<p>如果一个follower 在一段时间里没有接收到任何消息，也就是选举超时，然后他就会认为系统中没有可用的领导者然后开始进行选举以选出新的领导者。<br>要开始一次选举过程，跟随者先要增加自己的当前任期（term）号并且转换到候选人状态，并且给自己投一票。然后他会并行的向集群中的其他服务器节点发送请求投票的 RPCs 来给自己投票。</p>
+</blockquote>
+<h3 id="什么时候开始选举？"><a href="#什么时候开始选举？" class="headerlink" title="什么时候开始选举？"></a>什么时候开始选举？</h3><p>集群中只有follower</p>
+<h3 id="选举超时时间"><a href="#选举超时时间" class="headerlink" title="选举超时时间"></a>选举超时时间</h3><p>150ms~300ms，每个节点随机分配</p>
+<ul>
+<li>判断集群中没有leader，选举超时-&gt;认为系统没有leader</li>
+<li>选举超时：一个follower 在一段时间里没有接收到任何消息</li>
+<li>选举超时的结果：开始新一轮选举<br>成为candidate，term+1，先投自己一票，发送投票请求rpc</li>
+</ul>
+<h3 id="Candidate的三种结局"><a href="#Candidate的三种结局" class="headerlink" title="Candidate的三种结局"></a>Candidate的三种结局</h3><p><strong>note：收到大量同一个任期的选票，保证一个任期号，最多只会有一个领导人被选举出来（选举安全特性）</strong></p>
+<ul>
+<li>收到大部分选票，成为leader<br>发送心跳包，建立权威，阻止其他可能存在的candidate成为领导人</li>
+<li>其他服务器成为了leader<br>case1：等待其他的投票回应期间，收到了leader的RPC，发现对方的term不小于自己，承认对方合法leader</li>
+<li>选票瓜分，既没有赢也没有输<br>case2：有多个follower-&gt;candidate，在一个term号里同时发出投票请求，但是投选票数无法产生结果<br><strong>follower在一个term号里只能投一票，一个term里只能有一个leader</strong></li>
+</ul>
+<p>当这种情况发生的时候，每一个候选人都会超时，然后通过增加当前任期号来开始一轮新的选举。</p>
+<p><img src="http://op7scj9he.bkt.clouddn.com/raft1.png" alt=""></p>
+<blockquote>
+<p>任期用连续的整数标记，t3就是选票瓜分的情况，当这种情况发生的时候，每一个候选人都会超时，然后通过增加当前任期号来开始一轮新的选举。</p>
+</blockquote>
+<h3 id="选举安全特性："><a href="#选举安全特性：" class="headerlink" title="选举安全特性："></a>选举安全特性：</h3><blockquote>
+<p>对于一个给定的任期号，最多只会有一个领导人被选举出来</p>
+</blockquote>
+<p>如何保证的呢？</p>
+<ol>
+<li>任期号：非常重要的成分，在Raft算法中起到一个逻辑时钟的作用，单调递增。各个节点心跳、投票请求、复制log都会交换任期号（得到更大的任期号），候选人或者领导者收到更大的任期号，会自动变成跟随者。</li>
+<li>major：同一任期获取大多数投票</li>
+<li>选票瓜分：在一个任期里无法选举出领导者，进行下一轮选举，经过一个新的选举时间，任期号+1，发起投票请求…直到选出领导者。</li>
+</ol>
 
       
     </div>
@@ -476,9 +491,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/hash/" rel="tag"><i class="fa fa-tag"></i> hash</a>
-          
-            <a href="/tags/consistency/" rel="tag"><i class="fa fa-tag"></i> consistency</a>
+            <a href="/tags/consenus/" rel="tag"><i class="fa fa-tag"></i> consenus</a>
           
         </div>
       
@@ -491,8 +504,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/05/14/基于Raft的分布式消息队列RMBQ/" rel="next" title="基于Raft的分布式消息队列RMBQ">
-                <i class="fa fa-chevron-left"></i> 基于Raft的分布式消息队列RMBQ
+              <a href="/2018/05/29/https/" rel="next" title="HTTP/HTTPS">
+                <i class="fa fa-chevron-left"></i> HTTP/HTTPS
               </a>
             
           </div>
@@ -500,10 +513,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/05/18/海量数据处理/" rel="prev" title="海量数据处理">
-                海量数据处理 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -681,7 +690,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#场景"><span class="nav-number">1.</span> <span class="nav-text">场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#问题"><span class="nav-number">2.</span> <span class="nav-text">问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#系统伸缩性"><span class="nav-number">3.</span> <span class="nav-text">系统伸缩性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#衡量架构伸缩性的指标"><span class="nav-number">3.1.</span> <span class="nav-text">衡量架构伸缩性的指标</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一致性哈希算法（DHT）"><span class="nav-number">4.</span> <span class="nav-text">一致性哈希算法（DHT）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#移除节点"><span class="nav-number">4.1.</span> <span class="nav-text">移除节点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#增加节点"><span class="nav-number">4.2.</span> <span class="nav-text">增加节点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hash环的偏斜"><span class="nav-number">5.</span> <span class="nav-text">hash环的偏斜</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#虚拟节点"><span class="nav-number">5.1.</span> <span class="nav-text">虚拟节点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#判断哈希算法好坏"><span class="nav-number">6.</span> <span class="nav-text">判断哈希算法好坏</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft的领导地位"><span class="nav-number">1.</span> <span class="nav-text">Raft的领导地位</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一致性分析"><span class="nav-number">2.</span> <span class="nav-text">一致性分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#看待副本一致性问题的角度"><span class="nav-number">2.1.</span> <span class="nav-text">看待副本一致性问题的角度</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft中的领导的强地位"><span class="nav-number">3.</span> <span class="nav-text">Raft中的领导的强地位</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft三种节点"><span class="nav-number">4.</span> <span class="nav-text">Raft三种节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#选举细节"><span class="nav-number">5.</span> <span class="nav-text">选举细节</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#什么时候开始选举？"><span class="nav-number">5.1.</span> <span class="nav-text">什么时候开始选举？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#选举超时时间"><span class="nav-number">5.2.</span> <span class="nav-text">选举超时时间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Candidate的三种结局"><span class="nav-number">5.3.</span> <span class="nav-text">Candidate的三种结局</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#选举安全特性："><span class="nav-number">5.4.</span> <span class="nav-text">选举安全特性：</span></a></li></ol></li></ol></div>
             
 
           </div>
