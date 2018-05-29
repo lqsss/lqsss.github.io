@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="consenus," />
 
 
 
@@ -79,16 +79,18 @@
 
 
 
-<meta name="description" content="There&apos;s no place like 127.0.0.1">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Lqsss&#39;s Blog">
-<meta property="og:url" content="http://yoursite.com/tags/HTTPS/index.html">
+<meta name="description" content="Raft干嘛的跟Paxos差不多的，是一个共识算法。 Raft的初衷 尽管有很多工作都在尝试降低它的复杂性，但是 Paxos  算法依然十分难以理解 提供了和 Paxos 算法相同的功能和性能，但是它的算法结构和 Paxos 不同Basic Paxos  共识算法(consenus) 分布式系统的容错机制？多个数据副本(replication) 起到一个数据冗余的作用。 共识算法解决一个什么样的问">
+<meta name="keywords" content="consenus">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Raft(一)">
+<meta property="og:url" content="http://yoursite.com/2018/05/29/Raft(一)/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="There&apos;s no place like 127.0.0.1">
+<meta property="og:description" content="Raft干嘛的跟Paxos差不多的，是一个共识算法。 Raft的初衷 尽管有很多工作都在尝试降低它的复杂性，但是 Paxos  算法依然十分难以理解 提供了和 Paxos 算法相同的功能和性能，但是它的算法结构和 Paxos 不同Basic Paxos  共识算法(consenus) 分布式系统的容错机制？多个数据副本(replication) 起到一个数据冗余的作用。 共识算法解决一个什么样的问">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2018-05-29T10:37:42.643Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Lqsss&#39;s Blog">
-<meta name="twitter:description" content="There&apos;s no place like 127.0.0.1">
+<meta name="twitter:title" content="Raft(一)">
+<meta name="twitter:description" content="Raft干嘛的跟Paxos差不多的，是一个共识算法。 Raft的初衷 尽管有很多工作都在尝试降低它的复杂性，但是 Paxos  算法依然十分难以理解 提供了和 Paxos 算法相同的功能和性能，但是它的算法结构和 Paxos 不同Basic Paxos  共识算法(consenus) 分布式系统的容错机制？多个数据副本(replication) 起到一个数据冗余的作用。 共识算法解决一个什么样的问">
 
 
 
@@ -118,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/tags/HTTPS/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/05/29/Raft(一)/"/>
 
 
 
 
 
-  <title>Tag: HTTPS | Lqsss's Blog</title>
+  <title>Raft(一) | Lqsss's Blog</title>
   
 
 
@@ -143,7 +145,7 @@
     
   
 
-  <div class="container sidebar-position-left ">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -257,54 +259,222 @@
           <div id="content" class="content">
             
 
-  
-  
-  
-  <div class="post-block tag">
+  <div id="posts" class="posts-expand">
+    
 
-    <div id="posts" class="posts-collapse">
-      <div class="collection-title">
-        <h1>HTTPS<small>Tag</small>
-        </h1>
-      </div>
+  
 
-      
-        
+  
+  
+  
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/29/Raft(一)/">
 
-      <h2 class="post-title">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://op7scj9he.bkt.clouddn.com/%E4%B8%8B%E8%BD%BD.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
         
-            <a class="post-title-link" href="/2018/05/28/https/" itemprop="url">
-              
-                <span itemprop="name">HTTP/HTTPS</span>
-              
-            </a>
         
-      </h2>
+          <h1 class="post-title" itemprop="name headline">Raft(一)</h1>
+        
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2018-05-28T19:21:40+08:00"
-              content="2018-05-28" >
-          05-28
-        </time>
-      </div>
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-29T18:37:34+08:00">
+                2018-05-29
+              </time>
+            
 
-    </header>
-  </article>
+            
 
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Words count in article&#58;</span>
+                
+                <span title="Words count in article">
+                  460 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Reading time &asymp;</span>
+                
+                <span title="Reading time">
+                  2 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Raft干嘛的"><a href="#Raft干嘛的" class="headerlink" title="Raft干嘛的"></a>Raft干嘛的</h2><p>跟Paxos差不多的，是一个<strong>共识算法</strong>。</p>
+<h3 id="Raft的初衷"><a href="#Raft的初衷" class="headerlink" title="Raft的初衷"></a>Raft的初衷</h3><ul>
+<li>尽管有很多工作都在尝试降低它的复杂性，但是 Paxos  算法依然十分难以理解</li>
+<li>提供了和 Paxos 算法相同的功能和性能，但是它的算法结构和 Paxos 不同<br><a href="https://lqsss.github.io/2018/05/28/paxos/" target="_blank" rel="noopener">Basic Paxos</a></li>
+</ul>
+<h3 id="共识算法-consenus"><a href="#共识算法-consenus" class="headerlink" title="共识算法(consenus)"></a>共识算法(consenus)</h3><ol>
+<li>分布式系统的容错机制？<br>多个数据副本(replication) 起到一个数据冗余的作用。</li>
+<li>共识算法解决一个什么样的问题？<br>state machine replication的一致性。状态机上存储的可以是log，value，或者指令。</li>
+<li>最终一致性和强一致性？<br>分布式里的一致性(consistency)话题是一个老生常谈的问题，但是这个一致性并不能笼统地说明此处的一致性，对于数据副本，我们最好使用共识（consenus）来形容。</li>
+</ol>
+<ul>
+<li>最终一致性指的是在不同的副本在最终达成相同的状态。<br>这里的强一致性对于client的角度来看，向系统写入什么，读出来的也会是什么。</li>
+<li>当分布式系统中更新操作完成之后，任何多个进程或线程，访问系统都会获得最新的值。</li>
+</ul>
+<ol start="4">
+<li>2pc和Raft解决的是一个问题吗？<br>不是。2pc解决的是一个分布式事务的一致性问题，而Raft解决的是分布式里副本的一致性，起到一个集群容灾的能力。比如存储系统经常做分片(partition)<br><a href="https://www.zhihu.com/question/275845393/answer/383419685" target="_blank" rel="noopener">请问分布式事务一致性与raft或paxos协议解决的一致性问题是同一回事吗？</a><br><a href="https://www.zhihu.com/question/266759495" target="_blank" rel="noopener">TiDB使用了raft之后为什么还需要2PC?</a></li>
+</ol>
+<h2 id="Raft核心模块"><a href="#Raft核心模块" class="headerlink" title="Raft核心模块"></a>Raft核心模块</h2><ol>
+<li>领导选举</li>
+<li>日志复制</li>
+<li>集群变化</li>
+</ol>
+<h2 id="Raft一些相关资源"><a href="#Raft一些相关资源" class="headerlink" title="Raft一些相关资源"></a>Raft一些相关资源</h2><p><a href="http://thesecretlivesofdata.com/raft/" target="_blank" rel="noopener">Raft动画</a><br><a href="https://raft.github.io/" target="_blank" rel="noopener">Raft :GitHub Pages</a></p>
 
       
     </div>
+    
+    
+    
 
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/consenus/" rel="tag"><i class="fa fa-tag"></i> consenus</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/28/https/" rel="next" title="HTTP/HTTPS">
+                <i class="fa fa-chevron-left"></i> HTTP/HTTPS
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
   </div>
   
   
   
+  </article>
 
-  
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -312,6 +482,10 @@
 
 
           
+
+  
+
+
 
         </div>
         
@@ -332,8 +506,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -439,6 +622,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft干嘛的"><span class="nav-number">1.</span> <span class="nav-text">Raft干嘛的</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Raft的初衷"><span class="nav-number">1.1.</span> <span class="nav-text">Raft的初衷</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#共识算法-consenus"><span class="nav-number">1.2.</span> <span class="nav-text">共识算法(consenus)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft核心模块"><span class="nav-number">2.</span> <span class="nav-text">Raft核心模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft一些相关资源"><span class="nav-number">3.</span> <span class="nav-text">Raft一些相关资源</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -581,6 +780,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
 
   
 
