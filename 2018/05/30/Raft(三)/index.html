@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="HTTP,HTTPS," />
+  <meta name="keywords" content="consenus," />
 
 
 
@@ -79,18 +79,21 @@
 
 
 
-<meta name="description" content="HTTPS的安全性">
-<meta name="keywords" content="HTTP,HTTPS">
+<meta name="description" content="日志复制模块">
+<meta name="keywords" content="consenus">
 <meta property="og:type" content="article">
-<meta property="og:title" content="HTTP&#x2F;HTTPS">
-<meta property="og:url" content="http://yoursite.com/2018/05/29/https/index.html">
+<meta property="og:title" content="Raft(三) log replication">
+<meta property="og:url" content="http://yoursite.com/2018/05/30/Raft(三)/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="HTTPS的安全性">
+<meta property="og:description" content="日志复制模块">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-05-29T11:27:57.384Z">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/raft2.png">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/raft3.png">
+<meta property="og:updated_time" content="2018-05-30T03:05:49.736Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="HTTP&#x2F;HTTPS">
-<meta name="twitter:description" content="HTTPS的安全性">
+<meta name="twitter:title" content="Raft(三) log replication">
+<meta name="twitter:description" content="日志复制模块">
+<meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/raft2.png">
 
 
 
@@ -120,13 +123,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/05/29/https/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/05/30/Raft(三)/"/>
 
 
 
 
 
-  <title>HTTP/HTTPS | Lqsss's Blog</title>
+  <title>Raft(三) log replication | Lqsss's Blog</title>
   
 
 
@@ -273,7 +276,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/29/https/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/30/Raft(三)/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="lqsss">
@@ -290,7 +293,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">HTTP/HTTPS</h1>
+          <h1 class="post-title" itemprop="name headline">Raft(三) log replication</h1>
         
 
         <div class="post-meta">
@@ -302,8 +305,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-29T19:27:53+08:00">
-                2018-05-29
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-30T11:05:40+08:00">
+                2018-05-30
               </time>
             
 
@@ -325,8 +328,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index">
-                    <span itemprop="name">network</span>
+                  <a href="/categories/distributed/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed</span>
                   </a>
                 </span>
 
@@ -356,7 +359,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  1,528 字
+                  1,723 字
                 </span>
               
 
@@ -393,71 +396,79 @@
       
 
       
-        <p>HTTPS的安全性<br><a id="more"></a></p>
-<h2 id="HTTP"><a href="#HTTP" class="headerlink" title="HTTP"></a>HTTP</h2><h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><ol>
-<li>HTTP 协议是以 ASCII 码传输，建立在 TCP/IP 协议之上的应用层规范，默认80端口。</li>
-<li>无连接无状态</li>
-</ol>
-<h3 id="HTTP报文"><a href="#HTTP报文" class="headerlink" title="HTTP报文"></a>HTTP报文</h3><p>状态行、请求头、消息主体<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;method&gt; &lt;request-URL&gt; &lt;version&gt;</span><br><span class="line">&lt;headers&gt;</span><br><span class="line">&lt;entity-body&gt;</span><br></pre></td></tr></table></figure></p>
-<ul>
-<li><p>GET</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">GET /books/?sex=man&amp;name=Professional HTTP/1.1</span><br><span class="line"></span><br><span class="line">Host: www.example.com</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.6)</span><br><span class="line">Gecko/20050225 Firefox/1.0.1</span><br><span class="line">Connection: Keep-Alive</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>POST</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">POST / HTTP/1.1</span><br><span class="line"></span><br><span class="line"> Host: www.example.com</span><br><span class="line"> User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.6)</span><br><span class="line"> Gecko/20050225 Firefox/1.0.1</span><br><span class="line"> Content-Type: application/x-www-form-urlencoded</span><br><span class="line"> Content-Length: 40</span><br><span class="line"> Connection: Keep-Alive</span><br><span class="line"></span><br><span class="line"> sex=man&amp;name=Professional</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>状态行：请求方式+URL+HTTP版本号<br>请求头：编码格式、cookie、包长<br>请求体：内容</p>
-<h3 id="响应报文"><a href="#响应报文" class="headerlink" title="响应报文"></a>响应报文</h3><p>状态行:协议版本、数字形式的状态代码、及相应的状态描述<br>响应头(Response Header)<br>响应正文</p>
-<h3 id="会话跟踪"><a href="#会话跟踪" class="headerlink" title="会话跟踪"></a>会话跟踪</h3><ol>
-<li>什么是会话？</li>
-</ol>
-<p>客户端打开与服务器的连接发出请求到服务器响应客户端请求的全过程称之为会话。</p>
-<ol start="2">
-<li>什么是会话跟踪？</li>
-</ol>
-<p>会话跟踪指的是对同一个用户对服务器的连续的请求和接受响应的监视。</p>
-<ol start="3">
-<li>为什么需要会话跟踪？</li>
-</ol>
-<p>浏览器与服务器之间的通信是通过HTTP协议进行通信的，而HTTP协议是”无状态”的协议，它不能保存客户的信息，即一次响应完成之后连接就断开了，下一次的请求需要重新连接，这样就需要判断是否是同一个用户，所以才有会话跟踪技术来实现这种要求。</p>
-<p>会话跟踪常用的方法:</p>
+        <p>日志复制模块<br><a id="more"></a></p>
+<h2 id="日志结构"><a href="#日志结构" class="headerlink" title="日志结构"></a>日志结构</h2><p><img src="http://op7scj9he.bkt.clouddn.com/raft2.png" alt=""></p>
 <ol>
-<li>session<br>每一个用户都有一个不同的session，各个用户之间是不能共享的，是每个用户所独享的，在session中可以存放信息。</li>
+<li>term:任期号</li>
+<li>command：entry内容</li>
+<li>log index：当前节点的日志索引</li>
 </ol>
-<p>在服务器端会创建一个session对象，产生一个sessionID来标识这个session对象，然后将这个sessionID放入到Cookie中发送到客户端，下一次访问时，sessionID会发送到服务器，在服务器端进行识别不同的用户。</p>
-<p>Session的实现依赖于Cookie，如果Cookie被禁用，那么session也将失效。</p>
-<ol start="2">
-<li>cookie</li>
-<li>url重写</li>
-<li>隐藏域表单提交</li>
+<p>我们可以看到第一个节点是leader，其他是follower，图中最后一个节点所包含的log entries就可以看做<code>committed entries</code>。</p>
+<blockquote>
+<p>committed entries：在领导人将创建的日志条目复制到大多数的服务器上的时候，日志条目就会被提交了。</p>
+</blockquote>
+<p>领导人跟踪了最大的将会被提交的日志项的索引，并且索引值会被包含在未来的所有附加日志 RPCs （包括心跳包），这样其他的服务器才能最终知道领导人的提交位置。一旦跟随者知道一条日志条目已经被提交，那么他也会将这个日志条目应用到本地的状态机中（按照日志的顺序）。</p>
+<h2 id="日志复制的正常进程"><a href="#日志复制的正常进程" class="headerlink" title="日志复制的正常进程"></a>日志复制的正常进程</h2><p><strong>我们先不考虑任何宕机，网络丢包，分区等因素造成的错误！</strong><br>一旦一个领导人被选举出来，他就开始为客户端提供服务</p>
+<ol>
+<li>客户端发指令给leader</li>
+<li>leader将此作为新的log项append到本地日志</li>
+<li>并行的发起附加条目 RPCs 给其他的服务器，让他们复制这条日志条目</li>
+<li>follower接收到来自leader的复制日志的RPC请求，则append到本地日志，回一个确认消息</li>
+<li>当leader知道大多数的follower都成功复制，则将认为可提交的部分应用于状态机，并返回客户端。</li>
 </ol>
-<h2 id="HTTPS"><a href="#HTTPS" class="headerlink" title="HTTPS"></a>HTTPS</h2><h3 id="几个重要概念描述"><a href="#几个重要概念描述" class="headerlink" title="几个重要概念描述"></a>几个重要概念描述</h3><ol>
-<li>对称密钥:又称为共享密钥加密,客户端和服务端都共有，加密解密的过程都是相同的。</li>
-<li>非对称加密：服务端生成一组秘钥，公钥发放给客户端，私钥由服务端自己保留。只要服务器的私钥不丢失，即使公钥中间被拦截，也无法破解。</li>
-<li>数字签名：私钥签名，公钥验证。解决数据在服务端和客户端在传输数据的过程中有可能被人替换的问题。<br> 3.1 服务端对报文进行hash生成摘要信息（digest），用私钥对此进行签名，将签名+报文内容发送给客户端。<br> 3.2 客户端将签名提起出来，使用公钥将此解密，如果能正常地解密出来digest2，那么就能确认是对方发的。<br> 3.3 客户端同样对报文进行hash，得出数字摘要(digest1),如果digest1和digest2相等，则说明没有篡改。</li>
-<li><p>数字证书：开始时，客户端是没有公钥的，需要向服务端申请拿到公钥，可是在这个过程中有可能被中间人所拦截，给你一个假的公钥,自己保留一个对应的假私钥，用假私钥解密出客户端的报文，篡改，然后用真公钥传送给服务端。问题在于,客户端所得到的公钥是否真的就是服务端发过来的公钥。</p>
-<p> 所以，不能直接由服务端发放公钥，而是第三方使用私钥对服务端的公钥加密，然后发放给客户端一个第三方公钥去解密，这个叫证书。</p>
-</li>
+<h2 id="日志匹配特性"><a href="#日志匹配特性" class="headerlink" title="日志匹配特性"></a>日志匹配特性</h2><p>从此处开始讲各种容错机制，首要谈的就是Raft的日志匹配特性。</p>
+<p>Raft维护着以下的特性:</p>
+<ol>
+<li>如果在不同的日志中的两个条目拥有相同的索引和任期号，那么他们存储了相同的指令。</li>
+<li>如果在不同的日志中的两个条目拥有相同的索引和任期号，那么他们之前的所有日志条目也全部相同。</li>
 </ol>
-<h2 id="思考设计"><a href="#思考设计" class="headerlink" title="思考设计"></a>思考设计</h2><ol>
-<li>服务端对于每个客户端，维持一个对称加密算法。但是协商对称加密的过程是不安全的，中间有可能被截获。<br><code>解决：使用非对称加密算法进行对称加密算法协商过程。</code></li>
-<li>对于每个客户端都要有不同的对称加密方式，而且不被窃取<br><code>每次ssl握手都有随机数生成，在第四次握手后，双方都有三个随机数，通过这三个随机数生成加密方式</code></li>
-<li>如何得到公钥？公钥有被掉包的危险<br><code>CA数字证书的私钥对服务端的公钥的加密，客户端用数字证书的公钥解密，拿到公钥</code></li>
-<li>第三方机构不止授权一个网站，授权多个服务器网站，客户端拿到第三方的公钥，可以解密授权的所有证书，而得到公钥， 此时中间人可以调包证书，客户端一样可以解密。<br><code>数字签名确保数字证书的权威性</code>:将证书内容进行一次hash，然后通过CA的私钥加密，得到数字签名，附在证书的末尾，发给服务端。浏览器收到服务端证书，用数字证书的公钥对数字签名进行解密，得到hash1；然后按照证书上指定的hash算法对数字证书内容进行一次hash得到hash2，判断hahs1和hash2是否相同。</li>
+<p>下面阐述的是对以上两条的保证：</p>
+<ol>
+<li>领导人最多在一个任期里在指定的一个日志索引位置创建一条日志条目，同时日志条目在日志中的位置也从来不会改变</li>
+<li>附加日志 RPC 的一个简单的一致性检查所保证。在发送附加日志 RPC 的时候，<strong>领导人会把新的日志条目紧接着之前的条目的索引位置和任期号包含在里面（preLogIndex,preLogTerm）如果跟随者在它的日志中找不到包含相同索引位置和任期号的条目，那么他就会拒绝接收新的日志条目。</strong></li>
 </ol>
-<h2 id="HTTPS的优势："><a href="#HTTPS的优势：" class="headerlink" title="HTTPS的优势："></a>HTTPS的优势：</h2><ul>
-<li>通讯过程的hash生成的摘要，保证数据完整性</li>
-<li>握手过程的非对称加密，传输过程的对称加密，保证数据私密性</li>
-<li>证书保证双方身份的真实性</li>
+<p><strong>一致性检查就像一个归纳步骤：一开始空的日志状态肯定是满足日志匹配特性的，然后一致性检查保护了日志匹配特性当日志扩展的时候。因此，每当附加日志 RPC 返回成功时，领导人就知道跟随者的日志一定是和自己相同的了。</strong></p>
+<h2 id="重点：各种出错"><a href="#重点：各种出错" class="headerlink" title="重点：各种出错"></a>重点：各种出错</h2><p><img src="http://op7scj9he.bkt.clouddn.com/raft3.png" alt=""><br>上图是不是五颜六色，有长有短、各种数字。下面会对Raft算法在复制过程出现的不一致情况进行分析。</p>
+<p>如上图所示，各种节点所持久化的日志可能不尽相同<br><strong>原因:网络、运行缓慢、follower宕机、leader宕机导致选举重选</strong></p>
+<ul>
+<li>a、b可能是运行缓慢，再或者网络丢包、或者崩溃（<strong>缺失部分log</strong>）</li>
+<li>c、d有可能曾经是leader，收到了client指令请求，但是还没有来得及发送给其他follower复制日志的请求，就崩溃了（<strong>比leader的log多</strong>）</li>
+<li>而e、f是两种情况都存在的（<strong>既多也少</strong>），就f这样的情况，可能在第二任期是leader，复制了一些请求到本地log，没来得及发送复制请求，崩溃了；崩溃的时间很短，恢复后成为了任期3的leader，然后又复制了一些请求到log，依旧还是在提交前崩溃了，之后就一直处在宕机的状态。</li>
 </ul>
-<h2 id="HTTPS过程"><a href="#HTTPS过程" class="headerlink" title="HTTPS过程"></a>HTTPS过程</h2><ul>
-<li>建立服务器443端口连接</li>
-<li>SSL握手：随机数，证书，密钥，加密算法</li>
-<li>发送加密请求</li>
-<li>发送加密响应</li>
-<li>关闭SSL:服务端会话秘钥生成，发送给客户端</li>
-<li>关闭TCP</li>
+<h2 id="解决：强制复制"><a href="#解决：强制复制" class="headerlink" title="解决：强制复制"></a>解决：强制复制</h2><p>在 Raft 算法中，领导人处理不一致是通过强制跟随者直接复制自己的日志来解决了。</p>
+<ul>
+<li>在跟随者中的冲突的日志条目会被领导人的日志覆盖。</li>
+</ul>
+<p>具体细节：</p>
+<ul>
+<li><p>领导人针对每一个跟随者维护了一个nextIndex数组，这表示下一个需要发送给跟随者的日志条目的索引地址。</p>
+</li>
+<li><p>刚上任时，初始化nextIndex数组为本地log的下一个</p>
+<p>  如图，任期8刚上任的leader，nextIndex[11,11,11,11,11,11]</p>
+</li>
+<li><p>一致性检查：发送prevLogIndex、prevLogTerm，如果不匹配，拒绝leader的请求；如果匹配就返回一个成功确认，进行附加日志的操作。<br>e.g 发送给{prevLogIndex：10、prevLogTerm：6…}给a，而a发现本地日志里index为10的并不存在，拒绝此次附加日志RPC</p>
+</li>
+<li><p>在被follower拒绝之后，<strong>leader就会减小 nextIndex 值并进行重试。最终nextIndex会在某个位置使得leader和follower的日志达成一致。</strong></p>
+</li>
+<li>在某个位置达成一致后，附加日志RPC成功，这时就会把follower冲突的日志条目全部删除并且加上领导人的日志。<br>e.g leader与f冲突的位置 index为4，f中从index4开始删除，然后附加上leader index为4以后的日志。</li>
+</ul>
+<h3 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h3><blockquote>
+<p>当然follower拒绝leader的rpc后，leader缩小index重试，这个过程是可以优化的，当附加日志 RPC的请求被拒绝的时候，跟随者可以包含冲突的条目的任期号和自己存储的那个任期的最早的索引地址。<strong>通过减少被拒绝的附加日志 RPCs 的次数来优化</strong></p>
+</blockquote>
+<p>但是论文中说这种优化可能不是那么中重要。</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><blockquote>
+<p>领导人在获得权力的时候就不需要任何特殊的操作来恢复一致性。他只需要进行正常的操作，然后日志就能自动的在回复附加日志 RPC 的一致性检查失败的时候自动趋于一致。<strong>领导人从来不会覆盖或者删除自己的日志(领导人只附加特性)</strong></p>
+</blockquote>
+<h2 id="附："><a href="#附：" class="headerlink" title="附："></a>附：</h2><h3 id="附加日志RPC结构："><a href="#附加日志RPC结构：" class="headerlink" title="附加日志RPC结构："></a>附加日志RPC结构：</h3><blockquote>
+<p>由领导人负责调用来复制日志指令；也会用作heartbeat</p>
+</blockquote>
+<ul>
+<li>term:    领导人的任期号</li>
+<li>leaderId:    领导人的 Id，以便于跟随者重定向请求</li>
+<li>prevLogIndex:    新的日志条目紧随之前的索引值</li>
+<li>prevLogTerm:    prevLogIndex 条目的任期号</li>
+<li>entries[]:    准备存储的日志条目（表示心跳时为空；一次性发送多个是为了提高效率）</li>
+<li>leaderCommit:    领导人已经提交的日志的索引值</li>
 </ul>
 
       
@@ -476,9 +487,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/HTTP/" rel="tag"><i class="fa fa-tag"></i> HTTP</a>
-          
-            <a href="/tags/HTTPS/" rel="tag"><i class="fa fa-tag"></i> HTTPS</a>
+            <a href="/tags/consenus/" rel="tag"><i class="fa fa-tag"></i> consenus</a>
           
         </div>
       
@@ -491,8 +500,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/05/28/paxos/" rel="next" title="Basic Paxos">
-                <i class="fa fa-chevron-left"></i> Basic Paxos
+              <a href="/2018/05/30/Raft(一)/" rel="next" title="Raft(一)">
+                <i class="fa fa-chevron-left"></i> Raft(一)
               </a>
             
           </div>
@@ -500,10 +509,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/05/29/Raft(二)/" rel="prev" title="Raft(二) leader election">
-                Raft(二) leader election <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -681,7 +686,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP"><span class="nav-number">1.</span> <span class="nav-text">HTTP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#简介"><span class="nav-number">1.1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP报文"><span class="nav-number">1.2.</span> <span class="nav-text">HTTP报文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#响应报文"><span class="nav-number">1.3.</span> <span class="nav-text">响应报文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#会话跟踪"><span class="nav-number">1.4.</span> <span class="nav-text">会话跟踪</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTPS"><span class="nav-number">2.</span> <span class="nav-text">HTTPS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#几个重要概念描述"><span class="nav-number">2.1.</span> <span class="nav-text">几个重要概念描述</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#思考设计"><span class="nav-number">3.</span> <span class="nav-text">思考设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTPS的优势："><span class="nav-number">4.</span> <span class="nav-text">HTTPS的优势：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTPS过程"><span class="nav-number">5.</span> <span class="nav-text">HTTPS过程</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#日志结构"><span class="nav-number">1.</span> <span class="nav-text">日志结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日志复制的正常进程"><span class="nav-number">2.</span> <span class="nav-text">日志复制的正常进程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日志匹配特性"><span class="nav-number">3.</span> <span class="nav-text">日志匹配特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#重点：各种出错"><span class="nav-number">4.</span> <span class="nav-text">重点：各种出错</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决：强制复制"><span class="nav-number">5.</span> <span class="nav-text">解决：强制复制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#优化"><span class="nav-number">5.1.</span> <span class="nav-text">优化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#小结"><span class="nav-number">5.2.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#附："><span class="nav-number">6.</span> <span class="nav-text">附：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#附加日志RPC结构："><span class="nav-number">6.1.</span> <span class="nav-text">附加日志RPC结构：</span></a></li></ol></li></ol></div>
             
 
           </div>
