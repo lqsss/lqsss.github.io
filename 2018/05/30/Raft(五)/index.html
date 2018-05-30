@@ -79,18 +79,21 @@
 
 
 
-<meta name="description" content="Raft共识算法初体验">
+<meta name="description" content="安全性证明">
 <meta name="keywords" content="consenus">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Raft(一)">
-<meta property="og:url" content="http://yoursite.com/2018/05/30/Raft(一)/index.html">
+<meta property="og:title" content="Raft(五) Proof of safety">
+<meta property="og:url" content="http://yoursite.com/2018/05/30/Raft(五)/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="Raft共识算法初体验">
+<meta property="og:description" content="安全性证明">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-05-30T01:12:47.302Z">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/raft7.png">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/raft8.png">
+<meta property="og:updated_time" content="2018-05-30T09:16:32.585Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Raft(一)">
-<meta name="twitter:description" content="Raft共识算法初体验">
+<meta name="twitter:title" content="Raft(五) Proof of safety">
+<meta name="twitter:description" content="安全性证明">
+<meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/raft7.png">
 
 
 
@@ -120,13 +123,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/05/30/Raft(一)/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/05/30/Raft(五)/"/>
 
 
 
 
 
-  <title>Raft(一) | Lqsss's Blog</title>
+  <title>Raft(五) Proof of safety | Lqsss's Blog</title>
   
 
 
@@ -273,7 +276,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/30/Raft(一)/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/30/Raft(五)/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="lqsss">
@@ -290,7 +293,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Raft(一)</h1>
+          <h1 class="post-title" itemprop="name headline">Raft(五) Proof of safety</h1>
         
 
         <div class="post-meta">
@@ -302,7 +305,7 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-30T09:12:43+08:00">
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-30T17:16:21+08:00">
                 2018-05-30
               </time>
             
@@ -356,7 +359,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  477 字
+                  1,194 字
                 </span>
               
 
@@ -372,7 +375,7 @@
                   <span class="post-meta-item-text">Reading time &asymp;</span>
                 
                 <span title="Reading time">
-                  2 分钟
+                  4 分钟
                 </span>
               
             </div>
@@ -393,30 +396,54 @@
       
 
       
-        <p>Raft共识算法初体验<br><a id="more"></a></p>
-<h2 id="Raft干嘛的"><a href="#Raft干嘛的" class="headerlink" title="Raft干嘛的"></a>Raft干嘛的</h2><p>跟Paxos差不多的，是一个<strong>共识算法</strong>。</p>
-<h3 id="Raft的初衷"><a href="#Raft的初衷" class="headerlink" title="Raft的初衷"></a>Raft的初衷</h3><ul>
-<li>尽管有很多工作都在尝试降低它的复杂性，但是 Paxos  算法依然十分难以理解</li>
-<li>提供了和 Paxos 算法相同的功能和性能，但是它的算法结构和 Paxos 不同<br><a href="https://lqsss.github.io/2018/05/28/paxos/" target="_blank" rel="noopener">Basic Paxos</a></li>
+        <p>安全性证明<br><a id="more"></a></p>
+<h2 id="Raft里的特性"><a href="#Raft里的特性" class="headerlink" title="Raft里的特性"></a>Raft里的特性</h2><p><img src="http://op7scj9he.bkt.clouddn.com/raft7.png" alt=""></p>
+<h2 id="选举安全特性"><a href="#选举安全特性" class="headerlink" title="选举安全特性"></a>选举安全特性</h2><blockquote>
+<p>对于一个给定的任期号，最多只会有一个领导人被选举出来<br>随机的选举超时机制，选举成功后发送心跳包告知他人。</p>
+</blockquote>
+<p>存在的问题：splite vote，通过随机的选举超时机制，进行多轮的超时选举</p>
+<ul>
+<li>任期号：非常重要的成分，在Raft算法中起到一个逻辑时钟的作用，单调递增。各个节点心跳、投票请求、复制log都会交换任期号（得到更大的任期号），候选人或者领导者收到更大的任期号，会自动变成跟随者。</li>
+<li>major：同一任期获取大多数投票,follower在一个term里只能投一票</li>
+<li>选票瓜分：在一个任期里无法选举出领导者，进行下一轮选举，经过一个新的选举时间，任期号+1，发起投票请求…直到选出领导者。</li>
 </ul>
-<h3 id="共识算法-consenus"><a href="#共识算法-consenus" class="headerlink" title="共识算法(consenus)"></a>共识算法(consenus)</h3><ol>
-<li>分布式系统的容错机制？<br>多个数据副本(replication) 起到一个数据冗余的作用。</li>
-<li>共识算法解决一个什么样的问题？<br>state machine replication的一致性。状态机上存储的可以是log，value，或者指令。</li>
-<li>最终一致性和强一致性？<br>分布式里的一致性(consistency)话题是一个老生常谈的问题，但是这个一致性并不能笼统地说明此处的一致性，对于数据副本，我们最好使用共识（consenus）来形容。</li>
+<h2 id="领导人只附加原则"><a href="#领导人只附加原则" class="headerlink" title="领导人只附加原则"></a>领导人只附加原则</h2><ul>
+<li>领导人处理不一致是通过<strong>强制跟随者直接复制</strong>自己的日志来解决了。</li>
+<li>在发送附加日志 RPC的时候，领导人会把新的日志条目紧接着<strong>之前的条目的索引位置和任期号</strong>包含在里面。如果跟随者在它的日志中找不到包含相同索引位置和任期号的条目，那么他就会拒绝接收新的日志条目。</li>
+</ul>
+<h2 id="日志匹配原则"><a href="#日志匹配原则" class="headerlink" title="日志匹配原则"></a>日志匹配原则</h2><blockquote>
+<p>如果在不同的日志中的两个条目拥有相同的索引和任期号，那么他们之前的所有日志条目也全部相同。</p>
+</blockquote>
+<ul>
+<li>附加日志 RPC 的一个简单的一致性检查所保证。</li>
+</ul>
+<h2 id="领导人完全特性"><a href="#领导人完全特性" class="headerlink" title="领导人完全特性"></a>领导人完全特性</h2><blockquote>
+<p>如果某个日志条目在某个任期号中已经被提交，那么这个条目必然出现在更大任期号的所有领导人中</p>
+</blockquote>
+<h3 id="反证法"><a href="#反证法" class="headerlink" title="反证法"></a>反证法</h3><p><img src="http://op7scj9he.bkt.clouddn.com/raft8.png" alt=""><br>描述场景：如果 S1 （任期 T 的领导者）提交了一条新的日志在它的任期里，然后 S5 在之后的任期 U 里被选举为领导人，然后至少会有一个机器，如 S3，既拥有来自 S1 的日志，也给 S5 投票了。</p>
+<p>我们假设<strong>领导人完全性特性是不存在的</strong>，然后我们推出矛盾来。假设任期 T 的领导人（领导人T）在任期内提交了一条日志条目，但是这条日志条目没有被存储到未来某个任期的领导人的日志中。</p>
+<p><strong>设大于 T 的最小任期 U 的领导人 U 没有这条日志条目。</strong></p>
+<p>细节：</p>
+<ol>
+<li>由于假设，领导人完全性特性不存在的。term U的领导人S5没有term U的日志条目，收到了来自至少一个拥有termT的日志条目的一票（图中的S3）</li>
+<li>根据另外一个假设，大于 T 的最小任期 U 的领导人 U 没有这条日志条目。也就是说在[T…U)之间的领导人都是存在term T的该日志的，U是没有此日志的。</li>
+<li>投票者把自己选票投给领导人 U 时，领导人 U 的日志必须和投票者自己一样新。这就导致了两者矛盾。</li>
 </ol>
 <ul>
-<li>最终一致性指的是在不同的副本在最终达成相同的状态。<br>这里的强一致性对于client的角度来看，向系统写入什么，读出来的也会是什么。</li>
-<li>当分布式系统中更新操作完成之后，任何多个进程或线程，访问系统都会获得最新的值。</li>
+<li>两个矛盾：<ul>
+<li>如果voter和U的最后的term相同，那么leaderU则至少在最后的term的日志和voter的一样长，即包含了leader T提交的log entry;</li>
+<li>如果voter和U的最后的term不相同，那么U的必定大于voter的，则leader U必须包含term T的所有日志，因为U &gt; T；（日志匹配原则）</li>
+</ul>
+</li>
 </ul>
 <ol start="4">
-<li>2pc和Raft解决的是一个问题吗？<br>不是。2pc解决的是一个分布式事务的一致性问题，而Raft解决的是分布式里副本的一致性，起到一个集群容灾的能力。比如存储系统经常做分片(partition)<br><a href="https://www.zhihu.com/question/275845393/answer/383419685" target="_blank" rel="noopener">请问分布式事务一致性与raft或paxos协议解决的一致性问题是同一回事吗？</a><br><a href="https://www.zhihu.com/question/266759495" target="_blank" rel="noopener">TiDB使用了raft之后为什么还需要2PC?</a></li>
+<li>因此，假设不成立，不可能存在term U，使得term U中的leader不包含之前leader已经提交过的log entry。</li>
 </ol>
-<h2 id="Raft核心模块"><a href="#Raft核心模块" class="headerlink" title="Raft核心模块"></a>Raft核心模块</h2><ol>
-<li>领导选举</li>
-<li>日志复制</li>
-<li>集群变化</li>
-</ol>
-<h2 id="Raft一些相关资源"><a href="#Raft一些相关资源" class="headerlink" title="Raft一些相关资源"></a>Raft一些相关资源</h2><p><a href="http://thesecretlivesofdata.com/raft/" target="_blank" rel="noopener">Raft动画</a><br><a href="https://raft.github.io/" target="_blank" rel="noopener">Raft :GitHub Pages</a><br><a href="http://op7scj9he.bkt.clouddn.com/Raft.ppt" target="_blank" rel="noopener">给导师汇报时做的ppt</a></p>
+<h2 id="状态机安全特性"><a href="#状态机安全特性" class="headerlink" title="状态机安全特性"></a>状态机安全特性</h2><blockquote>
+<p>如果一个领导人在给定的索引值的日志项应用到状态机中，那么其他任何的服务器在这个索引的位置不会提交一个不同的日志</p>
+</blockquote>
+<p>现在我们来考虑在任何一个服务器应用一个指定索引位置的日志的最小任期；领导人完全特性保证拥有更高任期号的领导人会存储相同的日志条目，所以之后的任期里应用某个索引位置的日志条目也会是相同的值。因此，状态机安全特性是成立的。</p>
+<p>最后，Raft 要求服务器按照日志中索引位置顺序应用日志条目。和状态机安全特性结合起来看，这就意味着所有的服务器会应用相同的日志序列集到自己的状态机中，并且是按照相同的顺序。</p>
 
       
     </div>
@@ -447,8 +474,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/05/29/Raft(二)/" rel="next" title="Raft(二) leader election">
-                <i class="fa fa-chevron-left"></i> Raft(二) leader election
+              <a href="/2018/05/30/Raft(四)/" rel="next" title="Raft(四) safety">
+                <i class="fa fa-chevron-left"></i> Raft(四) safety
               </a>
             
           </div>
@@ -456,10 +483,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/05/30/Raft(三)/" rel="prev" title="Raft(三) log replication">
-                Raft(三) log replication <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -637,7 +660,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft干嘛的"><span class="nav-number">1.</span> <span class="nav-text">Raft干嘛的</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Raft的初衷"><span class="nav-number">1.1.</span> <span class="nav-text">Raft的初衷</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#共识算法-consenus"><span class="nav-number">1.2.</span> <span class="nav-text">共识算法(consenus)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft核心模块"><span class="nav-number">2.</span> <span class="nav-text">Raft核心模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft一些相关资源"><span class="nav-number">3.</span> <span class="nav-text">Raft一些相关资源</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft里的特性"><span class="nav-number">1.</span> <span class="nav-text">Raft里的特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#选举安全特性"><span class="nav-number">2.</span> <span class="nav-text">选举安全特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#领导人只附加原则"><span class="nav-number">3.</span> <span class="nav-text">领导人只附加原则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日志匹配原则"><span class="nav-number">4.</span> <span class="nav-text">日志匹配原则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#领导人完全特性"><span class="nav-number">5.</span> <span class="nav-text">领导人完全特性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#反证法"><span class="nav-number">5.1.</span> <span class="nav-text">反证法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#状态机安全特性"><span class="nav-number">6.</span> <span class="nav-text">状态机安全特性</span></a></li></ol></div>
             
 
           </div>
