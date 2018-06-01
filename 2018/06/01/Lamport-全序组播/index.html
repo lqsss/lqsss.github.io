@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="logic clock," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="之前跟老师没有汇报清楚，于是写了这篇文章。  意义：保证分布式系统的各个子系统都按相同的顺序执行一组操作 消息传递时，逻辑时钟的变化">
+<meta name="keywords" content="logic clock">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lamport-全序组播（totally-ordered-mulitcast）">
+<meta property="og:url" content="http://yoursite.com/2018/06/01/Lamport-全序组播/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="之前跟老师没有汇报清楚，于是写了这篇文章。  意义：保证分布式系统的各个子系统都按相同的顺序执行一组操作 消息传递时，逻辑时钟的变化">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/5753761-ed0370f8d7446632.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/5753761-5f38169f1e5ff676.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/5753761-1c1088f905de6cb5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/5753761-703211dfb682b5c3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/5753761-8fa6a14bd21fb52f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2018-06-01T02:24:41.529Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Lamport-全序组播（totally-ordered-mulitcast）">
+<meta name="twitter:description" content="之前跟老师没有汇报清楚，于是写了这篇文章。  意义：保证分布式系统的各个子系统都按相同的顺序执行一组操作 消息传递时，逻辑时钟的变化">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/5753761-ed0370f8d7446632.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/06/01/Lamport-全序组播/"/>
+
+
+
+
+
+  <title>Lamport-全序组播（totally-ordered-mulitcast） | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Lqsss's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-schedule">
+          <a href="/schedule/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-calendar"></i> <br />
+            
+            Schedule
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/06/01/Lamport-全序组播/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://op7scj9he.bkt.clouddn.com/%E4%B8%8B%E8%BD%BD.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Lamport-全序组播（totally-ordered-mulitcast）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-01T10:24:37+08:00">
+                2018-06-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Words count in article&#58;</span>
+                
+                <span title="Words count in article">
+                  961 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Reading time &asymp;</span>
+                
+                <span title="Reading time">
+                  4 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>之前跟老师没有汇报清楚，于是写了这篇文章。</p>
+<ol>
+<li>意义：保证分布式系统的各个子系统都按相同的顺序执行一组操作</li>
+<li>消息传递时，逻辑时钟的变化<a id="more"></a>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2>如何保证分布式系统中的各个子系统都按相同的顺序执行一组操作？一个等价的问题就是如何在分布式系统下实现全序组播(totally-ordered mulitcast)。这个可以利用Lamport提出的逻辑时钟实现。<br>但是规则的逻辑时钟是一个偏序，而非全序。</li>
+</ol>
+<h2 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h2><p>使用Lamport的算法，但使用进程ID打破关系<br>L(e) = M * Li(e) + i<br>M = maximum number of processes<br>i = process ID</p>
+<h2 id="假设"><a href="#假设" class="headerlink" title="假设"></a>假设</h2><blockquote>
+<p>Assume all messages sent by one sender are received in the order they were sent and that no messages are lost.</p>
+</blockquote>
+<p>Lamport全序组播是在如下的假设下进行的：</p>
+<ol>
+<li>发送者发送的顺序和接受者接收的顺序一致</li>
+<li>消息不会丢失</li>
+</ol>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>关键：每一个进程都维护一个本地请求队列(Request Queue)，此队列里的消息按时间戳排序。</p>
+<ol>
+<li>进程Pi给消息m加上时间戳Ti(m)，并广播给所有进程(包括Pi);</li>
+<li>进程Pj接收到消息m后，首先更新本地逻辑时钟，并把消息m加入请求队列，然后向所有进程（包括Pj）广播接收到消息m的确认信息ACK。</li>
+<li>当进程的请求队列中的某个消息位于队列顶部，且已经收到所有进程关于此消息的确认信息ACK时，可以把此消息从队列顶部取走，并传给应用程序。</li>
+</ol>
+<h2 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h2><p><img src="https://upload-images.jianshu.io/upload_images/5753761-ed0370f8d7446632.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="
+更新操作顺序不一致，导致数据副本状态不一致"><br><strong>全局的逻辑时间</strong><br>假设图左边为A，右边为B</p>
+<h3 id="B收到A之后，B才发送"><a href="#B收到A之后，B才发送" class="headerlink" title="B收到A之后，B才发送"></a>B收到A之后，B才发送</h3><p><img src="https://upload-images.jianshu.io/upload_images/5753761-5f38169f1e5ff676.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="图1"></p>
+<p>L(e) = M <em> Li(e) + i<br>计算例如：A-&gt;B(request)，此时规则的逻辑时间为1，M（最大进程数）为2，i为pid 1，所以此时时间戳应该为1</em>2+1 = 3</p>
+<ul>
+<li>queue：[{1,request,timestamps:3},{2,request,timestamps :10}]</li>
+</ul>
+<h3 id="AB同时发（1）"><a href="#AB同时发（1）" class="headerlink" title="AB同时发（1）"></a>AB同时发（1）</h3><p><img src="https://upload-images.jianshu.io/upload_images/5753761-1c1088f905de6cb5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="图2"></p>
+<p>这里ACK讨论的是在双方都未接收对方ACK前发送的。<br>队列里有两个请求，按时间戳从小到大排序</p>
+<ul>
+<li>queue：[{1,request,timestamps:3},{2,request,timestamps :4}]</li>
+</ul>
+<h3 id="AB同时发（2）"><a href="#AB同时发（2）" class="headerlink" title="AB同时发（2）"></a>AB同时发（2）</h3><p><img src="https://upload-images.jianshu.io/upload_images/5753761-703211dfb682b5c3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="图3"></p>
+<ul>
+<li>queue：[{1,request,timestamps:3},{2,request,timestamps :4}]</li>
+</ul>
+<h3 id="AB同时发（3）"><a href="#AB同时发（3）" class="headerlink" title="AB同时发（3）"></a>AB同时发（3）</h3><p><img src="https://upload-images.jianshu.io/upload_images/5753761-8fa6a14bd21fb52f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="图4"></p>
+<ul>
+<li>queue：[{1,request,timestamps:3},{2,request,timestamps :4}]</li>
+</ul>
+<h3 id="情况论述"><a href="#情况论述" class="headerlink" title="情况论述"></a>情况论述</h3><p><strong>没讨论的情况：</strong>B收到A的ACK穿插发生在B收到A和马上发回A一个ACK的间隙中。</p>
+<p><strong>不可能出现的情况：</strong>根据设定<code>发送者发送的顺序和接受者接收的顺序一致</code>，不可能出现<strong>B都已经收到了A发送的ACK，还没有收到A的请求消息的情况。</strong></p>
+<h3 id="ACK分析"><a href="#ACK分析" class="headerlink" title="ACK分析"></a>ACK分析</h3><p>后面ACK接收情况的不同影响的是，执行消息的时机（只有当接收到所有其他进程对此消息的ACK，并且处在队列头部），执行顺序依旧是一样<br>（例如AB同时发的3种情况里的队列{1,request,timestamps:3}{2,request,timestamps :4}）</p>
+<h2 id="关键"><a href="#关键" class="headerlink" title="关键"></a>关键</h2><ol>
+<li>收到的ACK的时间戳是高于接收到的消息<br>例如AB同时发的(图2)。B收到A的请求时间戳（3）小于收到A对于B请求回复的ACK（7）。<br>Lamport全序组播是在<code>发送者发送的顺序和接受者接收的顺序一致</code>的假设下进行的，假设B的请求m，当B收到A对于消息m的ACK时，说明了以下两点：</li>
+</ol>
+<ul>
+<li>进程B知道了A进程成功收到了m消息</li>
+<li>A发送ACK消息之前发送的请求消息N1、N2……，B进程也收到了，确保消息m不会提前执行，需要按照执行消息规则（时间戳顺序）来执行。</li>
+</ul>
+<ol start="2">
+<li>所有的进程的本地都有一份一致的请求队列副本</li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/logic-clock/" rel="tag"><i class="fa fa-tag"></i> logic clock</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/31/2pc/" rel="next" title="2PC">
+                <i class="fa fa-chevron-left"></i> 2PC
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="http://op7scj9he.bkt.clouddn.com/%E4%B8%8B%E8%BD%BD.jpg"
+                alt="lqsss" />
+            
+              <p class="site-author-name" itemprop="name">lqsss</p>
+              <p class="site-description motion-element" itemprop="description">There's no place like 127.0.0.1</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">26</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">14</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">30</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/lqsss" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="513447887@gmail.com" target="_blank" title="E-Mail">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://twitter.com/chuckie_li" target="_blank" title="Twitter">
+                      
+                        <i class="fa fa-fw fa-twitter"></i>Twitter</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="https://www.jianshu.com/u/908009220354" target="_blank" title="Jianshu">
+                      
+                        <i class="fa fa-fw fa-globe"></i>Jianshu</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://example.com/" title="fushengni" target="_blank">fushengni</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决"><span class="nav-number">2.</span> <span class="nav-text">解决</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#假设"><span class="nav-number">3.</span> <span class="nav-text">假设</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现"><span class="nav-number">4.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实例"><span class="nav-number">5.</span> <span class="nav-text">实例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#B收到A之后，B才发送"><span class="nav-number">5.1.</span> <span class="nav-text">B收到A之后，B才发送</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AB同时发（1）"><span class="nav-number">5.2.</span> <span class="nav-text">AB同时发（1）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AB同时发（2）"><span class="nav-number">5.3.</span> <span class="nav-text">AB同时发（2）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AB同时发（3）"><span class="nav-number">5.4.</span> <span class="nav-text">AB同时发（3）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#情况论述"><span class="nav-number">5.5.</span> <span class="nav-text">情况论述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ACK分析"><span class="nav-number">5.6.</span> <span class="nav-text">ACK分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关键"><span class="nav-number">6.</span> <span class="nav-text">关键</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count">43.6k</span>
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
