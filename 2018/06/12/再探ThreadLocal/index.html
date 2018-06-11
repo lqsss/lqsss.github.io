@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
 <meta property="og:description" content="主要阐述threadLocal的应用场景">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-06-11T16:59:06.638Z">
+<meta property="og:updated_time" content="2018-06-11T17:12:52.026Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="再探ThreadLocal">
 <meta name="twitter:description" content="主要阐述threadLocal的应用场景">
@@ -302,7 +302,7 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-12T00:58:38+08:00">
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-12T01:12:45+08:00">
                 2018-06-12
               </time>
             
@@ -394,8 +394,7 @@
 
       
         <p>主要阐述threadLocal的应用场景<br><a id="more"></a></p>
-<h2 id="前景回顾"><a href="#前景回顾" class="headerlink" title="前景回顾"></a>前景回顾</h2><p><a href="https://lqsss.github.io/2018/04/30/ThreadLocal/" target="_blank" rel="noopener">之前写的一篇：ThreadLocal和弱引用</a></p>
-<p>ThreadLocal相当于一个线程的局部变量，底层原理:每一个thread都有一个default访问权限的<code>ThreadLocalMap&lt;ThreadLocal,Object value&gt;</code> threadlocals对象，key都是对ThreadLocal的弱引用，value才是真正存储变量值。</p>
+<h2 id="前景回顾"><a href="#前景回顾" class="headerlink" title="前景回顾"></a>前景回顾</h2><p><a href="https://lqsss.github.io/2018/04/30/ThreadLocal/" target="_blank" rel="noopener">之前写的一篇：ThreadLocal和弱引用</a><br>ThreadLocal相当于一个线程的局部变量，底层原理:每一个thread都有一个default访问权限的<code>ThreadLocalMap&lt;ThreadLocal,Object value&gt;</code> threadlocals对象，key都是对ThreadLocal的弱引用，value才是真正存储变量值。</p>
 <p>主要讲了部分ThreadLocal源码，但尚未对应用场景做一个具体的分析描述。</p>
 <h2 id="应用场景构造"><a href="#应用场景构造" class="headerlink" title="应用场景构造"></a>应用场景构造</h2><blockquote>
 <p>ThreadLocal不是用来解决对象共享访问问题的，而主要提供了<strong>线程保持对象的方法和避免参数传递的方便的对象访问方式</strong>。</p>
@@ -465,10 +464,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/06/12/test/" rel="prev" title="5月计划">
-                5月计划 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -549,7 +544,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">30</span>
+                  <span class="site-state-item-count">29</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -680,7 +675,7 @@
     
       <span class="post-meta-item-text">Site words total count&#58;</span>
     
-    <span title="Site words total count">46.7k</span>
+    <span title="Site words total count">46.1k</span>
   
 </div>
 
