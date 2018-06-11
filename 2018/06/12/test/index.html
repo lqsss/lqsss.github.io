@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="schedule," />
+  <meta name="keywords" content="transaction," />
 
 
 
@@ -79,24 +79,18 @@
 
 
 
-<meta name="description" content="准备从以下方向论述  为什么要用消息队列（mq） 对于高可靠、强一致性的场景现在都有Rabbitmq解决方案了，那为什么还要用Raft算法实现一个mq">
-<meta name="keywords" content="schedule">
+<meta name="description" content="个人信息 李秋实/男/1994 中国地质大学(武汉) 学历：16级硕士在读 专业：软件工程 技术博客： https://lqsss.github.io/ https://www.jianshu.com/u/908009220354   期望职位：Java后台研发岗位   联系方式 手机：13545072357 Email：513447887@qq.com   教育经历 2016.6 - 2019.">
+<meta name="keywords" content="transaction">
 <meta property="og:type" content="article">
-<meta property="og:title" content="基于Raft的分布式消息队列RMBQ">
-<meta property="og:url" content="http://yoursite.com/2018/05/14/基于Raft的分布式消息队列RMBQ/index.html">
+<meta property="og:title" content="2PC">
+<meta property="og:url" content="http://yoursite.com/2018/06/12/test/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="准备从以下方向论述  为什么要用消息队列（mq） 对于高可靠、强一致性的场景现在都有Rabbitmq解决方案了，那为什么还要用Raft算法实现一个mq">
+<meta property="og:description" content="个人信息 李秋实/男/1994 中国地质大学(武汉) 学历：16级硕士在读 专业：软件工程 技术博客： https://lqsss.github.io/ https://www.jianshu.com/u/908009220354   期望职位：Java后台研发岗位   联系方式 手机：13545072357 Email：513447887@qq.com   教育经历 2016.6 - 2019.">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/IMG_1925.JPG">
-<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/_8F8E%7DJXOOYW%29@AF@ZZ%28_4E.png">
-<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514151447.png">
-<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514162715.png">
-<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514163908.png">
-<meta property="og:updated_time" content="2018-05-14T08:40:58.170Z">
+<meta property="og:updated_time" content="2018-06-11T17:08:29.942Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="基于Raft的分布式消息队列RMBQ">
-<meta name="twitter:description" content="准备从以下方向论述  为什么要用消息队列（mq） 对于高可靠、强一致性的场景现在都有Rabbitmq解决方案了，那为什么还要用Raft算法实现一个mq">
-<meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/IMG_1925.JPG">
+<meta name="twitter:title" content="2PC">
+<meta name="twitter:description" content="个人信息 李秋实/男/1994 中国地质大学(武汉) 学历：16级硕士在读 专业：软件工程 技术博客： https://lqsss.github.io/ https://www.jianshu.com/u/908009220354   期望职位：Java后台研发岗位   联系方式 手机：13545072357 Email：513447887@qq.com   教育经历 2016.6 - 2019.">
 
 
 
@@ -126,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/05/14/基于Raft的分布式消息队列RMBQ/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/06/12/test/"/>
 
 
 
 
 
-  <title>基于Raft的分布式消息队列RMBQ | Lqsss's Blog</title>
+  <title>2PC | Lqsss's Blog</title>
   
 
 
@@ -279,7 +273,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/14/基于Raft的分布式消息队列RMBQ/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/06/12/test/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="lqsss">
@@ -296,7 +290,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">基于Raft的分布式消息队列RMBQ</h1>
+          <h1 class="post-title" itemprop="name headline">2PC</h1>
         
 
         <div class="post-meta">
@@ -308,8 +302,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-14T16:40:52+08:00">
-                2018-05-14
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-12T01:08:22+08:00">
+                2018-06-12
               </time>
             
 
@@ -362,7 +356,7 @@
                   <span class="post-meta-item-text">Words count in article&#58;</span>
                 
                 <span title="Words count in article">
-                  1,823 字
+                  596 字
                 </span>
               
 
@@ -378,7 +372,7 @@
                   <span class="post-meta-item-text">Reading time &asymp;</span>
                 
                 <span title="Reading time">
-                  7 分钟
+                  2 分钟
                 </span>
               
             </div>
@@ -399,102 +393,81 @@
       
 
       
-        <p>准备从以下方向论述</p>
-<ol>
-<li>为什么要用消息队列（mq）</li>
-<li>对于高可靠、强一致性的场景现在都有Rabbitmq解决方案了，那为什么还要用Raft算法实现一个mq<a id="more"></a>
+        <h1 id="个人信息"><a href="#个人信息" class="headerlink" title="个人信息"></a>个人信息</h1><ul>
+<li>李秋实/男/1994</li>
+<li>中国地质大学(武汉)</li>
+<li>学历：16级硕士在读</li>
+<li>专业：软件工程</li>
+<li>技术博客：<ul>
+<li><a href="https://lqsss.github.io/" target="_blank" rel="noopener">https://lqsss.github.io/</a></li>
+<li><a href="https://www.jianshu.com/u/908009220354" target="_blank" rel="noopener">https://www.jianshu.com/u/908009220354</a></li>
+</ul>
 </li>
-</ol>
+<li>期望职位：Java后台研发岗位</li>
+</ul>
 <hr>
-<h2 id="架构演变——mq在架构中有什么用"><a href="#架构演变——mq在架构中有什么用" class="headerlink" title="架构演变——mq在架构中有什么用"></a>架构演变——mq在架构中有什么用</h2><ol>
-<li>异步请求</li>
-<li>应用解耦</li>
-<li>削峰</li>
-</ol>
-<h3 id="异步请求"><a href="#异步请求" class="headerlink" title="异步请求"></a>异步请求</h3><p><img src="http://op7scj9he.bkt.clouddn.com/IMG_1925.JPG" alt=""></p>
-<p>以下是对图中的三种场景进行的解释分析，讲的是一个注册业务系统</p>
-<ol>
-<li><p>串行业务：client向数据库写入注册信息，写入成功后，进行下面的业务，发送邮件，然后发送短信，假设写入数据库的时间为50，发送邮件50，发短信50，那么用户完成注册收到响应为150</p>
+<h1 id="联系方式"><a href="#联系方式" class="headerlink" title="联系方式"></a>联系方式</h1><ul>
+<li>手机：13545072357</li>
+<li>Email：<a href="mailto:513447887@qq.com" target="_blank" rel="noopener">513447887@qq.com</a></li>
+</ul>
+<hr>
+<h1 id="教育经历"><a href="#教育经历" class="headerlink" title="教育经历"></a>教育经历</h1><ul>
+<li>2016.6 - 2019.6 中国地质大学(武汉)，软件工程硕士</li>
+</ul>
+<hr>
+<h1 id="技能清单"><a href="#技能清单" class="headerlink" title="技能清单"></a>技能清单</h1><h2 id="理论原理"><a href="#理论原理" class="headerlink" title="理论原理"></a>理论原理</h2><ul>
+<li>熟悉计算机网络</li>
+<li>熟悉数据库原理</li>
+<li>熟悉数据结构和算法</li>
+<li>熟悉常用的设计模式</li>
+<li>有一定的分布式基础理论知识</li>
+<li>熟悉JVM相关知识</li>
+<li>熟悉Java多线程</li>
+</ul>
+<h2 id="技术"><a href="#技术" class="headerlink" title="技术"></a>技术</h2><ul>
+<li>熟练Java语言的编写</li>
+<li>熟练掌握spring框架</li>
+<li>熟悉javaWeb的开发</li>
+<li>熟悉Springmvc、MyBatis开源框架</li>
+<li>熟悉zookeeper、Curator框架</li>
+<li>熟悉html、css的编写</li>
+<li>熟练JavaScript es5的编写，了解es6</li>
+<li>熟悉vue.js的编写</li>
+<li>熟悉Netty网络框架</li>
+<li>熟悉protobuf序列化</li>
+</ul>
+<hr>
+<h1 id="工作经历"><a href="#工作经历" class="headerlink" title="工作经历"></a>工作经历</h1><ul>
+<li>2017.3-2017.5 盖得排行 Java后台开发实习生</li>
+<li>2017.6-2017.8 赤焰科技 Java后台开发实习生</li>
+</ul>
+<h1 id="项目"><a href="#项目" class="headerlink" title="项目"></a>项目</h1><h2 id="校内研究和开源"><a href="#校内研究和开源" class="headerlink" title="校内研究和开源"></a>校内研究和开源</h2><h3 id="RPC"><a href="#RPC" class="headerlink" title="RPC"></a>RPC</h3><ul>
+<li>github：<a href="https://github.com/lqsss/RPC" target="_blank" rel="noopener">https://github.com/lqsss/RPC</a></li>
+<li>相关记录：<a href="https://lqsss.github.io/2018/06/03/rpc/" target="_blank" rel="noopener">https://lqsss.github.io/2018/06/03/rpc/</a></li>
+<li>Netty做网络通信，TCP做传输协议，JSON做序列化</li>
+<li>Spring做控制反转</li>
+<li>zookeeper做服务注册和发现</li>
+<li><p>cglib做proxy</p>
+<h3 id="BRMQ"><a href="#BRMQ" class="headerlink" title="BRMQ"></a>BRMQ</h3><p>基于Raft共识算法实现一个分布式消息队列</p>
 </li>
-<li><p>并行:发邮件和发短信分开成两个业务系统，并行处理。此时用户得到响应只需要100</p>
+<li><p>理论基础：In search of an understandable consensus algorithm论文</p>
 </li>
-<li><p>加入mq中间件：将注册的消息放入mq后，就可以返回给client，然后邮件系统、短信系统从mq中拉取消息进行消费，这种场景中，写入mq的时间为5，client收到响应的时间为55。</p>
-</li>
-</ol>
-<h3 id="应用解耦"><a href="#应用解耦" class="headerlink" title="应用解耦"></a>应用解耦</h3><p><img src="http://op7scj9he.bkt.clouddn.com/_8F8E%7DJXOOYW%29@AF@ZZ%28_4E.png" alt=""></p>
-<ol>
-<li>订单系统与库存系统耦合：订单系统调用库存系统的接口，如果减库存失败，则订单服务也会失败。</li>
-<li>加入mq解耦：订单系统下单成功，放入消息到mq里，库存系统订阅，拉取后进行消费。如果库存系统宕掉了，也不会影响订单系统的服务进行。</li>
-</ol>
-<p>上面只是简单描述了mq在分布式系统的部分功能，<strong>重点不在于此</strong>。</p>
-<h2 id="关键"><a href="#关键" class="headerlink" title="关键"></a>关键</h2><blockquote>
-<p>发现RabbitMQ与我们类似!<br>相同：强一致性、可靠<br>不同：一致性算法 -&gt;QGuaranteed Multicast</p>
-</blockquote>
-<h2 id="希望"><a href="#希望" class="headerlink" title="希望"></a>希望</h2><ol>
-<li>如果找到RabbitMQ的适用场景，我们是<strong>可以复用的。</strong></li>
-<li>比较RaftMq和RabbitMQ的一致性算法差异-&gt;性能比较（<strong>比它厉害的地方</strong>）</li>
-</ol>
-<h2 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h2><ol>
-<li>高可靠场景</li>
-<li>强一致性场景</li>
-</ol>
-<h2 id="高可靠场景（消息不允许丢失）"><a href="#高可靠场景（消息不允许丢失）" class="headerlink" title="高可靠场景（消息不允许丢失）"></a>高可靠场景（消息不允许丢失）</h2><p><img src="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514151447.png" alt=""></p>
-<ol>
-<li><p>用户下订单成功后，放入消息到mq中，积分系统需要取出，进行加积分服务，<strong>此时mq的消息如果丢失的话，用户会少了积分！</strong></p>
-</li>
-<li><p>这是前文提及的注册服务，用户在填写注册信息后，需要等待邮箱或者短信通知，需要填写验证码进行下一步，<strong>如果mq里的消息丢失了，用户就收不到验证码!</strong></p>
-</li>
-<li><p>记账系统，如果记账发生了失败，需要放到mq里，到时候从mq里拉取消息，进行二次记账，<strong>此时是绝对不允许丢失的！</strong></p>
-</li>
-</ol>
-<p><strong>那么如何高可靠呢？</strong></p>
-<h3 id="保证高可靠的三点"><a href="#保证高可靠的三点" class="headerlink" title="保证高可靠的三点"></a>保证高可靠的三点</h3><ol>
-<li>消息持久化</li>
-<li>消费者消费成功后，返回ACK确认，queue删除消息</li>
-<li>如果宕机，follower重新选举leader，新的leader跟原来的数据一致</li>
-</ol>
-<blockquote>
-<p>重点说一下第三点：分布式系统中，需要数据的复制副本是一件很常见的事情，数据的冗余来保证可靠性，机器宕掉了，另一台备份顶上，<strong>问题关键在于如何来复制，如何来保证一致性，收到消息的指令，是马上返回ack告诉服务上游，还是等当所有副本都达到一致性才返回ack。（强一致性问题）</strong></p>
-</blockquote>
-<h2 id="强一致性：client能读取到最新正确的数据"><a href="#强一致性：client能读取到最新正确的数据" class="headerlink" title="强一致性：client能读取到最新正确的数据"></a>强一致性：client能读取到最新正确的数据</h2><h3 id="前提"><a href="#前提" class="headerlink" title="前提"></a>前提</h3><p><strong>我们以{N=2 ,W = 1, R = 1}为环境，A、B一主一备。</strong></p>
-<blockquote>
-<p>N — 数据复制的份数<br>W — 更新数据是需要保证写完成的节点数<br>R — 读取数据的时候需要读取的节点数</p>
-</blockquote>
-<p>如果W+R&lt;=N，则是弱一致性。例如对于一主一备异步复制的关系型数据库，N=2,W=1,R=1，则如果读的是备库，就可能无法读取主库已经更新过的数据，所以是弱一致性。</p>
-<p><strong>所以我们即将讨论的是一个弱一致性的环境下。</strong></p>
-<h3 id="场景1：顺序不一致"><a href="#场景1：顺序不一致" class="headerlink" title="场景1：顺序不一致"></a>场景1：顺序不一致</h3><p>比如说金融经常出现的交易啊，记账啊等情景<br>A：set x = 100；add x+= 10 ;mul x<em>= 110%<br>B：set x = 100；mul x</em>= 110%; add x+= 10</p>
-<p>A、B两个节点在复制数据的时候，可能会导致存储消息顺序不一致。比如加钱操作和加息操作顺序不是一致的，在我们{N=2 ,W = 1, R = 1}的环境下就会出错。</p>
-<h3 id="场景2：长度不一致"><a href="#场景2：长度不一致" class="headerlink" title="场景2：长度不一致"></a>场景2：长度不一致</h3><p>比如支付系统中，转账情景下。<br>A：set x = 100；add x+= 10 ;<br>B：set x = 100；</p>
-<p>A此时 有加钱消息，而B没有复制到此条消息。</p>
-<blockquote>
-<p>上面两种场景会导致实时的交易出错问题</p>
-</blockquote>
-<p><strong>另一个问题：现在分布式场景中，是如何保证上述场景的正常工作？</strong><br>我们这里先只谈消息中间件的解决方案。</p>
-<blockquote>
-<p>rabbitmq 这个中间件是可以满足金融方面那些强一致性，高可靠的场景！</p>
-</blockquote>
-<h2 id="和rabbitmq-pk一下"><a href="#和rabbitmq-pk一下" class="headerlink" title="和rabbitmq pk一下"></a>和rabbitmq pk一下</h2><p>用Raft比较rabbitmq的一致性算法。</p>
-<ol>
-<li>响应client时机，复制处理的时间延迟</li>
-<li>可用性，吞吐量</li>
-</ol>
-<h3 id="rabbitmq"><a href="#rabbitmq" class="headerlink" title="rabbitmq"></a>rabbitmq</h3><ol>
-<li>镜像队列的可靠多播（Guaranteed Multicast）</li>
-<li>Guaranteed Multicast：发送者将消息发给集群中的每个节点，这要求集群节点是全联通的。当发送节点挂掉时，消息可能没有发到集群中的每个节点，这就引入了集群中哪些节点要为已挂掉节点负责、继续发送消息的问题。</li>
-<li>环状结构：GM组将集群中的节点组成一个环<br>如果某一个节点宕掉了，左右相邻的节点会知道<br>上游节点负责将挂掉节点未转发的消息继续发给最近的下游节点</li>
-</ol>
-<p><img src="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514162715.png" alt=""></p>
-<p>这就要求GM组中每个节点缓存收到的消息（gm缓存队列），以便当下游节点挂掉时重新转发该消息。消息的最初发送者在收到自身发出的消息时，必须能够再次发出该消息的确认信息（gm ack message）在GM组中同步，这样其他节点才能够将缓存消息删除。当消息最初发送者再次收到确认消息时，说明整个集群已经同步该消息。此时新加入GM组的节点，将不会再收到该消息。</p>
-<h3 id="Raft-vs-Guaranteed-Multicast"><a href="#Raft-vs-Guaranteed-Multicast" class="headerlink" title="Raft vs. Guaranteed Multicast"></a>Raft vs. Guaranteed Multicast</h3><ol>
-<li><p>复制对比<br>GM：所有节点同步之后才能向客户端返回成功，需要在所有的节点上进行两次处理才可以保证同步<br>Raft：确认同步大多数follower，就向客户端返回成功</p>
-</li>
-<li><p>RabbitMq缺点：时延高，在有大量消息堆积的情况下性能会下降</p>
-</li>
-</ol>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>在过往解决高可靠 强一致性场景中，我们用rabbitmq这样的消息中间件可以解决，但是存在不少的缺点：<strong>时延高，在有大量消息堆积的情况下性能会下降</strong></p>
-<p>目的：mq架构是一个多副本集群，使用Raft强一致性算法在复制的过程加以改善。</p>
-<p>附:<br><img src="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514163908.png" alt=""></p>
-<p><a href="http://op7scj9he.bkt.clouddn.com/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%282%29.pptx" target="_blank" rel="noopener">基于Raft的分布式消息队列(2)</a></p>
+<li>github：<a href="https://github.com/lqsss/BRMQ" target="_blank" rel="noopener">https://github.com/lqsss/BRMQ</a></li>
+<li>向导师汇报时做的关于Raft的ppt：<a href="http://op7scj9he.bkt.clouddn.com/Raft.ppt" target="_blank" rel="noopener">http://op7scj9he.bkt.clouddn.com/Raft.ppt</a></li>
+<li>适用场景：强一致性，高可靠</li>
+<li>目的：在类似金融业务需要保证副本强一致性的场景中，使用Raft算法实现副本的同步，降低时延，从而提升性能</li>
+</ul>
+<h2 id="企业项目"><a href="#企业项目" class="headerlink" title="企业项目"></a>企业项目</h2><h3 id="盖得排行"><a href="#盖得排行" class="headerlink" title="盖得排行"></a>盖得排行</h3><p>公司主要是做一个导购排行的项目，方便人们在购物时，快速选择心仪的品牌产品，提供的是一个推荐购买服务。</p>
+<ul>
+<li>进行了vue1.0到2.0的版本迁移工作</li>
+<li>负责了导购管理模块的编写</li>
+</ul>
+<h3 id="广州大学生跑腿的微信小程序"><a href="#广州大学生跑腿的微信小程序" class="headerlink" title="广州大学生跑腿的微信小程序"></a>广州大学生跑腿的微信小程序</h3><p>面向学校学生的抢单和跑腿服务，主要是代拿快递和商品代购的跑腿服务。</p>
+<ul>
+<li>面向前台的商品模块编写</li>
+<li>solr服务的搭建，使用solarj实现商品搜索功能</li>
+<li>redis做缓存</li>
+</ul>
 
       
     </div>
@@ -512,7 +485,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/schedule/" rel="tag"><i class="fa fa-tag"></i> schedule</a>
+            <a href="/tags/transaction/" rel="tag"><i class="fa fa-tag"></i> transaction</a>
           
         </div>
       
@@ -525,8 +498,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/05/12/分布式锁-zookeeper/" rel="next" title="分布式锁实现 - zookeeper">
-                <i class="fa fa-chevron-left"></i> 分布式锁实现 - zookeeper
+              <a href="/2018/06/12/再探ThreadLocal/" rel="next" title="再探ThreadLocal">
+                <i class="fa fa-chevron-left"></i> 再探ThreadLocal
               </a>
             
           </div>
@@ -534,10 +507,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/05/15/一致性hash/" rel="prev" title="一致性哈希算法">
-                一致性哈希算法 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -715,7 +684,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#架构演变——mq在架构中有什么用"><span class="nav-number">1.</span> <span class="nav-text">架构演变——mq在架构中有什么用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#异步请求"><span class="nav-number">1.1.</span> <span class="nav-text">异步请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用解耦"><span class="nav-number">1.2.</span> <span class="nav-text">应用解耦</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关键"><span class="nav-number">2.</span> <span class="nav-text">关键</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#希望"><span class="nav-number">3.</span> <span class="nav-text">希望</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#场景"><span class="nav-number">4.</span> <span class="nav-text">场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#高可靠场景（消息不允许丢失）"><span class="nav-number">5.</span> <span class="nav-text">高可靠场景（消息不允许丢失）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#保证高可靠的三点"><span class="nav-number">5.1.</span> <span class="nav-text">保证高可靠的三点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#强一致性：client能读取到最新正确的数据"><span class="nav-number">6.</span> <span class="nav-text">强一致性：client能读取到最新正确的数据</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#前提"><span class="nav-number">6.1.</span> <span class="nav-text">前提</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景1：顺序不一致"><span class="nav-number">6.2.</span> <span class="nav-text">场景1：顺序不一致</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景2：长度不一致"><span class="nav-number">6.3.</span> <span class="nav-text">场景2：长度不一致</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#和rabbitmq-pk一下"><span class="nav-number">7.</span> <span class="nav-text">和rabbitmq pk一下</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#rabbitmq"><span class="nav-number">7.1.</span> <span class="nav-text">rabbitmq</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Raft-vs-Guaranteed-Multicast"><span class="nav-number">7.2.</span> <span class="nav-text">Raft vs. Guaranteed Multicast</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">8.</span> <span class="nav-text">总结</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#个人信息"><span class="nav-number">1.</span> <span class="nav-text">个人信息</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#联系方式"><span class="nav-number">2.</span> <span class="nav-text">联系方式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#教育经历"><span class="nav-number">3.</span> <span class="nav-text">教育经历</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#技能清单"><span class="nav-number">4.</span> <span class="nav-text">技能清单</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#理论原理"><span class="nav-number">4.1.</span> <span class="nav-text">理论原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#技术"><span class="nav-number">4.2.</span> <span class="nav-text">技术</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#工作经历"><span class="nav-number">5.</span> <span class="nav-text">工作经历</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#项目"><span class="nav-number">6.</span> <span class="nav-text">项目</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#校内研究和开源"><span class="nav-number">6.1.</span> <span class="nav-text">校内研究和开源</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RPC"><span class="nav-number">6.1.1.</span> <span class="nav-text">RPC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BRMQ"><span class="nav-number">6.1.2.</span> <span class="nav-text">BRMQ</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#企业项目"><span class="nav-number">6.2.</span> <span class="nav-text">企业项目</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#盖得排行"><span class="nav-number">6.2.1.</span> <span class="nav-text">盖得排行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#广州大学生跑腿的微信小程序"><span class="nav-number">6.2.2.</span> <span class="nav-text">广州大学生跑腿的微信小程序</span></a></li></ol></li></ol></li></ol></div>
             
 
           </div>
