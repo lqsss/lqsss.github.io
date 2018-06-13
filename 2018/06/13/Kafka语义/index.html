@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="mq,Kafka," />
 
 
 
@@ -79,16 +79,18 @@
 
 
 
-<meta name="description" content="There&apos;s no place like 127.0.0.1">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Lqsss&#39;s Blog">
-<meta property="og:url" content="http://yoursite.com/tags/consensus/index.html">
+<meta name="description" content="消息队列的语义 At most once—最多一次，消息可能会丢，但绝不会重复传递；  At least once—至少一次，消息绝不会丢，但可能会重复传递；  Exactly once—每条消息只会被精确地传递一次：既不会多，也不会少；   从生产者的角度来看 至少一次生产者生产消息至broker节点，等待broker节点的响应，如果因为网络通信或者机器故障的原因,没有收到ack，导致produ">
+<meta name="keywords" content="mq,Kafka">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kafka语义">
+<meta property="og:url" content="http://yoursite.com/2018/06/13/Kafka语义/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
-<meta property="og:description" content="There&apos;s no place like 127.0.0.1">
+<meta property="og:description" content="消息队列的语义 At most once—最多一次，消息可能会丢，但绝不会重复传递；  At least once—至少一次，消息绝不会丢，但可能会重复传递；  Exactly once—每条消息只会被精确地传递一次：既不会多，也不会少；   从生产者的角度来看 至少一次生产者生产消息至broker节点，等待broker节点的响应，如果因为网络通信或者机器故障的原因,没有收到ack，导致produ">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2018-06-13T06:11:52.373Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Lqsss&#39;s Blog">
-<meta name="twitter:description" content="There&apos;s no place like 127.0.0.1">
+<meta name="twitter:title" content="Kafka语义">
+<meta name="twitter:description" content="消息队列的语义 At most once—最多一次，消息可能会丢，但绝不会重复传递；  At least once—至少一次，消息绝不会丢，但可能会重复传递；  Exactly once—每条消息只会被精确地传递一次：既不会多，也不会少；   从生产者的角度来看 至少一次生产者生产消息至broker节点，等待broker节点的响应，如果因为网络通信或者机器故障的原因,没有收到ack，导致produ">
 
 
 
@@ -118,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/tags/consensus/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/06/13/Kafka语义/"/>
 
 
 
 
 
-  <title>Tag: consensus | Lqsss's Blog</title>
+  <title>Kafka语义 | Lqsss's Blog</title>
   
 
 
@@ -143,7 +145,7 @@
     
   
 
-  <div class="container sidebar-position-left ">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -257,54 +259,223 @@
           <div id="content" class="content">
             
 
-  
-  
-  
-  <div class="post-block tag">
+  <div id="posts" class="posts-expand">
+    
 
-    <div id="posts" class="posts-collapse">
-      <div class="collection-title">
-        <h1>consensus<small>Tag</small>
-        </h1>
-      </div>
+  
 
-      
-        
+  
+  
+  
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/06/13/Kafka语义/">
 
-      <h2 class="post-title">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="http://op7scj9he.bkt.clouddn.com/%E4%B8%8B%E8%BD%BD.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
         
-            <a class="post-title-link" href="/2018/06/01/Byzantine Generals Problem/" itemprop="url">
-              
-                <span itemprop="name">Byzantine Generals Problem</span>
-              
-            </a>
         
-      </h2>
+          <h1 class="post-title" itemprop="name headline">Kafka语义</h1>
+        
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2018-06-01T10:30:07+08:00"
-              content="2018-06-01" >
-          06-01
-        </time>
-      </div>
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-13T14:11:48+08:00">
+                2018-06-13
+              </time>
+            
 
-    </header>
-  </article>
+            
 
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed/" itemprop="url" rel="index">
+                    <span itemprop="name">distributed</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Words count in article&#58;</span>
+                
+                <span title="Words count in article">
+                  360 字
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Reading time &asymp;</span>
+                
+                <span title="Reading time">
+                  1 分钟
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="消息队列的语义"><a href="#消息队列的语义" class="headerlink" title="消息队列的语义"></a>消息队列的语义</h2><ul>
+<li><p>At most once—最多一次，消息可能会丢，但绝不会重复传递；</p>
+</li>
+<li><p>At least once—至少一次，消息绝不会丢，但可能会重复传递；</p>
+</li>
+<li><p>Exactly once—每条消息只会被精确地传递一次：既不会多，也不会少；</p>
+</li>
+</ul>
+<h2 id="从生产者的角度来看"><a href="#从生产者的角度来看" class="headerlink" title="从生产者的角度来看"></a>从生产者的角度来看</h2><ol>
+<li>至少一次<br>生产者生产消息至broker节点，等待broker节点的响应，如果因为网络通信或者机器故障的原因,没有收到ack，导致producer重新发送。</li>
+<li>恰好一次<br>每个Producer分配一个Id，通过每个消息的序列号进行去重</li>
+</ol>
+<h2 id="从消费者的角度来看"><a href="#从消费者的角度来看" class="headerlink" title="从消费者的角度来看"></a>从消费者的角度来看</h2><p>consumer自己保存offset，<strong>消息处理和offset的更新导致不同的语义</strong></p>
+<ol>
+<li><p>至少一次<br>consumer消费消息之后，准备更新offset时，崩溃。之后，当前consumer恢复，或者一个consumer group的其他消费者又再次消费了这条消息。（至少一次）</p>
+</li>
+<li><p>至多一次<br>更新保存offset在消费消息之前，在处理消息的时候，宕机了，这样会导致消息丢失的情况。</p>
+</li>
+</ol>
+<blockquote>
+<p>默认Kafka提供at-least-once语义的消息分发，允许用户通过在处理消息之前保存位置信息的方式来提供at-most-once语义。如果我们可以实现消费是幂等的，这个时候就可以认为整个系统是Exactly once的了。</p>
+</blockquote>
 
       
     </div>
+    
+    
+    
 
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/mq/" rel="tag"><i class="fa fa-tag"></i> mq</a>
+          
+            <a href="/tags/Kafka/" rel="tag"><i class="fa fa-tag"></i> Kafka</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/06/12/再探ThreadLocal/" rel="next" title="再探ThreadLocal">
+                <i class="fa fa-chevron-left"></i> 再探ThreadLocal
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
   </div>
   
   
   
+  </article>
 
-  
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -312,6 +483,10 @@
 
 
           
+
+  
+
+
 
         </div>
         
@@ -332,8 +507,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -439,6 +623,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#消息队列的语义"><span class="nav-number">1.</span> <span class="nav-text">消息队列的语义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#从生产者的角度来看"><span class="nav-number">2.</span> <span class="nav-text">从生产者的角度来看</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#从消费者的角度来看"><span class="nav-number">3.</span> <span class="nav-text">从消费者的角度来看</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -581,6 +781,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
 
   
 
