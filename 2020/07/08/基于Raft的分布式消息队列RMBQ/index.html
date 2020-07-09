@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="准备从以下方向论述  为什么要用消息队列（mq） 对于高可靠、强一致性的场景现在都有Rabbitmq解决方案了，那为什么还要用Raft算法实现一个mq">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Raft的分布式消息队列RMBQ">
+<meta property="og:url" content="http://yoursite.com/2020/07/08/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97RMBQ/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="准备从以下方向论述  为什么要用消息队列（mq） 对于高可靠、强一致性的场景现在都有Rabbitmq解决方案了，那为什么还要用Raft算法实现一个mq">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/IMG_1925.JPG">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/_8F8E%7DJXOOYW%29@AF@ZZ%28_4E.png">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514151447.png">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514162715.png">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514163908.png">
+<meta property="article:published_time" content="2020-07-08T07:33:59.787Z">
+<meta property="article:modified_time" content="2020-07-08T07:33:59.787Z">
+<meta property="article:author" content="lqsss">
+<meta property="article:tag" content="schedule">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/IMG_1925.JPG">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/08/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97RMBQ/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>基于Raft的分布式消息队列RMBQ | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/08/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97RMBQ/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于Raft的分布式消息队列RMBQ
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-07-08 15:33:59" itemprop="dateCreated datePublished" datetime="2020-07-08T15:33:59+08:00">2020-07-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed/" itemprop="url" rel="index"><span itemprop="name">distributed</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>2.3k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>2 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>准备从以下方向论述</p>
+<ol>
+<li>为什么要用消息队列（mq）</li>
+<li>对于高可靠、强一致性的场景现在都有Rabbitmq解决方案了，那为什么还要用Raft算法实现一个mq<a id="more"></a>
+</li>
+</ol>
+<hr>
+<h2 id="架构演变——mq在架构中有什么用"><a href="#架构演变——mq在架构中有什么用" class="headerlink" title="架构演变——mq在架构中有什么用"></a>架构演变——mq在架构中有什么用</h2><ol>
+<li>异步请求</li>
+<li>应用解耦</li>
+<li>削峰</li>
+</ol>
+<h3 id="异步请求"><a href="#异步请求" class="headerlink" title="异步请求"></a>异步请求</h3><p><img src="http://op7scj9he.bkt.clouddn.com/IMG_1925.JPG" alt=""></p>
+<p>以下是对图中的三种场景进行的解释分析，讲的是一个注册业务系统</p>
+<ol>
+<li><p>串行业务：client向数据库写入注册信息，写入成功后，进行下面的业务，发送邮件，然后发送短信，假设写入数据库的时间为50，发送邮件50，发短信50，那么用户完成注册收到响应为150</p>
+</li>
+<li><p>并行:发邮件和发短信分开成两个业务系统，并行处理。此时用户得到响应只需要100</p>
+</li>
+<li><p>加入mq中间件：将注册的消息放入mq后，就可以返回给client，然后邮件系统、短信系统从mq中拉取消息进行消费，这种场景中，写入mq的时间为5，client收到响应的时间为55。</p>
+</li>
+</ol>
+<h3 id="应用解耦"><a href="#应用解耦" class="headerlink" title="应用解耦"></a>应用解耦</h3><p><img src="http://op7scj9he.bkt.clouddn.com/_8F8E%7DJXOOYW%29@AF@ZZ%28_4E.png" alt=""></p>
+<ol>
+<li>订单系统与库存系统耦合：订单系统调用库存系统的接口，如果减库存失败，则订单服务也会失败。</li>
+<li>加入mq解耦：订单系统下单成功，放入消息到mq里，库存系统订阅，拉取后进行消费。如果库存系统宕掉了，也不会影响订单系统的服务进行。</li>
+</ol>
+<p>上面只是简单描述了mq在分布式系统的部分功能，<strong>重点不在于此</strong>。</p>
+<h2 id="关键"><a href="#关键" class="headerlink" title="关键"></a>关键</h2><blockquote>
+<p>发现RabbitMQ与我们类似!<br>相同：强一致性、可靠<br>不同：一致性算法 -&gt;QGuaranteed Multicast</p>
+</blockquote>
+<h2 id="希望"><a href="#希望" class="headerlink" title="希望"></a>希望</h2><ol>
+<li>如果找到RabbitMQ的适用场景，我们是<strong>可以复用的。</strong></li>
+<li>比较RaftMq和RabbitMQ的一致性算法差异-&gt;性能比较（<strong>比它厉害的地方</strong>）</li>
+</ol>
+<h2 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h2><ol>
+<li>高可靠场景</li>
+<li>强一致性场景</li>
+</ol>
+<h2 id="高可靠场景（消息不允许丢失）"><a href="#高可靠场景（消息不允许丢失）" class="headerlink" title="高可靠场景（消息不允许丢失）"></a>高可靠场景（消息不允许丢失）</h2><p><img src="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514151447.png" alt=""></p>
+<ol>
+<li><p>用户下订单成功后，放入消息到mq中，积分系统需要取出，进行加积分服务，<strong>此时mq的消息如果丢失的话，用户会少了积分！</strong></p>
+</li>
+<li><p>这是前文提及的注册服务，用户在填写注册信息后，需要等待邮箱或者短信通知，需要填写验证码进行下一步，<strong>如果mq里的消息丢失了，用户就收不到验证码!</strong></p>
+</li>
+<li><p>记账系统，如果记账发生了失败，需要放到mq里，到时候从mq里拉取消息，进行二次记账，<strong>此时是绝对不允许丢失的！</strong></p>
+</li>
+</ol>
+<p><strong>那么如何高可靠呢？</strong></p>
+<h3 id="保证高可靠的三点"><a href="#保证高可靠的三点" class="headerlink" title="保证高可靠的三点"></a>保证高可靠的三点</h3><ol>
+<li>消息持久化</li>
+<li>消费者消费成功后，返回ACK确认，queue删除消息</li>
+<li>如果宕机，follower重新选举leader，新的leader跟原来的数据一致</li>
+</ol>
+<blockquote>
+<p>重点说一下第三点：分布式系统中，需要数据的复制副本是一件很常见的事情，数据的冗余来保证可靠性，机器宕掉了，另一台备份顶上，<strong>问题关键在于如何来复制，如何来保证一致性，收到消息的指令，是马上返回ack告诉服务上游，还是等当所有副本都达到一致性才返回ack。（强一致性问题）</strong></p>
+</blockquote>
+<h2 id="强一致性：client能读取到最新正确的数据"><a href="#强一致性：client能读取到最新正确的数据" class="headerlink" title="强一致性：client能读取到最新正确的数据"></a>强一致性：client能读取到最新正确的数据</h2><h3 id="前提"><a href="#前提" class="headerlink" title="前提"></a>前提</h3><p><strong>我们以{N=2 ,W = 1, R = 1}为环境，A、B一主一备。</strong></p>
+<blockquote>
+<p>N — 数据复制的份数<br>W — 更新数据是需要保证写完成的节点数<br>R — 读取数据的时候需要读取的节点数</p>
+</blockquote>
+<p>如果W+R&lt;=N，则是弱一致性。例如对于一主一备异步复制的关系型数据库，N=2,W=1,R=1，则如果读的是备库，就可能无法读取主库已经更新过的数据，所以是弱一致性。</p>
+<p><strong>所以我们即将讨论的是一个弱一致性的环境下。</strong></p>
+<h3 id="场景1：顺序不一致"><a href="#场景1：顺序不一致" class="headerlink" title="场景1：顺序不一致"></a>场景1：顺序不一致</h3><p>比如说金融经常出现的交易啊，记账啊等情景<br>A：set x = 100；add x+= 10 ;mul x<em>= 110%<br>B：set x = 100；mul x</em>= 110%; add x+= 10</p>
+<p>A、B两个节点在复制数据的时候，可能会导致存储消息顺序不一致。比如加钱操作和加息操作顺序不是一致的，在我们{N=2 ,W = 1, R = 1}的环境下就会出错。</p>
+<h3 id="场景2：长度不一致"><a href="#场景2：长度不一致" class="headerlink" title="场景2：长度不一致"></a>场景2：长度不一致</h3><p>比如支付系统中，转账情景下。<br>A：set x = 100；add x+= 10 ;<br>B：set x = 100；</p>
+<p>A此时 有加钱消息，而B没有复制到此条消息。</p>
+<blockquote>
+<p>上面两种场景会导致实时的交易出错问题</p>
+</blockquote>
+<p><strong>另一个问题：现在分布式场景中，是如何保证上述场景的正常工作？</strong><br>我们这里先只谈消息中间件的解决方案。</p>
+<blockquote>
+<p>rabbitmq 这个中间件是可以满足金融方面那些强一致性，高可靠的场景！</p>
+</blockquote>
+<h2 id="和rabbitmq-pk一下"><a href="#和rabbitmq-pk一下" class="headerlink" title="和rabbitmq pk一下"></a>和rabbitmq pk一下</h2><p>用Raft比较rabbitmq的一致性算法。</p>
+<ol>
+<li>响应client时机，复制处理的时间延迟</li>
+<li>可用性，吞吐量</li>
+</ol>
+<h3 id="rabbitmq"><a href="#rabbitmq" class="headerlink" title="rabbitmq"></a>rabbitmq</h3><ol>
+<li>镜像队列的可靠多播（Guaranteed Multicast）</li>
+<li>Guaranteed Multicast：发送者将消息发给集群中的每个节点，这要求集群节点是全联通的。当发送节点挂掉时，消息可能没有发到集群中的每个节点，这就引入了集群中哪些节点要为已挂掉节点负责、继续发送消息的问题。</li>
+<li>环状结构：GM组将集群中的节点组成一个环<br>如果某一个节点宕掉了，左右相邻的节点会知道<br>上游节点负责将挂掉节点未转发的消息继续发给最近的下游节点</li>
+</ol>
+<p><img src="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514162715.png" alt=""></p>
+<p>这就要求GM组中每个节点缓存收到的消息（gm缓存队列），以便当下游节点挂掉时重新转发该消息。消息的最初发送者在收到自身发出的消息时，必须能够再次发出该消息的确认信息（gm ack message）在GM组中同步，这样其他节点才能够将缓存消息删除。当消息最初发送者再次收到确认消息时，说明整个集群已经同步该消息。此时新加入GM组的节点，将不会再收到该消息。</p>
+<h3 id="Raft-vs-Guaranteed-Multicast"><a href="#Raft-vs-Guaranteed-Multicast" class="headerlink" title="Raft vs. Guaranteed Multicast"></a>Raft vs. Guaranteed Multicast</h3><ol>
+<li><p>复制对比<br>GM：所有节点同步之后才能向客户端返回成功，需要在所有的节点上进行两次处理才可以保证同步<br>Raft：确认同步大多数follower，就向客户端返回成功</p>
+</li>
+<li><p>RabbitMq缺点：时延高，在有大量消息堆积的情况下性能会下降</p>
+</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>在过往解决高可靠 强一致性场景中，我们用rabbitmq这样的消息中间件可以解决，但是存在不少的缺点：<strong>时延高，在有大量消息堆积的情况下性能会下降</strong></p>
+<p>目的：mq架构是一个多副本集群，使用Raft强一致性算法在复制的过程加以改善。</p>
+<p>附:<br><img src="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514163908.png" alt=""></p>
+<p><a href="http://op7scj9he.bkt.clouddn.com/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%282%29.pptx" target="_blank" rel="noopener">基于Raft的分布式消息队列(2)</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/schedule/" rel="tag"># schedule</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/08/%E5%A0%86%E6%8E%92%E5%BA%8F/" rel="prev" title="堆排序">
+      <i class="fa fa-chevron-left"></i> 堆排序
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/08/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81-zookeeper/" rel="next" title="分布式锁实现 - zookeeper">
+      分布式锁实现 - zookeeper <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#架构演变——mq在架构中有什么用"><span class="nav-number">1.</span> <span class="nav-text">架构演变——mq在架构中有什么用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#异步请求"><span class="nav-number">1.1.</span> <span class="nav-text">异步请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用解耦"><span class="nav-number">1.2.</span> <span class="nav-text">应用解耦</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关键"><span class="nav-number">2.</span> <span class="nav-text">关键</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#希望"><span class="nav-number">3.</span> <span class="nav-text">希望</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#场景"><span class="nav-number">4.</span> <span class="nav-text">场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#高可靠场景（消息不允许丢失）"><span class="nav-number">5.</span> <span class="nav-text">高可靠场景（消息不允许丢失）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#保证高可靠的三点"><span class="nav-number">5.1.</span> <span class="nav-text">保证高可靠的三点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#强一致性：client能读取到最新正确的数据"><span class="nav-number">6.</span> <span class="nav-text">强一致性：client能读取到最新正确的数据</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#前提"><span class="nav-number">6.1.</span> <span class="nav-text">前提</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景1：顺序不一致"><span class="nav-number">6.2.</span> <span class="nav-text">场景1：顺序不一致</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景2：长度不一致"><span class="nav-number">6.3.</span> <span class="nav-text">场景2：长度不一致</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#和rabbitmq-pk一下"><span class="nav-number">7.</span> <span class="nav-text">和rabbitmq pk一下</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#rabbitmq"><span class="nav-number">7.1.</span> <span class="nav-text">rabbitmq</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Raft-vs-Guaranteed-Multicast"><span class="nav-number">7.2.</span> <span class="nav-text">Raft vs. Guaranteed Multicast</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">8.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="lqsss"
+      src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+  <p class="site-author-name" itemprop="name">lqsss</p>
+  <div class="site-description" itemprop="description">There's no place like 127.0.0.1</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">41</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">160k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">2:26</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

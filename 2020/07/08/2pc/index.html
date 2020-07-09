@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="对cmu440里2pc协议的一个总结  2pc解决一个什么样的问题 2pc的过程 2pc存在的问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2PC">
+<meta property="og:url" content="http://yoursite.com/2020/07/08/2pc/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="对cmu440里2pc协议的一个总结  2pc解决一个什么样的问题 2pc的过程 2pc存在的问题">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-b533dca4253e08d9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-c40be07380893ab8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-aeee1157da0c9368.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-1cced223cdd1887b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/5753761-aaf04af3c36ea786.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2020-07-08T07:33:59.783Z">
+<meta property="article:modified_time" content="2020-07-08T07:33:59.783Z">
+<meta property="article:author" content="lqsss">
+<meta property="article:tag" content="transaction">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/5753761-b533dca4253e08d9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/08/2pc/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>2PC | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/08/2pc/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          2PC
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-07-08 15:33:59" itemprop="dateCreated datePublished" datetime="2020-07-08T15:33:59+08:00">2020-07-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed/" itemprop="url" rel="index"><span itemprop="name">distributed</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>1.1k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>对cmu440里2pc协议的一个总结</p>
+<ol>
+<li>2pc解决一个什么样的问题</li>
+<li>2pc的过程</li>
+<li>2pc存在的问题<a id="more"></a>
+
+</li>
+</ol>
+<h2 id="分布式事务"><a href="#分布式事务" class="headerlink" title="分布式事务"></a>分布式事务</h2><h3 id="本地事务"><a href="#本地事务" class="headerlink" title="本地事务"></a>本地事务</h3><p>我们在单机节点的情况下，保持ACID的事务属性，是通过2PL完成的。</p>
+<ol>
+<li>准备阶段</li>
+</ol>
+<ul>
+<li>获取所需要的所有锁</li>
+<li>生成需要的更新列表</li>
+</ul>
+<ol start="2">
+<li>commit/abort阶段</li>
+</ol>
+<ul>
+<li>一切正常，然后更新全局状态</li>
+<li>事务不能完成，按原样的全局状态离开</li>
+<li>在任何一种情况下，RELEASE ALL LOCKS</li>
+</ul>
+<p>如果事务牵扯到不同的节点呢？就是我们接下来要谈的2pc协议</p>
+<h3 id="2pc阶段"><a href="#2pc阶段" class="headerlink" title="2pc阶段"></a>2pc阶段</h3><ol>
+<li>准备和投票<ul>
+<li>参与者找出所有状态变化</li>
+<li>每个决定是否可以完成交易</li>
+<li>与协调员沟通</li>
+</ul>
+</li>
+<li>提交<ul>
+<li>协调员向参与者进行广播：COMMIT / ABORT</li>
+<li>如果COMMIT，参与者进行相应的状态更改</li>
+</ul>
+</li>
+</ol>
+<h2 id="2pc具体细节"><a href="#2pc具体细节" class="headerlink" title="2pc具体细节"></a>2pc具体细节</h2><p><img src="http://upload-images.jianshu.io/upload_images/5753761-b533dca4253e08d9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="The finite state machine"></p>
+<h3 id="简要"><a href="#简要" class="headerlink" title="简要"></a>简要</h3><ol>
+<li>分布式中肯定是需要消息沟通（协调员和参与者之间）</li>
+<li>上图是2pc协议维护的一个状态机，(a)是协调者（相当于一个事务管理器），(b)是参与者</li>
+</ol>
+<h3 id="协作者"><a href="#协作者" class="headerlink" title="协作者"></a>协作者</h3><p><img src="http://upload-images.jianshu.io/upload_images/5753761-c40be07380893ab8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="iActions by Coordinator"></p>
+<ol>
+<li>广播投票请求给参与此次事务的所有参与者，进入WAIT状态阻塞，直到收到全部的参与者的投票响应，如果等待超时，则广播一个全局abort。</li>
+<li>如果收到了全部的响应投票，而且都是COMMIT的话，则发送一个全局commit，进入COMMIT状态。</li>
+<li>否则广播一个全局abort，进入ABORT状态。</li>
+</ol>
+<h3 id="参与者"><a href="#参与者" class="headerlink" title="参与者"></a>参与者</h3><p><img src="http://upload-images.jianshu.io/upload_images/5753761-aeee1157da0c9368.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Actions by Participant"></p>
+<ol>
+<li>等待来自协作者的投票请求,如果在超时时间内未收到投票请求，则写Abort到log里。</li>
+<li>如果参与者对投票回应一个commit,等待协作者的下一个决定，如果在超时时间内未收到协作者的决定，则询问其他参与者（阻塞），猜测协作者的决定，将决定写入log里;否则，回应abort。</li>
+<li>收到的决定或者通过其他参与者的状态猜测出的决定：<br> 3.1 如果为global_commit，则将global_commit写入日志<br> 3.2 如果为global_abort，则将global_abort写入日志</li>
+</ol>
+<h3 id="参与者-等待其他参与者的询问"><a href="#参与者-等待其他参与者的询问" class="headerlink" title="参与者(等待其他参与者的询问)"></a>参与者(等待其他参与者的询问)</h3><p><img src="http://upload-images.jianshu.io/upload_images/5753761-1cced223cdd1887b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Handling Decision Request"><br>另起一个工作线程完成以下工作：</p>
+<ol>
+<li>阻塞等待接收其他参与者</li>
+<li>从本地log中读取最近的状态：<br> 2.1 如果状态为global_commit，则回应此次参与者的请求，发送一个global_commit。<br> 2.2 如果状态为INIT或者global_abort，则发送global_abort给参与者<br> 2.3 其他（Ready），判断不出状态，则skip</li>
+</ol>
+<p><img src="http://upload-images.jianshu.io/upload_images/5753761-aaf04af3c36ea786.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<h2 id="故障恢复"><a href="#故障恢复" class="headerlink" title="故障恢复"></a>故障恢复</h2><p>节点通过日志的状态判断</p>
+<ul>
+<li>参与者（INIT）：安全到当地中止，通知协调员</li>
+<li>参与者（READY）：联系其他人</li>
+<li>协调器（WAIT）：重新发送VOTE_REQ</li>
+<li>协调员（等待/决定）：重新传送VOTE_COMMIT</li>
+</ul>
+<h2 id="2pc存在的问题"><a href="#2pc存在的问题" class="headerlink" title="2pc存在的问题"></a>2pc存在的问题</h2><p>问题抛出：如果每个参与者都收到了VOTE_REQ,但是协作者炸了！</p>
+<p>结果：2pc是一个阻塞协议，参与者因为没有收到协作者的请求而超时，询问其他参与者，缺发现是ready状态，而无法做出决策，<strong>阻塞</strong></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/transaction/" rel="tag"># transaction</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/08/BRMQ/" rel="prev" title="BRMQ记录">
+      <i class="fa fa-chevron-left"></i> BRMQ记录
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/08/Kafka%E8%AF%AD%E4%B9%89/" rel="next" title="Kafka语义">
+      Kafka语义 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#分布式事务"><span class="nav-number">1.</span> <span class="nav-text">分布式事务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#本地事务"><span class="nav-number">1.1.</span> <span class="nav-text">本地事务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2pc阶段"><span class="nav-number">1.2.</span> <span class="nav-text">2pc阶段</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2pc具体细节"><span class="nav-number">2.</span> <span class="nav-text">2pc具体细节</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#简要"><span class="nav-number">2.1.</span> <span class="nav-text">简要</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#协作者"><span class="nav-number">2.2.</span> <span class="nav-text">协作者</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参与者"><span class="nav-number">2.3.</span> <span class="nav-text">参与者</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参与者-等待其他参与者的询问"><span class="nav-number">2.4.</span> <span class="nav-text">参与者(等待其他参与者的询问)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#故障恢复"><span class="nav-number">3.</span> <span class="nav-text">故障恢复</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2pc存在的问题"><span class="nav-number">4.</span> <span class="nav-text">2pc存在的问题</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="lqsss"
+      src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+  <p class="site-author-name" itemprop="name">lqsss</p>
+  <div class="site-description" itemprop="description">There's no place like 127.0.0.1</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">41</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">160k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">2:26</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="HTTPS的安全性">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HTTP&#x2F;HTTPS">
+<meta property="og:url" content="http://yoursite.com/2020/07/08/https/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="HTTPS的安全性">
+<meta property="article:published_time" content="2020-07-08T07:33:59.786Z">
+<meta property="article:modified_time" content="2020-07-08T07:33:59.786Z">
+<meta property="article:author" content="lqsss">
+<meta property="article:tag" content="HTTP">
+<meta property="article:tag" content="HTTPS">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/08/https/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>HTTP/HTTPS | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/08/https/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HTTP/HTTPS
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-07-08 15:33:59" itemprop="dateCreated datePublished" datetime="2020-07-08T15:33:59+08:00">2020-07-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/network/" itemprop="url" rel="index"><span itemprop="name">network</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>2.4k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>2 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>HTTPS的安全性</p>
+<a id="more"></a>
+<h2 id="HTTP"><a href="#HTTP" class="headerlink" title="HTTP"></a>HTTP</h2><h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><ol>
+<li>HTTP 协议是以 ASCII 码传输，建立在 TCP/IP 协议之上的应用层规范，默认80端口。</li>
+<li>无连接无状态</li>
+</ol>
+<h3 id="HTTP报文"><a href="#HTTP报文" class="headerlink" title="HTTP报文"></a>HTTP报文</h3><p>状态行、请求头、消息主体</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;method&gt; &lt;request-URL&gt; &lt;version&gt;</span><br><span class="line">&lt;headers&gt;</span><br><span class="line">&lt;entity-body&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>GET</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">GET &#x2F;books&#x2F;?sex&#x3D;man&amp;name&#x3D;Professional HTTP&#x2F;1.1</span><br><span class="line"></span><br><span class="line">Host: www.example.com</span><br><span class="line">User-Agent: Mozilla&#x2F;5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.6)</span><br><span class="line">Gecko&#x2F;20050225 Firefox&#x2F;1.0.1</span><br><span class="line">Connection: Keep-Alive</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>POST</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">POST &#x2F; HTTP&#x2F;1.1</span><br><span class="line"></span><br><span class="line"> Host: www.example.com</span><br><span class="line"> User-Agent: Mozilla&#x2F;5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.6)</span><br><span class="line"> Gecko&#x2F;20050225 Firefox&#x2F;1.0.1</span><br><span class="line"> Content-Type: application&#x2F;x-www-form-urlencoded</span><br><span class="line"> Content-Length: 40</span><br><span class="line"> Connection: Keep-Alive</span><br><span class="line"></span><br><span class="line"> sex&#x3D;man&amp;name&#x3D;Professional</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p>状态行：请求方式+URL+HTTP版本号<br>请求头：编码格式、cookie、包长<br>请求体：内容</p>
+<h3 id="响应报文"><a href="#响应报文" class="headerlink" title="响应报文"></a>响应报文</h3><p>状态行:协议版本、数字形式的状态代码、及相应的状态描述<br>响应头(Response Header)<br>响应正文</p>
+<h3 id="会话跟踪"><a href="#会话跟踪" class="headerlink" title="会话跟踪"></a>会话跟踪</h3><ol>
+<li>什么是会话？</li>
+</ol>
+<p>客户端打开与服务器的连接发出请求到服务器响应客户端请求的全过程称之为会话。</p>
+<ol start="2">
+<li>什么是会话跟踪？</li>
+</ol>
+<p>会话跟踪指的是对同一个用户对服务器的连续的请求和接受响应的监视。</p>
+<ol start="3">
+<li>为什么需要会话跟踪？</li>
+</ol>
+<p>浏览器与服务器之间的通信是通过HTTP协议进行通信的，而HTTP协议是”无状态”的协议，它不能保存客户的信息，即一次响应完成之后连接就断开了，下一次的请求需要重新连接，这样就需要判断是否是同一个用户，所以才有会话跟踪技术来实现这种要求。</p>
+<p>会话跟踪常用的方法:</p>
+<ol>
+<li>session<br>每一个用户都有一个不同的session，各个用户之间是不能共享的，是每个用户所独享的，在session中可以存放信息。</li>
+</ol>
+<p>在服务器端会创建一个session对象，产生一个sessionID来标识这个session对象，然后将这个sessionID放入到Cookie中发送到客户端，下一次访问时，sessionID会发送到服务器，在服务器端进行识别不同的用户。</p>
+<p>Session的实现依赖于Cookie，如果Cookie被禁用，那么session也将失效。</p>
+<ol start="2">
+<li>cookie</li>
+<li>url重写</li>
+<li>隐藏域表单提交</li>
+</ol>
+<h2 id="HTTPS"><a href="#HTTPS" class="headerlink" title="HTTPS"></a>HTTPS</h2><h3 id="几个重要概念描述"><a href="#几个重要概念描述" class="headerlink" title="几个重要概念描述"></a>几个重要概念描述</h3><ol>
+<li><p>对称密钥:又称为共享密钥加密,客户端和服务端都共有，加密解密的过程都是相同的。</p>
+</li>
+<li><p>非对称加密：服务端生成一组秘钥，公钥发放给客户端，私钥由服务端自己保留。只要服务器的私钥不丢失，即使公钥中间被拦截，也无法破解。</p>
+</li>
+<li><p>数字签名：私钥签名，公钥验证。解决数据在服务端和客户端在传输数据的过程中有可能被人替换的问题。<br> 3.1 服务端对报文进行hash生成摘要信息（digest），用私钥对此进行签名，将签名+报文内容发送给客户端。<br> 3.2 客户端将签名提起出来，使用公钥将此解密，如果能正常地解密出来digest2，那么就能确认是对方发的。<br> 3.3 客户端同样对报文进行hash，得出数字摘要(digest1),如果digest1和digest2相等，则说明没有篡改。</p>
+</li>
+<li><p>数字证书：开始时，客户端是没有公钥的，需要向服务端申请拿到公钥，可是在这个过程中有可能被中间人所拦截，给你一个假的公钥,自己保留一个对应的假私钥，用假私钥解密出客户端的报文，篡改，然后用真公钥传送给服务端。问题在于,客户端所得到的公钥是否真的就是服务端发过来的公钥。</p>
+<p> 所以，不能直接由服务端发放公钥，而是第三方使用私钥对服务端的公钥加密，然后发放给客户端一个第三方公钥去解密，这个叫证书。</p>
+</li>
+</ol>
+<h2 id="思考设计"><a href="#思考设计" class="headerlink" title="思考设计"></a>思考设计</h2><ol>
+<li>服务端对于每个客户端，维持一个对称加密算法。但是协商对称加密的过程是不安全的，中间有可能被截获。<br><code>解决：使用非对称加密算法进行对称加密算法协商过程。</code></li>
+<li>对于每个客户端都要有不同的对称加密方式，而且不被窃取<br><code>每次ssl握手都有随机数生成，在第四次握手后，双方都有三个随机数，通过这三个随机数生成加密方式</code></li>
+<li>如何得到公钥？公钥有被掉包的危险<br><code>CA数字证书的私钥对服务端的公钥的加密，客户端用数字证书的公钥解密，拿到公钥</code></li>
+<li>第三方机构不止授权一个网站，授权多个服务器网站，客户端拿到第三方的公钥，可以解密授权的所有证书，而得到公钥， 此时中间人可以调包证书，客户端一样可以解密。<br><code>数字签名确保数字证书的权威性</code>:将证书内容进行一次hash，然后通过CA的私钥加密，得到数字签名，附在证书的末尾，发给服务端。浏览器收到服务端证书，用数字证书的公钥对数字签名进行解密，得到hash1；然后按照证书上指定的hash算法对数字证书内容进行一次hash得到hash2，判断hahs1和hash2是否相同。</li>
+</ol>
+<h2 id="HTTPS的优势："><a href="#HTTPS的优势：" class="headerlink" title="HTTPS的优势："></a>HTTPS的优势：</h2><ul>
+<li>通讯过程的hash生成的摘要，保证数据完整性</li>
+<li>握手过程的非对称加密，传输过程的对称加密，保证数据私密性</li>
+<li>证书保证双方身份的真实性</li>
+</ul>
+<h2 id="HTTPS过程"><a href="#HTTPS过程" class="headerlink" title="HTTPS过程"></a>HTTPS过程</h2><ul>
+<li>建立服务器443端口连接</li>
+<li>SSL握手：随机数，证书，密钥，加密算法</li>
+<li>发送加密请求</li>
+<li>发送加密响应</li>
+<li>关闭SSL:服务端会话秘钥生成，发送给客户端</li>
+<li>关闭TCP</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/HTTP/" rel="tag"># HTTP</a>
+              <a href="/tags/HTTPS/" rel="tag"># HTTPS</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/08/paxos/" rel="prev" title="Basic Paxos">
+      <i class="fa fa-chevron-left"></i> Basic Paxos
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/08/%E6%B5%B7%E9%87%8F%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/" rel="next" title="海量数据处理">
+      海量数据处理 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP"><span class="nav-number">1.</span> <span class="nav-text">HTTP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#简介"><span class="nav-number">1.1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP报文"><span class="nav-number">1.2.</span> <span class="nav-text">HTTP报文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#响应报文"><span class="nav-number">1.3.</span> <span class="nav-text">响应报文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#会话跟踪"><span class="nav-number">1.4.</span> <span class="nav-text">会话跟踪</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTPS"><span class="nav-number">2.</span> <span class="nav-text">HTTPS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#几个重要概念描述"><span class="nav-number">2.1.</span> <span class="nav-text">几个重要概念描述</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#思考设计"><span class="nav-number">3.</span> <span class="nav-text">思考设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTPS的优势："><span class="nav-number">4.</span> <span class="nav-text">HTTPS的优势：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTPS过程"><span class="nav-number">5.</span> <span class="nav-text">HTTPS过程</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="lqsss"
+      src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+  <p class="site-author-name" itemprop="name">lqsss</p>
+  <div class="site-description" itemprop="description">There's no place like 127.0.0.1</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">41</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">160k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">2:26</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

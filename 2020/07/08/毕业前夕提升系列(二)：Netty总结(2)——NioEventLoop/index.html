@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="问题之前猫眼电影面试官，曾经问过我服务端起多少个NIO线程(boss)？  默认情况下，Netty服务端起多少线程？何时启动 Netty是如何解决jdk空轮询bug的 Netty如何保证异步串行无锁化">
+<meta property="og:type" content="article">
+<meta property="og:title" content="毕业前夕提升系列(二)：Netty总结(1)——服务端的启动">
+<meta property="og:url" content="http://yoursite.com/2020/07/08/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(2)%E2%80%94%E2%80%94NioEventLoop/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="问题之前猫眼电影面试官，曾经问过我服务端起多少个NIO线程(boss)？  默认情况下，Netty服务端起多少线程？何时启动 Netty是如何解决jdk空轮询bug的 Netty如何保证异步串行无锁化">
+<meta property="article:published_time" content="2020-07-08T15:45:27.777Z">
+<meta property="article:modified_time" content="2020-07-09T07:03:08.830Z">
+<meta property="article:author" content="lqsss">
+<meta property="article:tag" content="summary">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/08/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(2)%E2%80%94%E2%80%94NioEventLoop/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>毕业前夕提升系列(二)：Netty总结(1)——服务端的启动 | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/08/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(2)%E2%80%94%E2%80%94NioEventLoop/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          毕业前夕提升系列(二)：Netty总结(1)——服务端的启动
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-07-08 23:45:27" itemprop="dateCreated datePublished" datetime="2020-07-08T23:45:27+08:00">2020-07-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-07-09 15:03:08" itemprop="dateModified" datetime="2020-07-09T15:03:08+08:00">2020-07-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Netty/" itemprop="url" rel="index"><span itemprop="name">Netty</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>27k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>25 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>之前猫眼电影面试官，曾经问过我服务端起多少个NIO线程(boss)？</p>
+<ul>
+<li>默认情况下，Netty服务端起多少线程？何时启动</li>
+<li>Netty是如何解决jdk空轮询bug的</li>
+<li>Netty如何保证异步串行无锁化</li>
+</ul>
+<a id="more"></a>
+
+<h2 id="线程池的创建"><a href="#线程池的创建" class="headerlink" title="线程池的创建"></a>线程池的创建</h2><p>用户调用构造函数创建NIO线程组：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> EventLoopGroup bossGroup = <span class="keyword">new</span> NioEventLoopGroup();</span><br><span class="line"><span class="keyword">private</span> EventLoopGroup workerGroup = <span class="keyword">new</span> NioEventLoopGroup();</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p>构造函数</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">NioEventLoopGroup</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>(<span class="number">0</span>);<span class="comment">//实际传的nThreads为0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">NioEventLoopGroup</span><span class="params">(<span class="keyword">int</span> nThreads)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>(nThreads, (Executor) <span class="keyword">null</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">NioEventLoopGroup</span><span class="params">(<span class="keyword">int</span> nThreads, ThreadFactory threadFactory)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>(nThreads, threadFactory, SelectorProvider.provider());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">NioEventLoopGroup</span><span class="params">(<span class="keyword">int</span> nThreads, Executor executor)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>(nThreads, executor, SelectorProvider.provider());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">NioEventLoopGroup</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">int</span> nThreads, ThreadFactory threadFactory, <span class="keyword">final</span> SelectorProvider selectorProvider)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>(nThreads, threadFactory, selectorProvider, DefaultSelectStrategyFactory.INSTANCE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">NioEventLoopGroup</span><span class="params">(<span class="keyword">int</span> nThreads, ThreadFactory threadFactory,</span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">final</span> SelectorProvider selectorProvider, <span class="keyword">final</span> SelectStrategyFactory selectStrategyFactory)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(nThreads, threadFactory, selectorProvider, selectStrategyFactory, RejectedExecutionHandlers.reject());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p>调用父类构造函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="title">MultithreadEventLoopGroup</span><span class="params">(<span class="keyword">int</span> nThreads, ThreadFactory threadFactory, Object... args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(nThreads == <span class="number">0</span> ? DEFAULT_EVENT_LOOP_THREADS : nThreads, threadFactory, args);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p>之前传入的线程数默认为0，所以这里默认设置为cpu*2</p>
+<p><strong>MultithreadEventExecutorGroup.java</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="title">MultithreadEventExecutorGroup</span><span class="params">(<span class="keyword">int</span> nThreads, Executor executor,</span></span></span><br><span class="line"><span class="function"><span class="params">                                            EventExecutorChooserFactory chooserFactory, Object... args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (nThreads &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(String.format(<span class="string">"nThreads: %d (expected: &gt; 0)"</span>, nThreads));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (executor == <span class="keyword">null</span>) &#123;</span><br><span class="line">            executor = <span class="keyword">new</span> ThreadPerTaskExecutor(newDefaultThreadFactory());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        children = <span class="keyword">new</span> EventExecutor[nThreads];<span class="comment">//1. 线程创建器</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; nThreads; i ++) &#123;   </span><br><span class="line">            <span class="keyword">boolean</span> success = <span class="keyword">false</span>;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                children[i] = newChild(executor, args);<span class="comment">//2. 构造NioEventLoop</span></span><br><span class="line">                success = <span class="keyword">true</span>;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                <span class="comment">// <span class="doctag">TODO:</span> Think about if this is a good exception type</span></span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"failed to create a child event loop"</span>, e);</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (!success) &#123;</span><br><span class="line">                    <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; i; j ++) &#123;</span><br><span class="line">                        children[j].shutdownGracefully();</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; i; j ++) &#123;</span><br><span class="line">                        EventExecutor e = children[j];</span><br><span class="line">                        <span class="keyword">try</span> &#123;</span><br><span class="line">                            <span class="keyword">while</span> (!e.isTerminated()) &#123;</span><br><span class="line">                                e.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125; <span class="keyword">catch</span> (InterruptedException interrupted) &#123;</span><br><span class="line">                            <span class="comment">// Let the caller handle the interruption.</span></span><br><span class="line">                            Thread.currentThread().interrupt();</span><br><span class="line">                            <span class="keyword">break</span>;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        chooser = chooserFactory.newChooser(children);</span><br><span class="line">  <span class="comment">//3. 创建线程选择器，选择器的作用就是给每个新的连接绑定一个新的nio线程 </span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">final</span> FutureListener&lt;Object&gt; terminationListener = <span class="keyword">new</span> FutureListener&lt;Object&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">operationComplete</span><span class="params">(Future&lt;Object&gt; future)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">                <span class="keyword">if</span> (terminatedChildren.incrementAndGet() == children.length) &#123;</span><br><span class="line">                    terminationFuture.setSuccess(<span class="keyword">null</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (EventExecutor e: children) &#123;</span><br><span class="line">            e.terminationFuture().addListener(terminationListener);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Set&lt;EventExecutor&gt; childrenSet = <span class="keyword">new</span> LinkedHashSet&lt;EventExecutor&gt;(children.length);</span><br><span class="line">        Collections.addAll(childrenSet, children);</span><br><span class="line">        readonlyChildren = Collections.unmodifiableSet(childrenSet);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p><strong>总结：</strong></p>
+<p><strong>new NioEventLoopGroup();</strong></p>
+<ol>
+<li><strong>创建一个线程创建器（ThreadPerTaskExecutor）</strong></li>
+<li><strong>构造2倍cpu数量的NioEventLoop</strong></li>
+<li><strong>创建线程选择器</strong></li>
+</ol>
+<h3 id="Executor的创建"><a href="#Executor的创建" class="headerlink" title="Executor的创建"></a>Executor的创建</h3><p><strong>ThreadPerTaskExecutor.java</strong></p>
+<p>每次执行任务都会创建一个线程实体(FastLocalThread)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">protected</span> ThreadFactory <span class="title">newDefaultThreadFactory</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> DefaultThreadFactory(getClass());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">DefaultThreadFactory</span><span class="params">(Class&lt;?&gt; poolType, <span class="keyword">boolean</span> daemon, <span class="keyword">int</span> priority)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(toPoolName(poolType), daemon, priority); </span><br><span class="line">        <span class="comment">//poolType：NioEventLoopGroup.class</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//构造线程池的名字：nioEventLoopGroup-1-</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">toPoolName</span><span class="params">(Class&lt;?&gt; poolType)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (poolType == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"poolType"</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        String poolName = StringUtil.simpleClassName(poolType);</span><br><span class="line">        <span class="keyword">switch</span> (poolName.length()) &#123;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">0</span>:</span><br><span class="line">                <span class="keyword">return</span> <span class="string">"unknown"</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">                <span class="keyword">return</span> poolName.toLowerCase(Locale.US);</span><br><span class="line">            <span class="keyword">default</span>:</span><br><span class="line">                <span class="keyword">if</span> (Character.isUpperCase(poolName.charAt(<span class="number">0</span>)) &amp;&amp; Character.isLowerCase(poolName.charAt(<span class="number">1</span>))) &#123;</span><br><span class="line">                    <span class="keyword">return</span> Character.toLowerCase(poolName.charAt(<span class="number">0</span>)) + poolName.substring(<span class="number">1</span>);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">return</span> poolName;</span><br><span class="line">                &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">DefaultThreadFactory</span><span class="params">(String poolName, <span class="keyword">boolean</span> daemon, <span class="keyword">int</span> priority, ThreadGroup threadGroup)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (poolName == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"poolName"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (priority &lt; Thread.MIN_PRIORITY || priority &gt; Thread.MAX_PRIORITY) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(</span><br><span class="line">                    <span class="string">"priority: "</span> + priority + <span class="string">" (expected: Thread.MIN_PRIORITY &lt;= priority &lt;= Thread.MAX_PRIORITY)"</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        prefix = poolName + <span class="string">'-'</span> + poolId.incrementAndGet() + <span class="string">'-'</span>;</span><br><span class="line">        <span class="keyword">this</span>.daemon = daemon;</span><br><span class="line">        <span class="keyword">this</span>.priority = priority;</span><br><span class="line">        <span class="keyword">this</span>.threadGroup = threadGroup;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">DefaultThreadFactory</span><span class="params">(String poolName, <span class="keyword">boolean</span> daemon, <span class="keyword">int</span> priority)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(poolName, daemon, priority, System.getSecurityManager() == <span class="keyword">null</span> ?</span><br><span class="line">                Thread.currentThread().getThreadGroup() : System.getSecurityManager().getThreadGroup());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Thread <span class="title">newThread</span><span class="params">(Runnable r)</span> </span>&#123;</span><br><span class="line">        Thread t = newThread(FastThreadLocalRunnable.wrap(r), prefix + nextId.incrementAndGet());</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (t.isDaemon() != daemon) &#123;</span><br><span class="line">                t.setDaemon(daemon);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (t.getPriority() != priority) &#123;</span><br><span class="line">                t.setPriority(priority);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception ignored) &#123;</span><br><span class="line">            <span class="comment">// Doesn't matter even if failed to set.</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> t;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//包装了一个FastThreadLocalThread</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> Thread <span class="title">newThread</span><span class="params">(Runnable r, String name)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> FastThreadLocalThread(threadGroup, r, name);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<h3 id="newChild-：创建NioEventLoop"><a href="#newChild-：创建NioEventLoop" class="headerlink" title="newChild()：创建NioEventLoop"></a>newChild()：创建NioEventLoop</h3><blockquote>
+<p>NioEventLoop -&gt; SingleThreadEventLoop -&gt; SingleThreadEventExecutor -&gt; AbstractScheduledEventExecutor</p>
+</blockquote>
+<p><code>SingleThreadEventExecutor</code>是netty中对本地线程的抽象，内部有一个Thread thread 属性，存储了一个java本地线程，所以NioEventLoop可以视为一个处理IO事件的线程模型。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> EventLoop <span class="title">newChild</span><span class="params">(Executor  executor, Object... args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> NioEventLoop(<span class="keyword">this</span>, executor, (SelectorProvider) args[<span class="number">0</span>],</span><br><span class="line">        ((SelectStrategyFactory) args[<span class="number">1</span>]).newSelectStrategy(), (RejectedExecutionHandler) args[<span class="number">2</span>]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<ul>
+<li>保存线程执行器</li>
+<li>创建一个任务队列：super里<code>taskQueue = newTaskQueue(this.maxPendingTasks);</code></li>
+<li>创建一个selector<blockquote>
+<p>一个NioEventLoop属于某一个NioEventLoopGroup， 且处于同一个NioEventLoopGroup下的所有NioEventLoop 公用Executor、SelectorProvider、SelectStrategyFactory和RejectedExecutionHandler。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="线程选择器"><a href="#线程选择器" class="headerlink" title="线程选择器"></a>线程选择器</h3><p><code>chooser = chooserFactory.newChooser(children);</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> EventExecutorChooser <span class="title">newChooser</span><span class="params">(EventExecutor[] executors)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (isPowerOfTwo(executors.length)) &#123;<span class="comment">//根据NioEventLoop的数量是否2的幂</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> PowerOfTwoEventExecutorChooser(executors);</span><br><span class="line">      <span class="comment">//index ++ &amp;(length-1)</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> GenericEventExecutorChooser(executors);</span><br><span class="line">      <span class="comment">//abs(index ++ % length)</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>Netty中有两种选择器的实现：</p>
+<ul>
+<li>GenericEventExecutorChooser</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">GenericEventExecutorChooser</span> <span class="keyword">implements</span> <span class="title">EventExecutorChooser</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> AtomicInteger idx = <span class="keyword">new</span> AtomicInteger();</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> EventExecutor[] executors;</span><br><span class="line"></span><br><span class="line">    GenericEventExecutorChooser(EventExecutor[] executors) &#123;</span><br><span class="line">        <span class="keyword">this</span>.executors = executors;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> EventExecutor <span class="title">next</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> executors[Math.abs(idx.getAndIncrement() % executors.length)];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<ul>
+<li>PowerOfTwoEventExecutorChooser<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">PowerOfTwoEventExecutorChooser</span> <span class="keyword">implements</span> <span class="title">EventExecutorChooser</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> AtomicInteger idx = <span class="keyword">new</span> AtomicInteger();</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> EventExecutor[] executors;</span><br><span class="line"></span><br><span class="line">    PowerOfTwoEventExecutorChooser(EventExecutor[] executors) &#123;</span><br><span class="line">        <span class="keyword">this</span>.executors = executors;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> EventExecutor <span class="title">next</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> executors[idx.getAndIncrement() &amp; executors.length - <span class="number">1</span>];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+</li>
+</ul>
+<p><strong>q：在nio线程数为2的幂时，<code>idx.getAndIncrement() &amp;amp; executors.length - 1</code>为什么可以达到递增循环的效果？</strong></p>
+<p><strong>a：因为2的幂-1转换为2进制的结果就是每个位置都是1，与下标做&amp;时，数值不会变(0&amp;1 = 0、1&amp;1 = 1 )；当index位置上的数都是1时，再递增就会进位，所谓位置变为0，首部新增一位1，再做&amp;，则轮询到了executors数组的首元素</strong></p>
+<p>新连接绑定到NioEventLoop上：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> EventExecutor <span class="title">next</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> chooser.next();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ul>
+<li>NIOEventLoopGroup的线程池实现其实就是一个NIOEventLoop数组，一个NIOEventLoop可以理解成就是一个线程。</li>
+<li>所有的NIOEventLoop线程是使用相同的 executor、SelectorProvider、SelectStrategyFactory、RejectedExecutionHandler以及是属于某一个NIOEventLoopGroup的。 这一点从 newChild(executor, args); 方法就可以看出：newChild()的实现是在NIOEventLoopGroup中实现的。</li>
+</ul>
+</blockquote>
+<h2 id="NioEventLoop启动"><a href="#NioEventLoop启动" class="headerlink" title="NioEventLoop启动"></a>NioEventLoop启动</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">register</span><span class="params">(EventLoop eventLoop, <span class="keyword">final</span> ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (eventLoop == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"eventLoop"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (isRegistered()) &#123;</span><br><span class="line">        promise.setFailure(<span class="keyword">new</span> IllegalStateException(<span class="string">"registered to an event loop already"</span>));</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!isCompatible(eventLoop)) &#123;</span><br><span class="line">        promise.setFailure(</span><br><span class="line">                <span class="keyword">new</span> IllegalStateException(<span class="string">"incompatible event loop type: "</span> + eventLoop.getClass().getName()));</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    AbstractChannel.<span class="keyword">this</span>.eventLoop = eventLoop;<span class="comment">//1</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (eventLoop.inEventLoop()) &#123; <span class="comment">//2</span></span><br><span class="line">        register0(promise);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            eventLoop.execute(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                    register0(promise);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            logger.warn(</span><br><span class="line">                    <span class="string">"Force-closing a channel whose registration task was not accepted by an event loop: &#123;&#125;"</span>,</span><br><span class="line">                    AbstractChannel.<span class="keyword">this</span>, t);</span><br><span class="line">            closeForcibly();</span><br><span class="line">            closeFuture.setClosed();</span><br><span class="line">            safeSetFailure(promise, t);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<ol>
+<li><p><code>channel.eventLoop().execute</code>：创建的NioServerSockcetChannel与Boss线程组的绑定，发生在unsafe的<code>register()</code>注册。</p>
+</li>
+<li><p>register0是具体注册的逻辑吗，但是需要由<code>eventLoop.inEventLoop()</code>判断当前线程否为nioEventLoop里的线程</p>
+</li>
+</ol>
+<pre><code>1.  如果是直接执行register0逻辑
+
+2.  如果不是，则包装成一个注册的task交付给线程池新生成一个nio线程去执行`eventLoop.execute(new Runnable(){//...})`调用的是`SingleThreadEventExecutor`的`execute`方法。</code></pre><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">execute</span><span class="params">(Runnable task)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (task == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"task"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">      </span><br><span class="line">    <span class="keyword">boolean</span> inEventLoop = inEventLoop();</span><br><span class="line">    addTask(task);					<span class="comment">//加入taskQueue</span></span><br><span class="line">    <span class="keyword">if</span> (!inEventLoop) &#123;</span><br><span class="line">        startThread();</span><br><span class="line">        <span class="keyword">if</span> (isShutdown() &amp;&amp; removeTask(task)) &#123;</span><br><span class="line">            reject();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">      </span><br><span class="line">    <span class="keyword">if</span> (!addTaskWakesUp &amp;&amp; wakesUpForTask(task)) &#123;</span><br><span class="line">        wakeup(inEventLoop);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>startThread()和doStartThread()方法，创建NioEventLoop底层的thread属性。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">startThread</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (state == ST_NOT_STARTED) &#123;</span><br><span class="line">        <span class="keyword">if</span> (STATE_UPDATER.compareAndSet(<span class="keyword">this</span>, ST_NOT_STARTED, ST_STARTED)) &#123;</span><br><span class="line">          <span class="comment">//CAS操作修改thread状态为ST_STARTED</span></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                doStartThread();</span><br><span class="line">              <span class="comment">//真正启动线程的函数</span></span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable cause) &#123;</span><br><span class="line">                STATE_UPDATER.set(<span class="keyword">this</span>, ST_NOT_STARTED);</span><br><span class="line">                PlatformDependent.throwException(cause);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">      </span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doStartThread</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">assert</span> thread == <span class="keyword">null</span>;</span><br><span class="line">    executor.execute(<span class="keyword">new</span> Runnable() &#123; <span class="comment">//ThreadPerTaskExecutor</span></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            thread = Thread.currentThread();</span><br><span class="line">          	<span class="comment">//将当前线程与thread属性绑定</span></span><br><span class="line">            <span class="keyword">if</span> (interrupted) &#123;</span><br><span class="line">                thread.interrupt();</span><br><span class="line">            &#125;</span><br><span class="line">      </span><br><span class="line">            <span class="keyword">boolean</span> success = <span class="keyword">false</span>;</span><br><span class="line">            updateLastExecutionTime();</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                SingleThreadEventExecutor.<span class="keyword">this</span>.run();</span><br><span class="line">              <span class="comment">//core：NioEventLoop.run()</span></span><br><span class="line">                success = <span class="keyword">true</span>;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">                logger.warn(<span class="string">"Unexpected exception from an event executor: "</span>, t);</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">                    <span class="keyword">int</span> oldState = state;</span><br><span class="line">                    <span class="keyword">if</span> (oldState &gt;= ST_SHUTTING_DOWN || STATE_UPDATER.compareAndSet(</span><br><span class="line">                            SingleThreadEventExecutor.<span class="keyword">this</span>, oldState, ST_SHUTTING_DOWN)) &#123;</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">      </span><br><span class="line">                <span class="comment">// Check if confirmShutdown() was called at the end of the loop.</span></span><br><span class="line">                <span class="keyword">if</span> (success &amp;&amp; gracefulShutdownStartTime == <span class="number">0</span>) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (logger.isErrorEnabled()) &#123;</span><br><span class="line">                        logger.error("Buggy " + EventExecutor.class.getSimpleName() + " implementation; " +</span><br><span class="line">                                SingleThreadEventExecutor.class.getSimpleName() + ".confirmShutdown() must " +</span><br><span class="line">                                <span class="string">"be called before run() implementation terminates."</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">      </span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="comment">// Run all remaining tasks and shutdown hooks.</span></span><br><span class="line">                    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">                        <span class="keyword">if</span> (confirmShutdown()) &#123;</span><br><span class="line">                            <span class="keyword">break</span>;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        cleanup();</span><br><span class="line">                    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                        STATE_UPDATER.set(SingleThreadEventExecutor.<span class="keyword">this</span>, ST_TERMINATED);</span><br><span class="line">                        threadLock.release();</span><br><span class="line">                        <span class="keyword">if</span> (!taskQueue.isEmpty()) &#123;</span><br><span class="line">                            <span class="keyword">if</span> (logger.isWarnEnabled()) &#123;</span><br><span class="line">                                logger.warn(<span class="string">"An event executor terminated with "</span> +</span><br><span class="line">                                        <span class="string">"non-empty task queue ("</span> + taskQueue.size() + <span class="string">')'</span>);</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">      </span><br><span class="line">                        terminationFuture.setSuccess(<span class="keyword">null</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>总结：</strong></p>
+<ol>
+<li><strong>NioEventLoop的启动，发生在第一次调用NioEventLoop调用execute执行任务时，会通过<code>SingleThreadEventExecutor</code>里的<code>ThreadPerTaskExecutor</code>创建线程。</strong></li>
+<li><strong>将NioEventLoop里的底层thread属性与创建的本地线程绑定。</strong></li>
+<li><strong>NioEventLoop.run()启动。</strong></li>
+</ol>
+<h2 id="NioEventLoop执行"><a href="#NioEventLoop执行" class="headerlink" title="NioEventLoop执行"></a>NioEventLoop执行</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">switch</span> (selectStrategy.calculateStrategy(selectNowSupplier, hasTasks())) &#123;</span><br><span class="line">        <span class="keyword">case</span> SelectStrategy.CONTINUE:</span><br><span class="line">          <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">case</span> SelectStrategy.BUSY_WAIT:</span><br><span class="line">          <span class="comment">// fall-through to SELECT since the busy-wait is not supported with NIO</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">case</span> SelectStrategy.SELECT:</span><br><span class="line">          select(wakenUp.getAndSet(<span class="keyword">false</span>));</span><br><span class="line"></span><br><span class="line">          <span class="keyword">if</span> (wakenUp.get()) &#123;</span><br><span class="line">            selector.wakeup();</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="comment">// fall through</span></span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      cancelledKeys = <span class="number">0</span>;</span><br><span class="line">      needsToSelectAgain = <span class="keyword">false</span>;</span><br><span class="line">      <span class="keyword">final</span> <span class="keyword">int</span> ioRatio = <span class="keyword">this</span>.ioRatio;</span><br><span class="line">      <span class="keyword">if</span> (ioRatio == <span class="number">100</span>) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          processSelectedKeys();</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">          <span class="comment">// Ensure we always run tasks.</span></span><br><span class="line">          runAllTasks();</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">long</span> ioStartTime = System.nanoTime();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          processSelectedKeys();</span><br><span class="line">          <span class="comment">//查询就绪的 IO 事件, 然后处理它;</span></span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">          <span class="comment">// Ensure we always run tasks.</span></span><br><span class="line">          <span class="keyword">final</span> <span class="keyword">long</span> ioTime = System.nanoTime() - ioStartTime;</span><br><span class="line">          runAllTasks(ioTime * (<span class="number">100</span> - ioRatio) / ioRatio);</span><br><span class="line">          <span class="comment">//运行 taskQueue 中的任务.</span></span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">      handleLoopException(t);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// Always handle shutdown even if the loop processing threw an exception.</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (isShuttingDown()) &#123;</span><br><span class="line">        closeAll();</span><br><span class="line">        <span class="keyword">if</span> (confirmShutdown()) &#123;</span><br><span class="line">          <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">      handleLoopException(t);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p><strong>总结：</strong></p>
+<p><strong>NioEventLoop事件循环执行机制是一个死循环：</strong></p>
+<ol>
+<li><strong>select检查是否有IO事件的到来</strong></li>
+<li><strong>处理IO事件</strong></li>
+<li><strong>处理异步任务队列里的任务(taskQueue，其它线程加入该队列的任务)</strong></li>
+</ol>
+<h3 id="检测I-O事件"><a href="#检测I-O事件" class="headerlink" title="检测I/O事件"></a>检测I/O事件</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">select</span><span class="params">(<span class="keyword">boolean</span> oldWakenUp)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  Selector selector = <span class="keyword">this</span>.selector;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">int</span> selectCnt = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">long</span> currentTimeNanos = System.nanoTime();</span><br><span class="line">    <span class="keyword">long</span> selectDeadLineNanos = currentTimeNanos + delayNanos(currentTimeNanos);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">      <span class="keyword">long</span> timeoutMillis = (selectDeadLineNanos - currentTimeNanos + <span class="number">500000L</span>) / <span class="number">1000000L</span>;</span><br><span class="line">      <span class="comment">//定时任务即将执行的剩余时间(如果没有定时任务，则默认为1s)，减去当前时间，加上5s的缓冲时间</span></span><br><span class="line">      <span class="keyword">if</span> (timeoutMillis &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (selectCnt == <span class="number">0</span>) &#123;</span><br><span class="line">          selector.selectNow();</span><br><span class="line">          <span class="comment">//如果定时任务超时，调用非阻塞select</span></span><br><span class="line">          selectCnt = <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (hasTasks() &amp;&amp; wakenUp.compareAndSet(<span class="keyword">false</span>, <span class="keyword">true</span>)) &#123;</span><br><span class="line">        selector.selectNow();</span><br><span class="line">        <span class="comment">//如果任务队列里存在任务，则调用阻塞select</span></span><br><span class="line">        selectCnt = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">int</span> selectedKeys = selector.select(timeoutMillis);</span><br><span class="line">      selectCnt ++; <span class="comment">//轮询次数</span></span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (selectedKeys != <span class="number">0</span> || oldWakenUp || wakenUp.get() || hasTasks() || hasScheduledTasks()) &#123;</span><br><span class="line">        <span class="comment">// select是否需要唤醒 /外部线程唤醒 /任务队列或者定时任务有任务 </span></span><br><span class="line">        <span class="comment">//满足这些条件就中断</span></span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (Thread.interrupted()) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">          logger.debug(<span class="string">"Selector.select() returned prematurely because "</span> +</span><br><span class="line">                       <span class="string">"Thread.currentThread().interrupt() was called. Use "</span> +</span><br><span class="line">                       <span class="string">"NioEventLoop.shutdownGracefully() to shutdown the NioEventLoop."</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        selectCnt = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">long</span> time = System.nanoTime();</span><br><span class="line">      <span class="keyword">if</span> (time - TimeUnit.MILLISECONDS.toNanos(timeoutMillis) &gt;= currentTimeNanos) &#123;</span><br><span class="line">        <span class="comment">//空轮询次数</span></span><br><span class="line">        selectCnt = <span class="number">1</span>;</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (SELECTOR_AUTO_REBUILD_THRESHOLD &gt; <span class="number">0</span> &amp;&amp;</span><br><span class="line">                 selectCnt &gt;= SELECTOR_AUTO_REBUILD_THRESHOLD) &#123;</span><br><span class="line">        logger.warn(</span><br><span class="line">          <span class="string">"Selector.select() returned prematurely &#123;&#125; times in a row; rebuilding Selector &#123;&#125;."</span>,</span><br><span class="line">          selectCnt, selector);</span><br><span class="line"></span><br><span class="line">        rebuildSelector();</span><br><span class="line">        selector = <span class="keyword">this</span>.selector;</span><br><span class="line"></span><br><span class="line">        selector.selectNow(); </span><br><span class="line">        <span class="comment">//更新完selector，需要立即调用一次非阻塞select。</span></span><br><span class="line">        selectCnt = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      currentTimeNanos = time;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (selectCnt &gt; MIN_PREMATURE_SELECTOR_RETURNS) &#123;</span><br><span class="line">      <span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">        logger.debug(<span class="string">"Selector.select() returned prematurely &#123;&#125; times in a row for Selector &#123;&#125;."</span>,</span><br><span class="line">                     selectCnt - <span class="number">1</span>, selector);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (CancelledKeyException e) &#123;</span><br><span class="line">    <span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">      logger.debug(CancelledKeyException.class.getSimpleName() + " raised by a Selector &#123;&#125; - JDK bug?",</span><br><span class="line">                   selector, e);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p>总结：</p>
+<ol>
+<li><p>计算一个select的一个阻塞超时时间：定时任务即将执行的剩余时间(如果没有定时任务，则默认为1s)，减去当前时间，加上5s的缓冲时间</p>
+</li>
+<li><p><strong>如果定时任务已经超时(阻塞超时时间小于0)</strong>，而且一次都没有执行过select，则立即selecotNow返回；break</p>
+</li>
+<li><p><strong>如果阻塞超时时间大于0</strong>，而且任务列队里有任务，且CAS唤醒selector成功的话，立即执行selectNow，break</p>
+</li>
+<li><p><strong>上述2、3都不满足的话</strong>，则执行一次阻塞的select，select循环次数+1</p>
+</li>
+<li><p>如果有就绪的io事件，或外部用户唤醒，或有待执行普通任务，或有待执行调度任务，break</p>
+</li>
+<li><p>解决jdk空轮询的bug</p>
+<pre><code>1.  记录一下当前的时间，**如果当前时间减去for循环开始的时间是大于selector阻塞超时时间**，表明正常完成一次select阻塞操作，将selectCnt赋值为1</code></pre><ol start="2">
+<li><strong>如果小于</strong>，select轮询次数大于等于阈值(512)，则会重建一个新的selector对象，避免jdk的bug导致cpu打满。<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">rebuildSelector0</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">final</span> Selector oldSelector = selector;</span><br><span class="line">        <span class="keyword">final</span> SelectorTuple newSelectorTuple;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (oldSelector == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            newSelectorTuple = openSelector();<span class="comment">//1</span></span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            logger.warn(<span class="string">"Failed to create a new Selector."</span>, e);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Register all channels to the new Selector.</span></span><br><span class="line">        <span class="keyword">int</span> nChannels = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (SelectionKey key: oldSelector.keys()) &#123;</span><br><span class="line">            Object a = key.attachment(); <span class="comment">//NioSocketChannel</span></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              <span class="comment">//jdk底层channel可能会多次向selector注册,保存到keys[]里</span></span><br><span class="line">                <span class="keyword">if</span> (!key.isValid() || key.channel().keyFor(newSelectorTuple.unwrappedSelector) != <span class="keyword">null</span>) &#123;</span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">int</span> interestOps = key.interestOps();</span><br><span class="line">              	<span class="comment">// 获取兴趣集</span></span><br><span class="line">                key.cancel();</span><br><span class="line">              <span class="comment">//取消</span></span><br><span class="line">                SelectionKey newKey = key.channel().register(newSelectorTuple.unwrappedSelector, interestOps, a);</span><br><span class="line">               <span class="comment">// 将老的兴趣集重新注册到前面新创建的selector上</span></span><br><span class="line">                <span class="keyword">if</span> (a <span class="keyword">instanceof</span> AbstractNioChannel) &#123;</span><br><span class="line">                    <span class="comment">// Update SelectionKey</span></span><br><span class="line">                    ((AbstractNioChannel) a).selectionKey = newKey;</span><br><span class="line">                &#125;</span><br><span class="line">                nChannels ++;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                logger.warn(<span class="string">"Failed to re-register a Channel to the new Selector."</span>, e);</span><br><span class="line">                <span class="keyword">if</span> (a <span class="keyword">instanceof</span> AbstractNioChannel) &#123;</span><br><span class="line">                    AbstractNioChannel ch = (AbstractNioChannel) a;</span><br><span class="line">                    ch.unsafe().close(ch.unsafe().voidPromise());</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="meta">@SuppressWarnings</span>(<span class="string">"unchecked"</span>)</span><br><span class="line">                    NioTask&lt;SelectableChannel&gt; task = (NioTask&lt;SelectableChannel&gt;) a;</span><br><span class="line">                    invokeChannelUnregistered(task, key, e);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        selector = newSelectorTuple.selector;</span><br><span class="line">        unwrappedSelector = newSelectorTuple.unwrappedSelector;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// time to close the old selector as everything else is registered to the new one</span></span><br><span class="line">            oldSelector.close();</span><br><span class="line">			      <span class="comment">//  关闭老的seleclor</span></span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            <span class="keyword">if</span> (logger.isWarnEnabled()) &#123;</span><br><span class="line">                logger.warn(<span class="string">"Failed to close the old Selector."</span>, t);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (logger.isInfoEnabled()) &#123;</span><br><span class="line">            logger.info(<span class="string">"Migrated "</span> + nChannels + <span class="string">" channel(s) to the new Selector."</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+</li>
+</ol>
+</li>
+</ol>
+<p><strong>rebuildSelector：新建selector，将注册在老selector的channel以及它们的感兴趣事件重新注册到新的selector，得到新的selectionKey，更新一下NioChannel对应的key。最终将老的selector关闭。</strong></p>
+<h3 id="处理selectionKey"><a href="#处理selectionKey" class="headerlink" title="处理selectionKey"></a>处理selectionKey</h3><h4 id="select优化"><a href="#select优化" class="headerlink" title="select优化"></a>select优化</h4><p>发生在NioEventLoop被创建的时候。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> SelectorTuple <span class="title">openSelector</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">final</span> Selector unwrappedSelector;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    unwrappedSelector = provider.openSelector();</span><br><span class="line">  &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> ChannelException(<span class="string">"failed to open a new selector"</span>, e);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (DISABLE_KEYSET_OPTIMIZATION) &#123;       </span><br><span class="line">    <span class="comment">//默认是false，需要优化</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> SelectorTuple(unwrappedSelector);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">final</span> Class&lt;?&gt; selectorImplClass = (Class&lt;?&gt;) maybeSelectorImplClass;</span><br><span class="line">  <span class="keyword">final</span> SelectedSelectionKeySet selectedKeySet = <span class="keyword">new</span> SelectedSelectionKeySet();</span><br><span class="line">  <span class="comment">// SelectedSelectionKeySet是我们优化的类型</span></span><br><span class="line"></span><br><span class="line">  Object maybeException = AccessController.doPrivileged(<span class="keyword">new</span> PrivilegedAction&lt;Object&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        Field selectedKeysField = selectorImplClass.getDeclaredField(<span class="string">"selectedKeys"</span>);</span><br><span class="line">        Field publicSelectedKeysField = selectorImplClass.getDeclaredField(<span class="string">"publicSelectedKeys"</span>);</span><br><span class="line">        <span class="comment">// 反射获取selectedKeys、publicSelectedKeys的field</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (PlatformDependent.javaVersion() &gt;= <span class="number">9</span> &amp;&amp; PlatformDependent.hasUnsafe()) &#123;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">long</span> selectedKeysFieldOffset = PlatformDependent.objectFieldOffset(selectedKeysField);</span><br><span class="line">          <span class="keyword">long</span> publicSelectedKeysFieldOffset =</span><br><span class="line">            PlatformDependent.objectFieldOffset(publicSelectedKeysField);</span><br><span class="line"></span><br><span class="line">          <span class="keyword">if</span> (selectedKeysFieldOffset != -<span class="number">1</span> &amp;&amp; publicSelectedKeysFieldOffset != -<span class="number">1</span>) &#123;</span><br><span class="line">            PlatformDependent.putObject(</span><br><span class="line">              unwrappedSelector, selectedKeysFieldOffset, selectedKeySet);</span><br><span class="line">            PlatformDependent.putObject(</span><br><span class="line">              unwrappedSelector, publicSelectedKeysFieldOffset, selectedKeySet);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="comment">// We could not retrieve the offset, lets try reflection as last-resort.</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Throwable cause = ReflectionUtil.trySetAccessible(selectedKeysField, <span class="keyword">true</span>);</span><br><span class="line">        <span class="keyword">if</span> (cause != <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="keyword">return</span> cause;</span><br><span class="line">        &#125;</span><br><span class="line">        cause = ReflectionUtil.trySetAccessible(publicSelectedKeysField, <span class="keyword">true</span>);</span><br><span class="line">        <span class="keyword">if</span> (cause != <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="keyword">return</span> cause;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        selectedKeysField.set(unwrappedSelector, selectedKeySet);</span><br><span class="line">        publicSelectedKeysField.set(unwrappedSelector, selectedKeySet);</span><br><span class="line">        <span class="comment">//将这两个field设置为我们优化过的selectedKeySet结构，之后，有I/O事件到来的有关selectionKey就会存储在这个结构里 </span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">      &#125; <span class="keyword">catch</span> (NoSuchFieldException e) &#123;</span><br><span class="line">        <span class="keyword">return</span> e;</span><br><span class="line">      &#125; <span class="keyword">catch</span> (IllegalAccessException e) &#123;</span><br><span class="line">        <span class="keyword">return</span> e;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (maybeException <span class="keyword">instanceof</span> Exception) &#123;</span><br><span class="line">    selectedKeys = <span class="keyword">null</span>;</span><br><span class="line">    Exception e = (Exception) maybeException;</span><br><span class="line">    logger.trace(<span class="string">"failed to instrument a special java.util.Set into: &#123;&#125;"</span>, unwrappedSelector, e);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> SelectorTuple(unwrappedSelector);</span><br><span class="line">  &#125;</span><br><span class="line">  selectedKeys = selectedKeySet</span><br><span class="line">    <span class="comment">//将NioEventLoop里的selectedKeys设置为新的优化结构</span></span><br><span class="line">    logger.trace(<span class="string">"instrumented a special java.util.Set into: &#123;&#125;"</span>, unwrappedSelector);</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> SelectorTuple(unwrappedSelector,</span><br><span class="line">                           <span class="keyword">new</span> SelectedSelectionKeySetSelector(unwrappedSelector, selectedKeySet));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p>总结：</p>
+<ol>
+<li>通过provider生成一个原生的selecor，新创建一个优化的数据结构<code>SelectedSelectionKeySet</code></li>
+<li>通过反射(selectorImplClass)获取<code>selectedKeys</code>、<code>publicSelectedKeys</code>的field</li>
+<li>将优化的数据结构塞进原生selector(<code>selectorImpl</code>)，替换掉步骤2得到的两个field</li>
+<li>将NioEventLoop里的selectedKeys设置为新的优化结构</li>
+</ol>
+<p><strong>SelectorImpl是原生selector的实现</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">SelectorImpl</span> <span class="keyword">extends</span> <span class="title">AbstractSelector</span> </span>&#123;</span><br><span class="line">    <span class="keyword">protected</span> Set&lt;SelectionKey&gt; selectedKeys = <span class="keyword">new</span> HashSet();</span><br><span class="line">  <span class="comment">// selectedKeys：可以准备被处理的key集合</span></span><br><span class="line">    <span class="keyword">protected</span> HashSet&lt;SelectionKey&gt; keys = <span class="keyword">new</span> HashSet();</span><br><span class="line">    <span class="keyword">private</span> Set&lt;SelectionKey&gt; publicKeys;</span><br><span class="line">    <span class="keyword">private</span> Set&lt;SelectionKey&gt; publicSelectedKeys;</span><br><span class="line">  <span class="comment">// publicSelectedKeys：实际上就是selectedKeys，暴露出去而已，被设置为不能修改</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="title">SelectorImpl</span><span class="params">(SelectorProvider var1)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(var1);</span><br><span class="line">        <span class="keyword">if</span> (Util.atBugLevel(<span class="string">"1.4"</span>)) &#123;</span><br><span class="line">            <span class="keyword">this</span>.publicKeys = <span class="keyword">this</span>.keys;</span><br><span class="line">            <span class="keyword">this</span>.publicSelectedKeys = <span class="keyword">this</span>.selectedKeys;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">this</span>.publicKeys = Collections.unmodifiableSet(<span class="keyword">this</span>.keys);</span><br><span class="line">            <span class="keyword">this</span>.publicSelectedKeys = Util.ungrowableSet(<span class="keyword">this</span>.selectedKeys);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>那么替代<code>selectedKeys</code><strong>hashSet</strong>这种结构，优化的结构是什么样的呢？</p>
+<p><em>*SelectedSelectionKeySet</em></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">SelectedSelectionKeySet</span> <span class="keyword">extends</span> <span class="title">AbstractSet</span>&lt;<span class="title">SelectionKey</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">    SelectionKey[] keys;</span><br><span class="line">    <span class="keyword">int</span> size;</span><br><span class="line"></span><br><span class="line">    SelectedSelectionKeySet() &#123;</span><br><span class="line">        keys = <span class="keyword">new</span> SelectionKey[<span class="number">1024</span>];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">add</span><span class="params">(SelectionKey o)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (o == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        keys[size++] = o;</span><br><span class="line">        <span class="keyword">if</span> (size == keys.length) &#123;</span><br><span class="line">            increaseCapacity();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p>底层其实就是维护了一个keys的数组，add操作是O(1)的复杂度，而HashSet这种需要更长的add时间。</p>
+<h4 id="具体处理"><a href="#具体处理" class="headerlink" title="具体处理"></a>具体处理</h4><p><code>processSelectedKeysOptimized()</code>具体处理selectionKeys的函数。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">processSelectedKeysOptimized</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; selectedKeys.size; ++i) &#123;</span><br><span class="line">      <span class="keyword">final</span> SelectionKey k = selectedKeys.keys[i];</span><br><span class="line"></span><br><span class="line">      selectedKeys.keys[i] = <span class="keyword">null</span>;</span><br><span class="line">      <span class="comment">//方便gc</span></span><br><span class="line"></span><br><span class="line">      <span class="keyword">final</span> Object a = k.attachment();</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (a <span class="keyword">instanceof</span> AbstractNioChannel) &#123;</span><br><span class="line">        processSelectedKey(k, (AbstractNioChannel) a);</span><br><span class="line">        <span class="comment">//具体处理逻辑</span></span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="meta">@SuppressWarnings</span>(<span class="string">"unchecked"</span>)</span><br><span class="line">        NioTask&lt;SelectableChannel&gt; task = (NioTask&lt;SelectableChannel&gt;) a;</span><br><span class="line">        processSelectedKey(k, task);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (needsToSelectAgain) &#123;</span><br><span class="line">        <span class="comment">// null out entries in the array to allow to have it GC'ed once the Channel close</span></span><br><span class="line">        <span class="comment">// See https://github.com/netty/netty/issues/2363</span></span><br><span class="line">        selectedKeys.reset(i + <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">        selectAgain();</span><br><span class="line">        i = -<span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">processSelectedKey</span><span class="params">(SelectionKey k, AbstractNioChannel ch)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> AbstractNioChannel.NioUnsafe unsafe = ch.unsafe();</span><br><span class="line">    <span class="comment">// 获取Netty Channel中的 NioUnsafe 对象，用于后面的IO操作</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!k.isValid()) &#123;</span><br><span class="line">      <span class="keyword">final</span> EventLoop eventLoop;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        eventLoop = ch.eventLoop();</span><br><span class="line">      &#125; <span class="keyword">catch</span> (Throwable ignored) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (eventLoop != <span class="keyword">this</span> || eventLoop == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// close the channel if the key is not valid anymore</span></span><br><span class="line">      unsafe.close(unsafe.voidPromise());</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">int</span> readyOps = k.readyOps();</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> ((readyOps &amp; SelectionKey.OP_CONNECT) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// 先处理连接事件</span></span><br><span class="line">        <span class="keyword">int</span> ops = k.interestOps();</span><br><span class="line">        ops &amp;= ~SelectionKey.OP_CONNECT;</span><br><span class="line">        k.interestOps(ops);</span><br><span class="line"></span><br><span class="line">        unsafe.finishConnect();</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// Process OP_WRITE first as we may be able to write some queued buffers and so free memory.</span></span><br><span class="line">      <span class="keyword">if</span> ((readyOps &amp; SelectionKey.OP_WRITE) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// Call forceFlush which will also take care of clear the OP_WRITE once there is nothing left to write</span></span><br><span class="line">        ch.unsafe().forceFlush();</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// Also check for readOps of 0 to workaround possible JDK bug which may otherwise lead</span></span><br><span class="line">      <span class="comment">// to a spin loop</span></span><br><span class="line">      <span class="keyword">if</span> ((readyOps &amp; (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT)) != <span class="number">0</span> || readyOps == <span class="number">0</span>) &#123;</span><br><span class="line">        unsafe.read();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (CancelledKeyException ignored) &#123;</span><br><span class="line">      unsafe.close(unsafe.voidPromise());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="任务处理"><a href="#任务处理" class="headerlink" title="任务处理"></a>任务处理</h3><p>发生在NioEventLoop的事件循环里<code>run()</code>的<code>runAllTask()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (ioRatio == <span class="number">100</span>) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        processSelectedKeys();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        <span class="comment">// Ensure we always run tasks.</span></span><br><span class="line">        runAllTasks();</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">long</span> ioStartTime = System.nanoTime();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        processSelectedKeys();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        <span class="comment">// Ensure we always run tasks.</span></span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">long</span> ioTime = System.nanoTime() - ioStartTime;</span><br><span class="line">        runAllTasks(ioTime * (<span class="number">100</span> - ioRatio) / ioRatio);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<ul>
+<li><code>ioRatio</code>表示I/O任务和非I/O任务的时间比，默认是50</li>
+<li><code>ioRatio</code>为100时，就先完成select的I/O任务，然后完成非I/O任务</li>
+<li><code>ioRatio</code>为其它时，记录I/O任务完成的时间，完成非I/O任务的时间不得超过<strong>ioTime * (100 - ioRatio) / ioRatio</strong></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">runAllTasks</span><span class="params">(<span class="keyword">long</span> timeoutNanos)</span> </span>&#123;</span><br><span class="line">    fetchFromScheduledTaskQueue(); <span class="comment">//1. </span></span><br><span class="line">    Runnable task = pollTask();</span><br><span class="line">    <span class="keyword">if</span> (task == <span class="keyword">null</span>) &#123;</span><br><span class="line">        afterRunningAllTasks();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">long</span> deadline = ScheduledFutureTask.nanoTime() + timeoutNanos;</span><br><span class="line">    <span class="keyword">long</span> runTasks = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">long</span> lastExecutionTime;</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        safeExecute(task);  <span class="comment">//2. </span></span><br><span class="line"></span><br><span class="line">        runTasks ++;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Check timeout every 64 tasks because nanoTime() is relatively expensive.</span></span><br><span class="line">        <span class="comment">// <span class="doctag">XXX:</span> Hard-coded value - will make it configurable if it is really a problem.</span></span><br><span class="line">        <span class="keyword">if</span> ((runTasks &amp; <span class="number">0x3F</span>) == <span class="number">0</span>) &#123;</span><br><span class="line">            lastExecutionTime = ScheduledFutureTask.nanoTime();</span><br><span class="line">            <span class="keyword">if</span> (lastExecutionTime &gt;= deadline) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        task = pollTask();</span><br><span class="line">        <span class="keyword">if</span> (task == <span class="keyword">null</span>) &#123;</span><br><span class="line">            lastExecutionTime = ScheduledFutureTask.nanoTime();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    afterRunningAllTasks();</span><br><span class="line">    <span class="keyword">this</span>.lastExecutionTime = lastExecutionTime;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<ol>
+<li>任务的聚合</li>
+<li>任务的执行</li>
+</ol>
+<h4 id="任务的聚合"><a href="#任务的聚合" class="headerlink" title="任务的聚合"></a>任务的聚合</h4><p>将定时任务队列里过期的任务聚合到taskQueue</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">fetchFromScheduledTaskQueue</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> nanoTime = AbstractScheduledEventExecutor.nanoTime(); </span><br><span class="line">    <span class="comment">// 算出距离定时任务队列开始时的时间</span></span><br><span class="line"></span><br><span class="line">    Runnable scheduledTask  = pollScheduledTask(nanoTime);</span><br><span class="line">    <span class="comment">// 取出已经过期的延时任务</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (scheduledTask != <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (!taskQueue.offer(scheduledTask)) &#123;</span><br><span class="line">        <span class="comment">// 如果向taskQueue添加失败</span></span><br><span class="line">        <span class="comment">// No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.             </span></span><br><span class="line">        scheduledTaskQueue().add((ScheduledFutureTask&lt;?&gt;) scheduledTask);</span><br><span class="line">        <span class="comment">// 因为之前把定时队列取出的时候会remove，所以需要重新添加回去</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      scheduledTask  = pollScheduledTask(nanoTime);</span><br><span class="line">      <span class="comment">// 继续取出定时队列的一个任务，scheduledTaskQueue是一个优先级队列</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>定时任务<code>ScheduledFutureTask</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">long</span> <span class="title">deadlineNanos</span><span class="params">(<span class="keyword">long</span> delay)</span> </span>&#123;</span><br><span class="line">      <span class="keyword">long</span> deadlineNanos = nanoTime() + delay;</span><br><span class="line">      <span class="comment">// Guard against overflow</span></span><br><span class="line">      <span class="keyword">return</span> deadlineNanos &lt; <span class="number">0</span> ? Long.MAX_VALUE : deadlineNanos;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//延时时间短的，排在前面</span></span><br><span class="line"><span class="comment">//如果时间相等，则比较Id大小，小的在前</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(Delayed o)</span> </span>&#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">this</span> == o) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      ScheduledFutureTask&lt;?&gt; that = (ScheduledFutureTask&lt;?&gt;) o;</span><br><span class="line">      <span class="keyword">long</span> d = deadlineNanos() - that.deadlineNanos();</span><br><span class="line">      <span class="keyword">if</span> (d &lt; <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (d &gt; <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (id &lt; that.id) &#123;</span><br><span class="line">          <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (id == that.id) &#123;</span><br><span class="line">          <span class="keyword">throw</span> <span class="keyword">new</span> Error();</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<h4 id="任务的执行"><a href="#任务的执行" class="headerlink" title="任务的执行"></a>任务的执行</h4><p>safeExecute</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">safeExecute</span><span class="params">(Runnable task)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      task.run();</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">      logger.warn(<span class="string">"A task raised an exception. Task: &#123;&#125;"</span>, task, t);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>可以看到就是简单地执行run方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (;;) &#123;</span><br><span class="line">    safeExecute(task);  <span class="comment">//2. </span></span><br><span class="line"></span><br><span class="line">    runTasks ++;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Check timeout every 64 tasks because nanoTime() is relatively expensive.</span></span><br><span class="line">    <span class="comment">// <span class="doctag">XXX:</span> Hard-coded value - will make it configurable if it is really a problem.</span></span><br><span class="line">    <span class="keyword">if</span> ((runTasks &amp; <span class="number">0x3F</span>) == <span class="number">0</span>) &#123;</span><br><span class="line">        lastExecutionTime = ScheduledFutureTask.nanoTime();</span><br><span class="line">        <span class="keyword">if</span> (lastExecutionTime &gt;= deadline) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    task = pollTask();</span><br><span class="line">    <span class="keyword">if</span> (task == <span class="keyword">null</span>) &#123;</span><br><span class="line">        lastExecutionTime = ScheduledFutureTask.nanoTime();</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<ol>
+<li><p>执行任务次数+1</p>
+</li>
+<li><p>判断执行任务次数是否达到64</p>
+<ol>
+<li><p>如果到达了64个，就判断是否到达非I/O任务时间，是的话就退出，并记录下最后执行任务的时间，break</p>
+</li>
+<li><p>未达到64，且未超时，则取任务进行下一个循环，直到taskQueue为空</p>
+</li>
+</ol>
+</li>
+</ol>
+<p><strong>检查（nanoTime的执行）也是相对耗时的操作，这里用了硬编码的方式</strong></p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.csdn.net/u010853261/article/details/620437" target="_blank" rel="noopener">netty源码分析–EventLoopGroup与EventLoop 分析netty的线程模型</a></p>
+<p><a href="https://www.jianshu.com/p/3ec120ca46b2" target="_blank" rel="noopener">JDK Epoll空轮询bug</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/summary/" rel="tag"># summary</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/08/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(1)%E2%80%94%E2%80%94%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%9A%84%E5%90%AF%E5%8A%A8/" rel="prev" title="毕业前夕提升系列(二)：Netty总结(1)——服务端的启动">
+      <i class="fa fa-chevron-left"></i> 毕业前夕提升系列(二)：Netty总结(1)——服务端的启动
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/09/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(3)%E2%80%94%E2%80%94%E6%96%B0%E8%BF%9E%E6%8E%A5%E6%8E%A5%E5%85%A5/" rel="next" title="毕业前夕提升系列(二)：毕业前夕提升系列(二)：Netty总结(3)——新连接接入">
+      毕业前夕提升系列(二)：毕业前夕提升系列(二)：Netty总结(3)——新连接接入 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#问题"><span class="nav-number">1.</span> <span class="nav-text">问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线程池的创建"><span class="nav-number">2.</span> <span class="nav-text">线程池的创建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Executor的创建"><span class="nav-number">2.1.</span> <span class="nav-text">Executor的创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#newChild-：创建NioEventLoop"><span class="nav-number">2.2.</span> <span class="nav-text">newChild()：创建NioEventLoop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#线程选择器"><span class="nav-number">2.3.</span> <span class="nav-text">线程选择器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NioEventLoop启动"><span class="nav-number">3.</span> <span class="nav-text">NioEventLoop启动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NioEventLoop执行"><span class="nav-number">4.</span> <span class="nav-text">NioEventLoop执行</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#检测I-O事件"><span class="nav-number">4.1.</span> <span class="nav-text">检测I&#x2F;O事件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#处理selectionKey"><span class="nav-number">4.2.</span> <span class="nav-text">处理selectionKey</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#select优化"><span class="nav-number">4.2.1.</span> <span class="nav-text">select优化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#具体处理"><span class="nav-number">4.2.2.</span> <span class="nav-text">具体处理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#任务处理"><span class="nav-number">4.3.</span> <span class="nav-text">任务处理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#任务的聚合"><span class="nav-number">4.3.1.</span> <span class="nav-text">任务的聚合</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#任务的执行"><span class="nav-number">4.3.2.</span> <span class="nav-text">任务的执行</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="lqsss"
+      src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+  <p class="site-author-name" itemprop="name">lqsss</p>
+  <div class="site-description" itemprop="description">There's no place like 127.0.0.1</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">41</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">160k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">2:26</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

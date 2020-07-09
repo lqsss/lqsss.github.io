@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="安全性证明">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Raft(五) Proof of safety">
+<meta property="og:url" content="http://yoursite.com/2020/07/08/Raft(%E4%BA%94)/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="安全性证明">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/raft7.png">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/raft8.png">
+<meta property="article:published_time" content="2020-07-08T07:33:59.785Z">
+<meta property="article:modified_time" content="2020-07-08T07:33:59.785Z">
+<meta property="article:author" content="lqsss">
+<meta property="article:tag" content="consenus">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/raft7.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/08/Raft(%E4%BA%94)/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>Raft(五) Proof of safety | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/08/Raft(%E4%BA%94)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Raft(五) Proof of safety
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-07-08 15:33:59" itemprop="dateCreated datePublished" datetime="2020-07-08T15:33:59+08:00">2020-07-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/distributed/" itemprop="url" rel="index"><span itemprop="name">distributed</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>1.4k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>安全性证明</p>
+<a id="more"></a>
+
+<h2 id="Raft里的特性"><a href="#Raft里的特性" class="headerlink" title="Raft里的特性"></a>Raft里的特性</h2><p><img src="http://op7scj9he.bkt.clouddn.com/raft7.png" alt=""></p>
+<h2 id="选举安全特性"><a href="#选举安全特性" class="headerlink" title="选举安全特性"></a>选举安全特性</h2><blockquote>
+<p>对于一个给定的任期号，最多只会有一个领导人被选举出来<br>随机的选举超时机制，选举成功后发送心跳包告知他人。</p>
+</blockquote>
+<p>存在的问题：splite vote，通过随机的选举超时机制，进行多轮的超时选举</p>
+<ul>
+<li>任期号：非常重要的成分，在Raft算法中起到一个逻辑时钟的作用，单调递增。各个节点心跳、投票请求、复制log都会交换任期号（得到更大的任期号），候选人或者领导者收到更大的任期号，会自动变成跟随者。</li>
+<li>major：同一任期获取大多数投票,follower在一个term里只能投一票</li>
+<li>选票瓜分：在一个任期里无法选举出领导者，进行下一轮选举，经过一个新的选举时间，任期号+1，发起投票请求…直到选出领导者。</li>
+</ul>
+<h2 id="领导人只附加原则"><a href="#领导人只附加原则" class="headerlink" title="领导人只附加原则"></a>领导人只附加原则</h2><ul>
+<li>领导人处理不一致是通过<strong>强制跟随者直接复制</strong>自己的日志来解决了。</li>
+<li>在发送附加日志 RPC的时候，领导人会把新的日志条目紧接着<strong>之前的条目的索引位置和任期号</strong>包含在里面。如果跟随者在它的日志中找不到包含相同索引位置和任期号的条目，那么他就会拒绝接收新的日志条目。</li>
+</ul>
+<h2 id="日志匹配原则"><a href="#日志匹配原则" class="headerlink" title="日志匹配原则"></a>日志匹配原则</h2><blockquote>
+<p>如果在不同的日志中的两个条目拥有相同的索引和任期号，那么他们之前的所有日志条目也全部相同。</p>
+</blockquote>
+<ul>
+<li>附加日志 RPC 的一个简单的一致性检查所保证。</li>
+</ul>
+<h2 id="领导人完全特性"><a href="#领导人完全特性" class="headerlink" title="领导人完全特性"></a>领导人完全特性</h2><blockquote>
+<p>如果某个日志条目在某个任期号中已经被提交，那么这个条目必然出现在更大任期号的所有领导人中</p>
+</blockquote>
+<h3 id="反证法"><a href="#反证法" class="headerlink" title="反证法"></a>反证法</h3><p><img src="http://op7scj9he.bkt.clouddn.com/raft8.png" alt=""><br>描述场景：如果 S1 （任期 T 的领导者）提交了一条新的日志在它的任期里，然后 S5 在之后的任期 U 里被选举为领导人，然后至少会有一个机器，如 S3，既拥有来自 S1 的日志，也给 S5 投票了。</p>
+<p>我们假设<strong>领导人完全性特性是不存在的</strong>，然后我们推出矛盾来。假设任期 T 的领导人（领导人T）在任期内提交了一条日志条目，但是这条日志条目没有被存储到未来某个任期的领导人的日志中。</p>
+<p><strong>设大于 T 的最小任期 U 的领导人 U 没有这条日志条目。</strong></p>
+<p>细节：</p>
+<ol>
+<li>由于假设，领导人完全性特性不存在的。term U的领导人S5没有term U的日志条目，收到了来自至少一个拥有termT的日志条目的一票（图中的S3）</li>
+<li>根据另外一个假设，大于 T 的最小任期 U 的领导人 U 没有这条日志条目。也就是说在[T…U)之间的领导人都是存在term T的该日志的，U是没有此日志的。</li>
+<li>投票者把自己选票投给领导人 U 时，领导人 U 的日志必须和投票者自己一样新。这就导致了两者矛盾。</li>
+</ol>
+<ul>
+<li>两个矛盾：<ul>
+<li>如果voter和U的最后的term相同，那么leaderU则至少在最后的term的日志和voter的一样长，即包含了leader T提交的log entry;</li>
+<li>如果voter和U的最后的term不相同，那么U的必定大于voter的，则leader U必须包含term T的所有日志，因为U &gt; T；（日志匹配原则）</li>
+</ul>
+</li>
+</ul>
+<ol start="4">
+<li>因此，假设不成立，不可能存在term U，使得term U中的leader不包含之前leader已经提交过的log entry。</li>
+</ol>
+<h2 id="状态机安全特性"><a href="#状态机安全特性" class="headerlink" title="状态机安全特性"></a>状态机安全特性</h2><blockquote>
+<p>如果一个领导人在给定的索引值的日志项应用到状态机中，那么其他任何的服务器在这个索引的位置不会提交一个不同的日志</p>
+</blockquote>
+<p>现在我们来考虑在任何一个服务器应用一个指定索引位置的日志的最小任期；领导人完全特性保证拥有更高任期号的领导人会存储相同的日志条目，所以之后的任期里应用某个索引位置的日志条目也会是相同的值。因此，状态机安全特性是成立的。</p>
+<p>最后，Raft 要求服务器按照日志中索引位置顺序应用日志条目。和状态机安全特性结合起来看，这就意味着所有的服务器会应用相同的日志序列集到自己的状态机中，并且是按照相同的顺序。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/consenus/" rel="tag"># consenus</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/08/Raft(%E5%9B%9B)/" rel="prev" title="Raft(四) safety">
+      <i class="fa fa-chevron-left"></i> Raft(四) safety
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/08/Raft(%E4%BA%8C)/" rel="next" title="Raft(二) leader election">
+      Raft(二) leader election <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Raft里的特性"><span class="nav-number">1.</span> <span class="nav-text">Raft里的特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#选举安全特性"><span class="nav-number">2.</span> <span class="nav-text">选举安全特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#领导人只附加原则"><span class="nav-number">3.</span> <span class="nav-text">领导人只附加原则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日志匹配原则"><span class="nav-number">4.</span> <span class="nav-text">日志匹配原则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#领导人完全特性"><span class="nav-number">5.</span> <span class="nav-text">领导人完全特性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#反证法"><span class="nav-number">5.1.</span> <span class="nav-text">反证法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#状态机安全特性"><span class="nav-number">6.</span> <span class="nav-text">状态机安全特性</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="lqsss"
+      src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+  <p class="site-author-name" itemprop="name">lqsss</p>
+  <div class="site-description" itemprop="description">There's no place like 127.0.0.1</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">41</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">160k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">2:26</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

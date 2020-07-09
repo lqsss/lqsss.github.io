@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="pipeline负责读写事件的传播">
+<meta property="og:type" content="article">
+<meta property="og:title" content="毕业前夕提升系列(二)：Netty总结(4)——pipeline">
+<meta property="og:url" content="http://yoursite.com/2020/07/09/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(4)%E2%80%94%E2%80%94pipeline/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="pipeline负责读写事件的传播">
+<meta property="og:image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/ChannelHandler.png">
+<meta property="article:published_time" content="2020-07-09T06:29:05.012Z">
+<meta property="article:modified_time" content="2020-07-09T06:45:46.203Z">
+<meta property="article:author" content="lqsss">
+<meta property="article:tag" content="summary">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/ChannelHandler.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/09/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(4)%E2%80%94%E2%80%94pipeline/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>毕业前夕提升系列(二)：Netty总结(4)——pipeline | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/09/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(4)%E2%80%94%E2%80%94pipeline/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          毕业前夕提升系列(二)：Netty总结(4)——pipeline
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-07-09 14:29:05 / Modified: 14:45:46" itemprop="dateCreated datePublished" datetime="2020-07-09T14:29:05+08:00">2020-07-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Netty/" itemprop="url" rel="index"><span itemprop="name">Netty</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>11k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>10 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>pipeline负责读写事件的传播</p>
+<a id="more"></a>
+
+<p>Q1：Netty是如何判断ChannelHandler类型的</p>
+<p>Q2：对于ChannelHandler的添加应该遵循什么样的顺序？</p>
+<p>Q3：<strong>用户手动触发事件传播</strong>，不同的触发方式有什么样的区别？</p>
+<h2 id="pipeline初始化"><a href="#pipeline初始化" class="headerlink" title="pipeline初始化"></a>pipeline初始化</h2><h3 id="发生时机"><a href="#发生时机" class="headerlink" title="发生时机"></a>发生时机</h3><p>发生在NioSocketChannel创建时，<code>newChannelPipeline()</code>为创建一个ChannelPipeline的过程。每一个新创建的Channel都将会被分配一个新的ChannelPipeline。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="title">AbstractChannel</span><span class="params">(Channel parent)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.parent = parent;</span><br><span class="line">    id = newId();</span><br><span class="line">    unsafe = newUnsafe();</span><br><span class="line">    pipeline = newChannelPipeline();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="pipeline节点结构"><a href="#pipeline节点结构" class="headerlink" title="pipeline节点结构"></a>pipeline节点结构</h3><p>pipeline的节点结构：<code>ChannelHandlerContext</code></p>
+<p>我们从HeadContext进入发现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ChannelHandlerContext</span> <span class="keyword">extends</span> <span class="title">AttributeMap</span>, <span class="title">ChannelInboundInvoker</span>, <span class="title">ChannelOutboundInvoker</span></span>&#123;</span><br><span class="line">      <span class="function">Channel <span class="title">channel</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">      <span class="function">EventExecutor <span class="title">executor</span><span class="params">()</span></span>;<span class="comment">//哪一个NIO线程执行</span></span><br><span class="line"></span><br><span class="line">      <span class="function">String <span class="title">name</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">      <span class="function">ChannelHandler <span class="title">handler</span><span class="params">()</span></span>;<span class="comment">//节点处理器</span></span><br><span class="line"></span><br><span class="line">      <span class="function"><span class="keyword">boolean</span> <span class="title">isRemoved</span><span class="params">()</span></span>;<span class="comment">//表示这节点是否被移除</span></span><br><span class="line">  </span><br><span class="line">  		<span class="function">ChannelPipeline <span class="title">pipeline</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p>ChannelHandlerContext的继承父类：</p>
+<ul>
+<li><p><code>AttributeMap</code>设置属性</p>
+</li>
+<li><p><code>ChannelInboundInvoker</code>Inbound事件：读事件、注册、active</p>
+</li>
+<li><p><code>ChannelOutboundInvoker</code>Outbound事件：传播写事件</p>
+</li>
+</ul>
+<h3 id="两大哨兵"><a href="#两大哨兵" class="headerlink" title="两大哨兵"></a>两大哨兵</h3><p><code>TailContext、HeadContext</code></p>
+<h4 id="TailContext"><a href="#TailContext" class="headerlink" title="TailContext"></a>TailContext</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">TailContext</span> <span class="keyword">extends</span> <span class="title">AbstractChannelHandlerContext</span> <span class="keyword">implements</span> <span class="title">ChannelInboundHandler</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        TailContext(DefaultChannelPipeline pipeline) &#123;</span><br><span class="line">            <span class="keyword">super</span>(pipeline, <span class="keyword">null</span>, TAIL_NAME, <span class="keyword">true</span>, <span class="keyword">false</span>);</span><br><span class="line">            setAddComplete();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> ChannelHandler <span class="title">handler</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">        &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">//未捕获的异常，会在这里捕获</span></span><br><span class="line">          <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">exceptionCaught</span><span class="params">(ChannelHandlerContext ctx, Throwable cause)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">            onUnhandledInboundException(cause);</span><br><span class="line">        &#125;</span><br><span class="line">  <span class="comment">//未处理的inbound消息，会在这里(tail)处理</span></span><br><span class="line">         <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">channelRead</span><span class="params">(ChannelHandlerContext ctx, Object msg)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">            onUnhandledInboundMessage(msg);</span><br><span class="line">        &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h4 id="HeadContext"><a href="#HeadContext" class="headerlink" title="HeadContext"></a>HeadContext</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HeadContext(DefaultChannelPipeline pipeline) &#123;</span><br><span class="line">    <span class="keyword">super</span>(pipeline, <span class="keyword">null</span>, HEAD_NAME, <span class="keyword">false</span>, <span class="keyword">true</span>);<span class="comment">//1</span></span><br><span class="line">    unsafe = pipeline.channel().unsafe();</span><br><span class="line">    setAddComplete();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p>与TailContext区别在于，HeadContext是设置的为outbound。</p>
+<h2 id="添加childHandler"><a href="#添加childHandler" class="headerlink" title="添加childHandler"></a>添加childHandler</h2><p>Q:什么时候添加？ </p>
+<blockquote>
+<p>A：《毕业前夕提升系列(二)：Netty总结(3)——新连接接入》：accept创建新连接后，传播read事件到ServerBootstrapAcceptor里的channelRead()方法里添加。</p>
+</blockquote>
+<p>流程：</p>
+<ol>
+<li>判断是否重复添加</li>
+<li>创建节点并添加至链表</li>
+<li>回调添加完成事件</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> ChannelPipeline <span class="title">addLast</span><span class="params">(EventExecutorGroup group, String name, ChannelHandler handler)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> AbstractChannelHandlerContext newCtx;</span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">        checkMultiplicity(handler); <span class="comment">//1. </span></span><br><span class="line"></span><br><span class="line">        newCtx = newContext(group, filterName(name, handler), handler);<span class="comment">//2</span></span><br><span class="line"></span><br><span class="line">        addLast0(newCtx);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// If the registered is false it means that the channel was not registered on an eventloop yet.</span></span><br><span class="line">        <span class="comment">// In this case we add the context to the pipeline and add a task that will call</span></span><br><span class="line">        <span class="comment">// ChannelHandler.handlerAdded(...) once the channel is registered.</span></span><br><span class="line">        <span class="keyword">if</span> (!registered) &#123;</span><br><span class="line">            newCtx.setAddPending();</span><br><span class="line">            callHandlerCallbackLater(newCtx, <span class="keyword">true</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        EventExecutor executor = newCtx.executor();</span><br><span class="line">        <span class="keyword">if</span> (!executor.inEventLoop()) &#123;</span><br><span class="line">            newCtx.setAddPending();</span><br><span class="line">            executor.execute(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                    callHandlerAdded0(newCtx);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    callHandlerAdded0(newCtx);<span class="comment">//3</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="1-判断是否重复添加"><a href="#1-判断是否重复添加" class="headerlink" title="1. 判断是否重复添加"></a>1. 判断是否重复添加</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">checkMultiplicity</span><span class="params">(ChannelHandler handler)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (handler <span class="keyword">instanceof</span> ChannelHandlerAdapter) &#123;</span><br><span class="line">        ChannelHandlerAdapter h = (ChannelHandlerAdapter) handler;</span><br><span class="line">        <span class="keyword">if</span> (!h.isSharable() &amp;&amp; h.added) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> ChannelPipelineException(</span><br><span class="line">                    h.getClass().getName() +</span><br><span class="line">                    <span class="string">" is not a @Sharable handler, so can't be added or removed multiple times."</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        h.added = <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="2-创建节点并添加至链表"><a href="#2-创建节点并添加至链表" class="headerlink" title="2. 创建节点并添加至链表"></a>2. 创建节点并添加至链表</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">newCtx = newContext(group, filterName(name, handler), handler);</span><br><span class="line">addLast0(newCtx);</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="3-回调添加完成事件"><a href="#3-回调添加完成事件" class="headerlink" title="3. 回调添加完成事件"></a>3. 回调添加完成事件</h3><p><code>callHandlerAdded0(newCtx);</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">callHandlerAdded0</span><span class="params">(<span class="keyword">final</span> AbstractChannelHandlerContext ctx)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="comment">// We must call setAddComplete before calling handlerAdded. Otherwise if the handlerAdded method generates</span></span><br><span class="line">      <span class="comment">// any pipeline events ctx.handler() will miss them because the state will not allow it.</span></span><br><span class="line">      ctx.setAddComplete(); <span class="comment">//添加完毕</span></span><br><span class="line">      ctx.handler().handlerAdded(ctx); <span class="comment">//handler添加完成的回调</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">      <span class="keyword">boolean</span> removed = <span class="keyword">false</span>;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        remove0(ctx);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          ctx.handler().handlerRemoved(ctx);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">          ctx.setRemoved();</span><br><span class="line">        &#125;</span><br><span class="line">        removed = <span class="keyword">true</span>;</span><br><span class="line">      &#125; <span class="keyword">catch</span> (Throwable t2) &#123;</span><br><span class="line">        <span class="keyword">if</span> (logger.isWarnEnabled()) &#123;</span><br><span class="line">          logger.warn(<span class="string">"Failed to remove a handler: "</span> + ctx.name(), t2);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (removed) &#123;</span><br><span class="line">        fireExceptionCaught(<span class="keyword">new</span> ChannelPipelineException(</span><br><span class="line">          ctx.handler().getClass().getName() +</span><br><span class="line">          <span class="string">".handlerAdded() has thrown an exception; removed."</span>, t));</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        fireExceptionCaught(<span class="keyword">new</span> ChannelPipelineException(</span><br><span class="line">          ctx.handler().getClass().getName() +</span><br><span class="line">          <span class="string">".handlerAdded() has thrown an exception; also failed to remove."</span>, t));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="删除childHandler"><a href="#删除childHandler" class="headerlink" title="删除childHandler"></a>删除childHandler</h2><p>场景：权限校验</p>
+<ul>
+<li>remove</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> ChannelPipeline <span class="title">remove</span><span class="params">(ChannelHandler handler)</span> </span>&#123;</span><br><span class="line">    remove(getContextOrDie(handler));</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="1-找到节点"><a href="#1-找到节点" class="headerlink" title="1. 找到节点"></a>1. 找到节点</h3><ul>
+<li>getContextOrDie</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> AbstractChannelHandlerContext <span class="title">getContextOrDie</span><span class="params">(ChannelHandler handler)</span> </span>&#123;</span><br><span class="line">  <span class="comment">//1. 获取节点</span></span><br><span class="line">    AbstractChannelHandlerContext ctx = (AbstractChannelHandlerContext) context(handler);</span><br><span class="line">    <span class="keyword">if</span> (ctx == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchElementException(handler.getClass().getName());</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> ctx;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<ul>
+<li>context<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> ChannelHandlerContext <span class="title">context</span><span class="params">(ChannelHandler handler)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (handler == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"handler"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    AbstractChannelHandlerContext ctx = head.next;</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (ctx == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (ctx.handler() == handler) &#123;</span><br><span class="line">            <span class="keyword">return</span> ctx;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        ctx = ctx.next;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+</li>
+</ul>
+<h3 id="2-删除"><a href="#2-删除" class="headerlink" title="2.删除"></a>2.删除</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> AbstractChannelHandlerContext <span class="title">remove</span><span class="params">(<span class="keyword">final</span> AbstractChannelHandlerContext ctx)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">assert</span> ctx != head &amp;&amp; ctx != tail;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">        remove0(ctx);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// If the registered is false it means that the channel was not registered on an eventloop yet.</span></span><br><span class="line">        <span class="comment">// In this case we remove the context from the pipeline and add a task that will call</span></span><br><span class="line">        <span class="comment">// ChannelHandler.handlerRemoved(...) once the channel is registered.</span></span><br><span class="line">        <span class="keyword">if</span> (!registered) &#123;</span><br><span class="line">            callHandlerCallbackLater(ctx, <span class="keyword">false</span>);</span><br><span class="line">            <span class="keyword">return</span> ctx;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        EventExecutor executor = ctx.executor();</span><br><span class="line">        <span class="keyword">if</span> (!executor.inEventLoop()) &#123;</span><br><span class="line">            executor.execute(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                    callHandlerRemoved0(ctx);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">            <span class="keyword">return</span> ctx;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    callHandlerRemoved0(ctx);<span class="comment">//3</span></span><br><span class="line">    <span class="keyword">return</span> ctx;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-回调删除事件"><a href="#3-回调删除事件" class="headerlink" title="3.回调删除事件"></a>3.回调删除事件</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">callHandlerRemoved0</span><span class="params">(<span class="keyword">final</span> AbstractChannelHandlerContext ctx)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Notify the complete removal.</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            ctx.handler().handlerRemoved(ctx);<span class="comment">//回调处</span></span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            ctx.setRemoved();<span class="comment">//设置为REMOVE_COMPLETE状态</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">        fireExceptionCaught(<span class="keyword">new</span> ChannelPipelineException(</span><br><span class="line">                ctx.handler().getClass().getName() + <span class="string">".handlerRemoved() has thrown an exception."</span>, t));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="inBound事件的传播"><a href="#inBound事件的传播" class="headerlink" title="inBound事件的传播"></a>inBound事件的传播</h2><p><img src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/ChannelHandler.png" alt="ChannelHandler"></p>
+<p>channelRead():</p>
+<ul>
+<li>服务端channel：连接</li>
+<li>客户端channel：bytebuf数据</li>
+</ul>
+<h3 id="channelRead事件传播"><a href="#channelRead事件传播" class="headerlink" title="channelRead事件传播"></a>channelRead事件传播</h3><p>有A、B、C三个InboundHandler，在pipeline里顺序：A-&gt;B-&gt;C，调用<code>pipeline.fireChannelRead()</code>传递消息。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> ChannelPipeline <span class="title">fireChannelRead</span><span class="params">(Object msg)</span> </span>&#123;</span><br><span class="line">    AbstractChannelHandlerContext.invokeChannelRead(head, msg);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>从Head开始传播，找到下一个inbound类型的handle</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">invokeChannelRead</span><span class="params">(<span class="keyword">final</span> AbstractChannelHandlerContext next, Object msg)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> Object m = next.pipeline.touch(ObjectUtil.checkNotNull(msg, <span class="string">"msg"</span>), next);</span><br><span class="line">    EventExecutor executor = next.executor();</span><br><span class="line">    <span class="keyword">if</span> (executor.inEventLoop()) &#123;</span><br><span class="line">        next.invokeChannelRead(m);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        executor.execute(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                next.invokeChannelRead(m);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">invokeChannelRead</span><span class="params">(Object msg)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (invokeHandler()) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            ((ChannelInboundHandler) handler()).channelRead(<span class="keyword">this</span>, msg);</span><br><span class="line">						<span class="comment">// head的channelRead回调处</span></span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            notifyHandlerException(t);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        fireChannelRead(msg);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">channelRead</span><span class="params">(ChannelHandlerContext ctx, Object msg)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    ctx.fireChannelRead(msg); <span class="comment">//head传播至后面</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ChannelHandlerContext <span class="title">fireChannelRead</span><span class="params">(<span class="keyword">final</span> Object msg)</span> </span>&#123;</span><br><span class="line">    invokeChannelRead(findContextInbound(), msg); <span class="comment">//循环找到一个inbound类型的handler</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> AbstractChannelHandlerContext <span class="title">findContextInbound</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    AbstractChannelHandlerContext ctx = <span class="keyword">this</span>;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        ctx = ctx.next;</span><br><span class="line">    &#125; <span class="keyword">while</span> (!ctx.inbound);</span><br><span class="line">    <span class="keyword">return</span> ctx;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p>  <code>ctx.fireChannelRead(msg);</code>是从当前channelhandlerContext开始往后面传播；而<code>pipeline.fireChannelRead()</code>是从head节点开始往后面传播。如果传播到tail节点，还有没处理channelRead事件的话，会debug模式下提醒。</p>
+<h3 id="SimpleInboundHandler处理器"><a href="#SimpleInboundHandler处理器" class="headerlink" title="SimpleInboundHandler处理器"></a>SimpleInboundHandler处理器</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">channelRead</span><span class="params">(ChannelHandlerContext ctx, Object msg)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="keyword">boolean</span> release = <span class="keyword">true</span>;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (acceptInboundMessage(msg)) &#123;</span><br><span class="line">            <span class="meta">@SuppressWarnings</span>(<span class="string">"unchecked"</span>)</span><br><span class="line">            I imsg = (I) msg;      <span class="comment">//1. 转型</span></span><br><span class="line">            channelRead0(ctx, imsg); <span class="comment">//2. 用户代码回调处</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            release = <span class="keyword">false</span>;</span><br><span class="line">            ctx.fireChannelRead(msg);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      <span class="comment">//3. 自动释放</span></span><br><span class="line">        <span class="keyword">if</span> (autoRelease &amp;&amp; release) &#123;</span><br><span class="line">            ReferenceCountUtil.release(msg);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<ol>
+<li>转型</li>
+<li>用户代码回调处</li>
+<li>帮用户自动释放bytebuf。</li>
+</ol>
+<h2 id="outBound事件的传播"><a href="#outBound事件的传播" class="headerlink" title="outBound事件的传播"></a>outBound事件的传播</h2><p>outBound和inBound事件的不同：</p>
+<ul>
+<li><p>outBound:bind、connect、deregister、write、flush等，给用户主动调用的方法</p>
+</li>
+<li><p>inBound:channelRegister、ChannelActive、ChannelRead、ChannelReadComplete。更多的是事件触发，更多的是一个被动</p>
+</li>
+<li><p><strong>传播顺序与pipeline里添加的顺序相反。</strong></p>
+</li>
+</ul>
+<h3 id="write事件传播"><a href="#write事件传播" class="headerlink" title="write事件传播"></a>write事件传播</h3><p>ctx.channel().write()-&gt;pipeline.write()：从tail开始传播写入事件，如果一直传播到head，会调用<code>unsafe.write()</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> ChannelFuture <span class="title">write</span><span class="params">(Object msg, ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> tail.write(msg, promise);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ChannelFuture <span class="title">write</span><span class="params">(<span class="keyword">final</span> Object msg, <span class="keyword">final</span> ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (msg == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"msg"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (isNotValidPromise(promise, <span class="keyword">true</span>)) &#123;</span><br><span class="line">            ReferenceCountUtil.release(msg);</span><br><span class="line">            <span class="comment">// cancelled</span></span><br><span class="line">            <span class="keyword">return</span> promise;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (RuntimeException e) &#123;</span><br><span class="line">        ReferenceCountUtil.release(msg);</span><br><span class="line">        <span class="keyword">throw</span> e;</span><br><span class="line">    &#125;</span><br><span class="line">    write(msg, <span class="keyword">false</span>, promise);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> promise;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">write</span><span class="params">(Object msg, <span class="keyword">boolean</span> flush, ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">    AbstractChannelHandlerContext next = findContextOutbound();</span><br><span class="line">    <span class="keyword">final</span> Object m = pipeline.touch(msg, next);</span><br><span class="line">    EventExecutor executor = next.executor();</span><br><span class="line">    <span class="keyword">if</span> (executor.inEventLoop()) &#123;</span><br><span class="line">        <span class="keyword">if</span> (flush) &#123;</span><br><span class="line">            next.invokeWriteAndFlush(m, promise);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            next.invokeWrite(m, promise);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">final</span> AbstractWriteTask task;</span><br><span class="line">        <span class="keyword">if</span> (flush) &#123;</span><br><span class="line">            task = WriteAndFlushTask.newInstance(next, m, promise);</span><br><span class="line">        &#125;  <span class="keyword">else</span> &#123;</span><br><span class="line">            task = WriteTask.newInstance(next, m, promise);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (!safeExecute(executor, task, promise, m)) &#123;</span><br><span class="line">            <span class="comment">// We failed to submit the AbstractWriteTask. We need to cancel it so we decrement the pending bytes</span></span><br><span class="line">            <span class="comment">// and put it back in the Recycler for re-use later.</span></span><br><span class="line">            <span class="comment">//</span></span><br><span class="line">            <span class="comment">// See https://github.com/netty/netty/issues/8343.</span></span><br><span class="line">            task.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">invokeWrite</span><span class="params">(Object msg, ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (invokeHandler()) &#123;</span><br><span class="line">            invokeWrite0(msg, promise);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            write(msg, promise);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">invokeWrite0</span><span class="params">(Object msg, ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            ((ChannelOutboundHandler) handler()).write(<span class="keyword">this</span>, msg, promise);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            notifyOutboundHandlerException(t, promise);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<ul>
+<li><p>ctx.write()从当前节点向下传播。</p>
+</li>
+<li><p>ctx.channel().write()从tail开始</p>
+</li>
+</ul>
+<h2 id="异常事件传播"><a href="#异常事件传播" class="headerlink" title="异常事件传播"></a>异常事件传播</h2><p><code>exceptionCaught()</code>是ctx的捕获异常的回调函数，如果用户没有重写，默认是调用<code>fireExcetionCaught()</code></p>
+<p><code>fireExcetionCaught()</code>传递异常方法。</p>
+<p>传递顺序：pipeline双向链表的顺序。</p>
+<p>如果传播到tail节点，没有捕获的话，会在最后打印出来提醒。</p>
+<h3 id="应用程序中通常做法"><a href="#应用程序中通常做法" class="headerlink" title="应用程序中通常做法"></a>应用程序中通常做法</h3><p>添加一个异常处理器。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/summary/" rel="tag"># summary</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/09/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(3)%E2%80%94%E2%80%94%E6%96%B0%E8%BF%9E%E6%8E%A5%E6%8E%A5%E5%85%A5/" rel="prev" title="毕业前夕提升系列(二)：毕业前夕提升系列(二)：Netty总结(3)——新连接接入">
+      <i class="fa fa-chevron-left"></i> 毕业前夕提升系列(二)：毕业前夕提升系列(二)：Netty总结(3)——新连接接入
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/09/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(5)%E2%80%94%E2%80%94Netty%E4%B8%AD%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/" rel="next" title="毕业前夕提升系列(二)：Netty总结(5)——Netty中内存分配">
+      毕业前夕提升系列(二)：Netty总结(5)——Netty中内存分配 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#pipeline初始化"><span class="nav-number">1.</span> <span class="nav-text">pipeline初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#发生时机"><span class="nav-number">1.1.</span> <span class="nav-text">发生时机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pipeline节点结构"><span class="nav-number">1.2.</span> <span class="nav-text">pipeline节点结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#两大哨兵"><span class="nav-number">1.3.</span> <span class="nav-text">两大哨兵</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#TailContext"><span class="nav-number">1.3.1.</span> <span class="nav-text">TailContext</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HeadContext"><span class="nav-number">1.3.2.</span> <span class="nav-text">HeadContext</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#添加childHandler"><span class="nav-number">2.</span> <span class="nav-text">添加childHandler</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-判断是否重复添加"><span class="nav-number">2.1.</span> <span class="nav-text">1. 判断是否重复添加</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-创建节点并添加至链表"><span class="nav-number">2.2.</span> <span class="nav-text">2. 创建节点并添加至链表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-回调添加完成事件"><span class="nav-number">2.3.</span> <span class="nav-text">3. 回调添加完成事件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#删除childHandler"><span class="nav-number">3.</span> <span class="nav-text">删除childHandler</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-找到节点"><span class="nav-number">3.1.</span> <span class="nav-text">1. 找到节点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-删除"><span class="nav-number">3.2.</span> <span class="nav-text">2.删除</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-回调删除事件"><span class="nav-number">3.3.</span> <span class="nav-text">3.回调删除事件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#inBound事件的传播"><span class="nav-number">4.</span> <span class="nav-text">inBound事件的传播</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#channelRead事件传播"><span class="nav-number">4.1.</span> <span class="nav-text">channelRead事件传播</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SimpleInboundHandler处理器"><span class="nav-number">4.2.</span> <span class="nav-text">SimpleInboundHandler处理器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#outBound事件的传播"><span class="nav-number">5.</span> <span class="nav-text">outBound事件的传播</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#write事件传播"><span class="nav-number">5.1.</span> <span class="nav-text">write事件传播</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#异常事件传播"><span class="nav-number">6.</span> <span class="nav-text">异常事件传播</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#应用程序中通常做法"><span class="nav-number">6.1.</span> <span class="nav-text">应用程序中通常做法</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="lqsss"
+      src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+  <p class="site-author-name" itemprop="name">lqsss</p>
+  <div class="site-description" itemprop="description">There's no place like 127.0.0.1</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">41</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">160k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">2:26</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

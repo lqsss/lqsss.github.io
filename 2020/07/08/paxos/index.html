@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Paxos共识算法的简单认识（不带证明）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Basic Paxos">
+<meta property="og:url" content="http://yoursite.com/2020/07/08/paxos/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="Paxos共识算法的简单认识（不带证明）">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/1.JPG">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/2.JPG">
+<meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/3.JPG">
+<meta property="article:published_time" content="2020-07-08T07:33:59.786Z">
+<meta property="article:modified_time" content="2020-07-08T07:33:59.786Z">
+<meta property="article:author" content="lqsss">
+<meta property="article:tag" content="distributed">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/1.JPG">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/08/paxos/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>Basic Paxos | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/08/paxos/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Basic Paxos
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-07-08 15:33:59" itemprop="dateCreated datePublished" datetime="2020-07-08T15:33:59+08:00">2020-07-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/consenus/" itemprop="url" rel="index"><span itemprop="name">consenus</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>3.1k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>3 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Paxos共识算法的简单认识（不带证明）</p>
+<a id="more"></a>
+
+<h2 id="共识算法-consenus"><a href="#共识算法-consenus" class="headerlink" title="共识算法(consenus)"></a>共识算法(consenus)</h2><ol>
+<li>分布式系统的容错机制？<br>多个数据副本(replication) 起到一个数据冗余的作用。</li>
+<li>共识算法解决一个什么样的问题？<br>state machine replication的一致性。状态机上存储的可以是log，value，或者指令。</li>
+<li>最终一致性和强一致性？<br>分布式里的一致性(consistency)话题是一个老生常谈的问题，但是这个一致性并不能笼统地说明此处的一致性，对于数据副本，我们最好使用共识（consenus）来形容。</li>
+</ol>
+<ul>
+<li>最终一致性指的是在不同的副本在最终达成相同的状态。</li>
+<li>这里的强一致性对于client的角度来看，向系统写入什么，读出来的也会是什么。<blockquote>
+<p>当分布式系统中更新操作完成之后，任何多个进程或线程，访问系统都会获得最新的值。</p>
+</blockquote>
+</li>
+</ul>
+<p><a href="https://www.zhihu.com/question/275845393/answer/383419685" target="_blank" rel="noopener">请问分布式事务一致性与raft或paxos协议解决的一致性问题是同一回事吗？</a></p>
+<h2 id="角色"><a href="#角色" class="headerlink" title="角色"></a>角色</h2><ol>
+<li>acceptor:议案接受者，value存储的节点</li>
+<li>proposer:议案的发起者，接受client发出指令请求，执行一个请求转发</li>
+<li>learner:议案记录者，通过的议案会被记录下来，并且同步到所有acceptor</li>
+</ol>
+<h2 id="两个阶段"><a href="#两个阶段" class="headerlink" title="两个阶段"></a>两个阶段</h2><ul>
+<li>prepare阶段：判断proposer的议案候选资格</li>
+</ul>
+<ol>
+<li>多个proposer向acceptor发起议案投票请求<code>Prapare(n)</code>,这里n指的是议案编号(proposer number)，议案编号唯一。</li>
+<li>acceptor保存的是之前最大的议案编号(accepted_proposer_num)，以及接受的议案(accepted_value)，某个acceptor收到请求，首先判断传来的议案编号是否大于存储的议案编号，首次acceptor里accepted_proposer_num是null<br> 2.1 如果大于，则获取acceptor的授权，修改accepted_proposer_num为n，返回accepted_proposer_num和上一个存储的状态值(accepted_value)<br> 2.2 如果小于，则拒绝proposer的请求。</li>
+</ol>
+<p>proposer收到大部分的acceptor的返回，它就有进入第二阶段的权利，并计算其中最大的议案编号所对应的议案内容。</p>
+<ul>
+<li>accept阶段：讨论proposer提出的议案是否通过</li>
+</ul>
+<ol>
+<li>proposer给第一阶段授权的acceptor发起accept(n,V)请求<br> 1.1 var为第一阶段计算的议案内容，如果var存在，则此次议案的内容则为var<br> 1.2 如果var不存在，则议案内容为V，提交上去。</li>
+<li>acceptor接收proposer的accept请求，首先判断收到的议案号与存储当前最大的议案号的大小关系<br> 2.1 如果小于，则直接拒绝<br> 2.2 等于，设置accepted_value为V</li>
+</ol>
+<p><strong>不会出现大于的情况。</strong></p>
+<h2 id="图解"><a href="#图解" class="headerlink" title="图解"></a>图解</h2><h3 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h3><p>Acceptor：&lt;accepted_proposer_num,accepted_value&gt;,last_proposer_num(prepare_proposer_num)<br>prepare请求: {proposer_num}<br>prepare对应的ACK:{ok,&lt; accepted_proposer_num,accepted_value&gt;}<br>accept请求:{proposer_num,value}<br>accept对应的ACK:{ok,&lt; accepted_proposer_num,accepted_value&gt;}</p>
+<p><img src="http://op7scj9he.bkt.clouddn.com/1.JPG" alt=""></p>
+<ul>
+<li>prepare</li>
+</ul>
+<ol>
+<li>ProposerA发出议案编号为#1的授权请求（希望Acceptor能够投票讨论这个议案）给集群中所有Acceptor</li>
+<li>由于是系统启动初期，此时Acceptor的accepted_proposer_num,accepted_value为{null,null}，last_proposer_num此时修改为#1</li>
+<li>返回ack{ok，&lt; null,null&gt;}，给予Proposer权利进入第二阶段（投票赋值阶段）</li>
+<li>ProposerA收到超过N/2+1的ack，确认自己有赋值的权利</li>
+</ol>
+<hr>
+<p><img src="http://op7scj9he.bkt.clouddn.com/2.JPG" alt=""></p>
+<ul>
+<li>ProposerA的accept阶段</li>
+</ul>
+<ol>
+<li>ProposerA向Acceptor1发起赋值请求&lt; #1,v1&gt;,Acceptor：&lt; #1,v1&gt;,#1</li>
+</ol>
+<ul>
+<li>ProposerB在ProposerA的accept期间（还未向Acceptor2、3发起赋值请求），进入prepare阶段</li>
+</ul>
+<ol>
+<li>ProposerB向Acceptor1、2发起议案编号为#2的授权请求</li>
+<li>Acceptor1发现#2&gt;#1(下文的核心点1),修改last_proposer_num为#2，此时Acceptor1状态为&lt;#1,v1&gt;,#2</li>
+<li>Acceptor1返回ack{ok，&lt; #1，v1&gt;}，给予ProposerB权利进入第二阶段（投票赋值阶段）</li>
+<li>Acceptor2返回ProposerB一个ack{ok，&lt; null,null&gt;}，给予ProposerB权利进入第二阶段（投票赋值阶段）</li>
+<li>ProposerB收到多数派的授权，更新收到的value（核心点3），收到的value：Acceptor1的v1，Acceptor2的null，于是第二阶段要赋值的value为v1；(如果收到的多数派的value为null的话，则第二阶段要赋值的value为自己本身要提交的v2)</li>
+</ol>
+<hr>
+<p><img src="http://op7scj9he.bkt.clouddn.com/3.JPG" alt=""></p>
+<ul>
+<li>ProposerB的accept阶段 （ProposerB只会向Acceptor1、2发出请求）</li>
+</ul>
+<ol>
+<li>这时Acceptor1、2收到了来自ProposerB的赋值请求&lt; #2,v1&gt;</li>
+<li>Acceptor1修改状态&lt; #2,v1&gt;,#2,返回ACK{ok,#2,v1}</li>
+<li>Acceptor2由&lt; null,null&gt;,#2更新为&lt; #2,v1&gt;,#2,返回ACK{ok,#2,v1}</li>
+<li>ProposerB收到多数派的ACK，赋值成功</li>
+</ol>
+<ul>
+<li>ProposerA的accept阶段</li>
+</ul>
+<ol>
+<li>这时Acceptor2、3收到了来自ProposerA的赋值请求&lt; #1,v1&gt;</li>
+<li>Acceptor2发现收到的请求议案编号为#1&lt;#2(核心点3)，拒绝此次请求</li>
+<li>Acceptor3由&lt; null,null&gt;,#1更新为&lt; #1,v1&gt;,#1,返回ACK{ok,#1,v1}</li>
+<li>ProposerB收到多数派的ACK，赋值成功</li>
+</ol>
+<p>这里我们看出ProposerA、B都赋值成功，然而并不冲突，整个集群保持了一致的状态（value:v1）。当集群中的大多数保持了一致，就确定了一致，由learn记录这个value，完成整个集群的同步，达到最终一致。</p>
+<h2 id="核心点"><a href="#核心点" class="headerlink" title="核心点"></a>核心点</h2><ol>
+<li>acceptor只能接受大于等于当前最大的议案编号，否则拒绝。</li>
+<li>paxos是一个多数派协议，proposer在第一阶段收到N/2+1个授权，才能进入第二阶段，在第二阶段收到大部分赋值ack，表明大部分的acceptor存储了这个状态，才能算此次议案通过。</li>
+<li>已经确认最终保持一致的状态，不会再改变。后面就算存在议案编号更大的议案请求，当它发现大多数acceptor都已经存储了某个具体的value，自然也将此次请求改为{n,value};只有当proposer发现大多数acceptor里的value为null时，才将自己提案中的V对授权过的acceptor发出更新请求{n,V}。</li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.csdn.net/yinwenjie/article/details/61933266" target="_blank" rel="noopener">架构设计：系统存储（24）——数据一致性与Paxos算法（中）</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/distributed/" rel="tag"># distributed</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/08/network/" rel="prev" title="网络">
+      <i class="fa fa-chevron-left"></i> 网络
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/08/https/" rel="next" title="HTTP/HTTPS">
+      HTTP/HTTPS <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#共识算法-consenus"><span class="nav-number">1.</span> <span class="nav-text">共识算法(consenus)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#角色"><span class="nav-number">2.</span> <span class="nav-text">角色</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#两个阶段"><span class="nav-number">3.</span> <span class="nav-text">两个阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#图解"><span class="nav-number">4.</span> <span class="nav-text">图解</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#结构"><span class="nav-number">4.1.</span> <span class="nav-text">结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#核心点"><span class="nav-number">5.</span> <span class="nav-text">核心点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="lqsss"
+      src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+  <p class="site-author-name" itemprop="name">lqsss</p>
+  <div class="site-description" itemprop="description">There's no place like 127.0.0.1</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">41</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">160k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">2:26</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
