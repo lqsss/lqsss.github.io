@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="netty中在使用writeAndFlush方法最终在doWrite()方法，是通过NIO的socketChannel的write方法，该方法在设置none-blocking模式下是异步写入的，如果client需要在写入成功后加上一些后续逻辑，一般是下面做法: 12345678ChannelFuture channelFuture &#x3D; chan.writeAndFlush(object);chan">
+<meta property="og:type" content="article">
+<meta property="og:title" content="毕业前夕提升系列(二)：Netty总结(11)——观察者模式在Netty的应用">
+<meta property="og:url" content="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(11)%E2%80%94%E2%80%94%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F%E5%9C%A8Netty%E7%9A%84%E5%BA%94%E7%94%A8/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="netty中在使用writeAndFlush方法最终在doWrite()方法，是通过NIO的socketChannel的write方法，该方法在设置none-blocking模式下是异步写入的，如果client需要在写入成功后加上一些后续逻辑，一般是下面做法: 12345678ChannelFuture channelFuture &#x3D; chan.writeAndFlush(object);chan">
+<meta property="article:published_time" content="2020-08-02T10:35:38.934Z">
+<meta property="article:modified_time" content="2020-08-02T10:35:38.935Z">
+<meta property="article:author" content="lqsss">
+<meta property="article:tag" content="summary">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(11)%E2%80%94%E2%80%94%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F%E5%9C%A8Netty%E7%9A%84%E5%BA%94%E7%94%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>毕业前夕提升系列(二)：Netty总结(11)——观察者模式在Netty的应用 | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(11)%E2%80%94%E2%80%94%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F%E5%9C%A8Netty%E7%9A%84%E5%BA%94%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          毕业前夕提升系列(二)：Netty总结(11)——观察者模式在Netty的应用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-02 18:35:38" itemprop="dateCreated datePublished" datetime="2020-08-02T18:35:38+08:00">2020-08-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Netty/" itemprop="url" rel="index"><span itemprop="name">Netty</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>netty中在使用<code>writeAndFlush</code>方法最终在<code>doWrite()</code>方法，是通过NIO的socketChannel的<code>write</code>方法，该方法在设置none-blocking模式下是异步写入的，如果client需要在写入成功后加上一些后续逻辑，一般是下面做法:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ChannelFuture channelFuture = chan.writeAndFlush(object);</span><br><span class="line">channelFuture.addListener((future) -&gt; &#123;</span><br><span class="line">    <span class="keyword">if</span> (future.isSuccess()) &#123;</span><br><span class="line"></span><br><span class="line">    &#125; eles &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="Netty的Promise"><a href="#Netty的Promise" class="headerlink" title="Netty的Promise"></a>Netty的Promise</h2><p>netty中的Promise类就是观察者的体现，我们用<code>writeAndFlush</code>来跟踪一下源码</p>
+<p><code>writeAndFlush()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ChannelFuture <span class="title">writeAndFlush</span><span class="params">(Object msg)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> writeAndFlush(msg, newPromise());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="创建Promise对象"><a href="#创建Promise对象" class="headerlink" title="创建Promise对象"></a>创建Promise对象</h3><p><code>AbstractChannelHandlerContext#newPromise()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ChannelPromise <span class="title">newPromise</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> DefaultChannelPromise(channel(), executor());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>DefaultPromise</code>类实现了<code>Promise</code>：<code>public class DefaultPromise&lt;V&gt; extends AbstractFuture&lt;V&gt; implements Promise&lt;V&gt;</code></p>
+<p><code>Promise</code>最终实现的jdk的<code>Future</code></p>
+<h3 id="Promise的传递"><a href="#Promise的传递" class="headerlink" title="Promise的传递"></a>Promise的传递</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ChannelFuture <span class="title">writeAndFlush</span><span class="params">(Object msg, ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (msg == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"msg"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (isNotValidPromise(promise, <span class="keyword">true</span>)) &#123;</span><br><span class="line">        ReferenceCountUtil.release(msg);</span><br><span class="line">        <span class="comment">// cancelled</span></span><br><span class="line">        <span class="keyword">return</span> promise;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//2. ctx传播，执行ctx的写入方法</span></span><br><span class="line">    write(msg, <span class="keyword">true</span>, promise);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> promise;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><code>AbstractChannelHandlerContext#write()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">write</span><span class="params">(Object msg, <span class="keyword">boolean</span> flush, ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">    AbstractChannelHandlerContext next = findContextOutbound();</span><br><span class="line">    <span class="keyword">final</span> Object m = pipeline.touch(msg, next);</span><br><span class="line">    EventExecutor executor = next.executor();</span><br><span class="line">    <span class="keyword">if</span> (executor.inEventLoop()) &#123;</span><br><span class="line">        <span class="keyword">if</span> (flush) &#123;</span><br><span class="line">            <span class="comment">//2.1 调用invokeWriteAndFlush()方法，promise代入</span></span><br><span class="line">            next.invokeWriteAndFlush(m, promise);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            next.invokeWrite(m, promise);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">final</span> AbstractWriteTask task;</span><br><span class="line">        <span class="keyword">if</span> (flush) &#123;</span><br><span class="line">            task = WriteAndFlushTask.newInstance(next, m, promise);</span><br><span class="line">        &#125;  <span class="keyword">else</span> &#123;</span><br><span class="line">            task = WriteTask.newInstance(next, m, promise);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//2.2 将包装好的task交付给线程池</span></span><br><span class="line">        <span class="keyword">if</span> (!safeExecute(executor, task, promise, m)) &#123;</span><br><span class="line">            <span class="comment">// We failed to submit the AbstractWriteTask. We need to cancel it so we decrement the pending bytes</span></span><br><span class="line">            <span class="comment">// and put it back in the Recycler for re-use later.</span></span><br><span class="line">            <span class="comment">//</span></span><br><span class="line">            <span class="comment">// See https://github.com/netty/netty/issues/8343.</span></span><br><span class="line">            task.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><code>DefaultChannelPipeline$HeadContext#write()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">write</span><span class="params">(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    unsafe.write(msg, promise);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><code>AbstractChannel$AbstractUnsafe#write()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">write</span><span class="params">(Object msg, ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">    assertEventLoop();</span><br><span class="line"></span><br><span class="line">    ChannelOutboundBuffer outboundBuffer = <span class="keyword">this</span>.outboundBuffer;</span><br><span class="line">    <span class="keyword">if</span> (outboundBuffer == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">// If the outboundBuffer is null we know the channel was closed and so</span></span><br><span class="line">        <span class="comment">// need to fail the future right away. If it is not null the handling of the rest</span></span><br><span class="line">        <span class="comment">// will be done in flush0()</span></span><br><span class="line">        <span class="comment">// See https://github.com/netty/netty/issues/2362</span></span><br><span class="line">      </span><br><span class="line">  			<span class="comment">//2.1.2 channel已经close了，这里设置失败状态</span></span><br><span class="line">        safeSetFailure(promise, WRITE_CLOSED_CHANNEL_EXCEPTION);</span><br><span class="line">        <span class="comment">// release message now to prevent resource-leak</span></span><br><span class="line">        ReferenceCountUtil.release(msg);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> size;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        msg = filterOutboundMessage(msg);</span><br><span class="line">        size = pipeline.estimatorHandle().size(msg);</span><br><span class="line">        <span class="keyword">if</span> (size &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            size = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">        safeSetFailure(promise, t);</span><br><span class="line">        ReferenceCountUtil.release(msg);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">  	<span class="comment">//2.1.3 将promise和消息一起包装成Entry对象塞到Entry链的末尾</span></span><br><span class="line">    outboundBuffer.addMessage(msg, size, promise);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>目前promise的流动：writeAndFlush()-&gt;pipeline上-&gt;最终到HeadContext，调用unsafe的write方法写入，将将promise和消息一起包装成Entry对象塞到Entry链的末尾，随着后续的flush操作的成功与否对promise设定成功或失败</p>
+<h3 id="设置失败结果"><a href="#设置失败结果" class="headerlink" title="设置失败结果"></a>设置失败结果</h3><p> 2.1.2  写入判断，如果channel已经close了，这里设置失败状态</p>
+<p><code>AbstractChannel#safeSetFailure()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">safeSetFailure</span><span class="params">(ChannelPromise promise, Throwable cause)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//2.1.2.1 尝试设置失败状态</span></span><br><span class="line">    <span class="keyword">if</span> (!(promise <span class="keyword">instanceof</span> VoidChannelPromise) &amp;&amp; !promise.tryFailure(cause)) &#123;</span><br><span class="line">        logger.warn(<span class="string">"Failed to mark a promise as failure because it's done already: &#123;&#125;"</span>, promise, cause);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>2.1.2.1 尝试设置失败状态</p>
+<p><code>promise.tryFailure(cause)</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">tryFailure</span><span class="params">(Throwable cause)</span> </span>&#123;</span><br><span class="line">   <span class="comment">//2.1.2.1.1 CAS设置状态</span></span><br><span class="line">    <span class="keyword">if</span> (setFailure0(cause)) &#123;</span><br><span class="line">        notifyListeners();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>2.1.2.1.1 CAS设置状态 <code>DefaultPromise#setValue0</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">setValue0</span><span class="params">(Object objResult)</span> </span>&#123;</span><br><span class="line">  <span class="comment">//如果这个没有结果或者还处于未取消的结果</span></span><br><span class="line">    <span class="keyword">if</span> (RESULT_UPDATER.compareAndSet(<span class="keyword">this</span>, <span class="keyword">null</span>, objResult) ||</span><br><span class="line">        RESULT_UPDATER.compareAndSet(<span class="keyword">this</span>, UNCANCELLABLE, objResult)) &#123;</span><br><span class="line">      <span class="comment">//如果有监听者，notifyAll()</span></span><br><span class="line">        checkNotifyWaiters();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="flush过程中改变promise的结果"><a href="#flush过程中改变promise的结果" class="headerlink" title="flush过程中改变promise的结果"></a>flush过程中改变promise的结果</h3><p>当成功写完，会调用<code>ChannelOutboundBuffer#remove()</code>，其中会设置promise为SUCCESS，通知监听者，执行回调函数。</p>
+<p><code>AbstractNioByteChannel$NioByteUnsafe#doWriteInternal()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">doWriteInternal</span><span class="params">(ChannelOutboundBuffer in, Object msg)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (msg <span class="keyword">instanceof</span> ByteBuf) &#123;</span><br><span class="line">        ByteBuf buf = (ByteBuf) msg;</span><br><span class="line">        <span class="keyword">if</span> (!buf.isReadable()) &#123;</span><br><span class="line">          <span class="comment">//3.1 当该buf已经写完了</span></span><br><span class="line">            in.remove();</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">int</span> localFlushedAmount = doWriteBytes(buf);</span><br><span class="line">        <span class="keyword">if</span> (localFlushedAmount &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            in.progress(localFlushedAmount);</span><br><span class="line">            <span class="keyword">if</span> (!buf.isReadable()) &#123;</span><br><span class="line">                in.remove();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (msg <span class="keyword">instanceof</span> FileRegion) &#123;</span><br><span class="line">        FileRegion region = (FileRegion) msg;</span><br><span class="line">        <span class="keyword">if</span> (region.transferred() &gt;= region.count()) &#123;</span><br><span class="line">            in.remove();</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">long</span> localFlushedAmount = doWriteFileRegion(region);</span><br><span class="line">        <span class="keyword">if</span> (localFlushedAmount &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            in.progress(localFlushedAmount);</span><br><span class="line">            <span class="keyword">if</span> (region.transferred() &gt;= region.count()) &#123;</span><br><span class="line">                in.remove();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Should not reach here.</span></span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> Error();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> WRITE_STATUS_SNDBUF_FULL;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">remove</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Entry e = flushedEntry;</span><br><span class="line">    <span class="keyword">if</span> (e == <span class="keyword">null</span>) &#123;</span><br><span class="line">        clearNioBuffers();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Object msg = e.msg;</span><br><span class="line"></span><br><span class="line">    ChannelPromise promise = e.promise;</span><br><span class="line">    <span class="keyword">int</span> size = e.pendingSize;</span><br><span class="line"></span><br><span class="line">    removeEntry(e);</span><br><span class="line">		</span><br><span class="line">    <span class="keyword">if</span> (!e.cancelled) &#123;</span><br><span class="line">        <span class="comment">// only release message, notify and decrement if it was not canceled before.</span></span><br><span class="line">        ReferenceCountUtil.safeRelease(msg);</span><br><span class="line">        <span class="comment">//3.1 设置promise为成功</span></span><br><span class="line">        safeSuccess(promise);</span><br><span class="line">        decrementPendingOutboundBytes(size, <span class="keyword">false</span>, <span class="keyword">true</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// recycle the entry</span></span><br><span class="line">    e.recycle();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>3.1 设置promise为成功</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">safeSuccess</span><span class="params">(ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Only log if the given promise is not of type VoidChannelPromise as trySuccess(...) is expected to return</span></span><br><span class="line">    <span class="comment">// false.</span></span><br><span class="line">    PromiseNotificationUtil.trySuccess(promise, <span class="keyword">null</span>, promise <span class="keyword">instanceof</span> VoidChannelPromise ? <span class="keyword">null</span> : logger);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;V&gt; <span class="function"><span class="keyword">void</span> <span class="title">trySuccess</span><span class="params">(Promise&lt;? <span class="keyword">super</span> V&gt; p, V result, InternalLogger logger)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!p.trySuccess(result) &amp;&amp; logger != <span class="keyword">null</span>) &#123;</span><br><span class="line">        Throwable err = p.cause();</span><br><span class="line">        <span class="keyword">if</span> (err == <span class="keyword">null</span>) &#123;</span><br><span class="line">            logger.warn(<span class="string">"Failed to mark a promise as success because it has succeeded already: &#123;&#125;"</span>, p);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            logger.warn(</span><br><span class="line">                    <span class="string">"Failed to mark a promise as success because it has failed already: &#123;&#125;, unnotified cause:"</span>,</span><br><span class="line">                    p, err);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><code>DefaultPromise#trySuccess()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">trySuccess</span><span class="params">(V result)</span> </span>&#123;</span><br><span class="line">  <span class="comment">//cas更改result为SUCCESS</span></span><br><span class="line">    <span class="keyword">if</span> (setSuccess0(result)) &#123;</span><br><span class="line">      <span class="comment">//通知监听者</span></span><br><span class="line">        notifyListeners();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="通知监听者"><a href="#通知监听者" class="headerlink" title="通知监听者"></a>通知监听者</h3><p><code>DefaultPromise#notifyListeners()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">notifyListeners</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    EventExecutor executor = executor();</span><br><span class="line">    <span class="keyword">if</span> (executor.inEventLoop()) &#123;</span><br><span class="line">        <span class="keyword">final</span> InternalThreadLocalMap threadLocals = InternalThreadLocalMap.get();</span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">int</span> stackDepth = threadLocals.futureListenerStackDepth();</span><br><span class="line">      <span class="comment">//监听者可以嵌套，nio线程最大嵌套层数为8</span></span><br><span class="line">        <span class="keyword">if</span> (stackDepth &lt; MAX_LISTENER_STACK_DEPTH) &#123;</span><br><span class="line">            threadLocals.setFutureListenerStackDepth(stackDepth + <span class="number">1</span>);</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                notifyListenersNow();</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                threadLocals.setFutureListenerStackDepth(stackDepth);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    safeExecute(executor, <span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            notifyListenersNow();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><code>DefaultPromise#notifyListeners0()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">notifyListeners0</span><span class="params">(DefaultFutureListeners listeners)</span> </span>&#123;</span><br><span class="line">    GenericFutureListener&lt;?&gt;[] a = listeners.listeners();</span><br><span class="line">    <span class="keyword">int</span> size = listeners.size();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; size; i ++) &#123;</span><br><span class="line">        notifyListener0(<span class="keyword">this</span>, a[i]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>DefaultPromise#notifyListener0()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">notifyListener0</span><span class="params">(Future future, GenericFutureListener l)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="comment">//调用监听器的回调函数</span></span><br><span class="line">        l.operationComplete(future);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">        <span class="keyword">if</span> (logger.isWarnEnabled()) &#123;</span><br><span class="line">            logger.warn(<span class="string">"An exception was thrown by "</span> + l.getClass().getName() + <span class="string">".operationComplete()"</span>, t);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="注册观察者"><a href="#注册观察者" class="headerlink" title="注册观察者"></a>注册观察者</h2><p><code>DefaultPromise#addListener()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Promise&lt;V&gt; <span class="title">addListener</span><span class="params">(GenericFutureListener&lt;? extends Future&lt;? <span class="keyword">super</span> V&gt;&gt; listener)</span> </span>&#123;</span><br><span class="line">    checkNotNull(listener, <span class="string">"listener"</span>);</span><br><span class="line"></span><br><span class="line">   <span class="comment">//1. 同步</span></span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">      <span class="comment">//2. 具体加监听器逻辑</span></span><br><span class="line">      addListener0(listener);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//3 添加监听器时，判断一次是否完成</span></span><br><span class="line">    <span class="keyword">if</span> (isDone()) &#123;</span><br><span class="line">      notifyListeners();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><code>DefaultPromise#addListener0()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">addListener0</span><span class="params">(GenericFutureListener&lt;? extends Future&lt;? <span class="keyword">super</span> V&gt;&gt; listener)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (listeners == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="comment">//第一次添加</span></span><br><span class="line">        listeners = listener;</span><br><span class="line">      <span class="comment">//第三次添加，直接往DefaultFutureListeners对象里的listeners数组里添加</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (listeners <span class="keyword">instanceof</span> DefaultFutureListeners) &#123;</span><br><span class="line">        ((DefaultFutureListeners) listeners).add(listener);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="comment">//第二次添加，将listeners转成DefaultFutureListeners对象</span></span><br><span class="line">        listeners = <span class="keyword">new</span> DefaultFutureListeners((GenericFutureListener&lt;?&gt;) listeners, listener);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<ol>
+<li>这里为什么要同步呢？</li>
+</ol>
+<p>监听器没有做channel和eventloop的绑定，其他的线程也可以向其注册监听器</p>
+<ol start="3">
+<li>添加监听器时，判断一次是否完成</li>
+</ol>
+<p>因为channel的操作都是NIO异步的过程，在添加监听器的时候可能已经完成了操作，所以检测一次是否完成，若执行完成，直接通知监听者</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://www.cnblogs.com/throwable/p/12231878.html" target="_blank" rel="noopener">从源码上理解Netty并发工具-Promise</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/summary/" rel="tag"># summary</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(10)%E2%80%94%E2%80%94Netty%E7%BC%96%E7%A0%81%E5%99%A8/" rel="prev" title="毕业前夕提升系列(二)：Netty总结(10)——Netty编码器">
+      <i class="fa fa-chevron-left"></i> 毕业前夕提升系列(二)：Netty总结(10)——Netty编码器
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(12)%E2%80%94%E2%80%94%E8%A3%85%E9%A5%B0%E8%80%85%E6%A8%A1%E5%BC%8F/" rel="next" title="毕业前夕提升系列(二)：Netty总结(12)——装饰者模式">
+      毕业前夕提升系列(二)：Netty总结(12)——装饰者模式 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Netty的Promise"><span class="nav-number">1.</span> <span class="nav-text">Netty的Promise</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#创建Promise对象"><span class="nav-number">1.1.</span> <span class="nav-text">创建Promise对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Promise的传递"><span class="nav-number">1.2.</span> <span class="nav-text">Promise的传递</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#设置失败结果"><span class="nav-number">1.3.</span> <span class="nav-text">设置失败结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#flush过程中改变promise的结果"><span class="nav-number">1.4.</span> <span class="nav-text">flush过程中改变promise的结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通知监听者"><span class="nav-number">1.5.</span> <span class="nav-text">通知监听者</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#注册观察者"><span class="nav-number">2.</span> <span class="nav-text">注册观察者</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class=partial"site-overview-wrap sidebar-panel">
+        [object Object]
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

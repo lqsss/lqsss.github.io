@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="IM系统经验总结背景IM系统伴随着下面几个问题：  实时性：网络协议、带宽、机器的演变升级 投递可靠性：这里是指消息能够在应用层被对等方接收 一致性 安全性  投递可靠性消息为什么会丢使用的TCP协议作为传输层的协议，它是可靠的全双工协议，仅仅只靠它就能保证对等方正常接收消息了吗？ 先说结论：仅仅靠TCP的可靠性是不行的，原因主要是以下三点：  网络不是完美的  服务问题：应用出现故障导致收发失败">
+<meta property="og:type" content="article">
+<meta property="og:title" content="IM经验总结">
+<meta property="og:url" content="http://yoursite.com/2020/08/02/IM%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="IM系统经验总结背景IM系统伴随着下面几个问题：  实时性：网络协议、带宽、机器的演变升级 投递可靠性：这里是指消息能够在应用层被对等方接收 一致性 安全性  投递可靠性消息为什么会丢使用的TCP协议作为传输层的协议，它是可靠的全双工协议，仅仅只靠它就能保证对等方正常接收消息了吗？ 先说结论：仅仅靠TCP的可靠性是不行的，原因主要是以下三点：  网络不是完美的  服务问题：应用出现故障导致收发失败">
+<meta property="article:published_time" content="2020-08-02T10:35:38.930Z">
+<meta property="article:modified_time" content="2020-08-02T10:35:38.930Z">
+<meta property="article:author" content="lqsss">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2020/08/02/IM%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>IM经验总结 | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/IM%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          IM经验总结
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-02 18:35:38" itemprop="dateCreated datePublished" datetime="2020-08-02T18:35:38+08:00">2020-08-02</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="IM系统经验总结"><a href="#IM系统经验总结" class="headerlink" title="IM系统经验总结"></a>IM系统经验总结</h2><h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>IM系统伴随着下面几个问题：</p>
+<ul>
+<li>实时性：网络协议、带宽、机器的演变升级</li>
+<li>投递可靠性：这里是指消息能够在应用层被对等方接收</li>
+<li>一致性</li>
+<li>安全性</li>
+</ul>
+<h2 id="投递可靠性"><a href="#投递可靠性" class="headerlink" title="投递可靠性"></a>投递可靠性</h2><h3 id="消息为什么会丢"><a href="#消息为什么会丢" class="headerlink" title="消息为什么会丢"></a>消息为什么会丢</h3><p>使用的TCP协议作为传输层的协议，它是可靠的全双工协议，仅仅只靠它就能保证对等方正常接收消息了吗？</p>
+<p>先说结论：仅仅靠TCP的可靠性是不行的，原因主要是以下三点：</p>
+<ol>
+<li>网络不是完美的 </li>
+<li>服务问题：应用出现故障导致收发失败</li>
+<li>服务器出现故障</li>
+</ol>
+<blockquote>
+<p>补充：send()成功只能表明上层应用成功将消息发送到发送缓冲区里，在连接断开的时候直接回收连接和释放缓冲区数据；对于接收方在未检测到TCP断开时，会正常处理缓冲区里的数，但存在断开时，上层应用未来得及正常从缓冲区里取出完整的数据，例如RST状态下。</p>
+</blockquote>
+<p>消息的丢失情况，主要分以下几个维度：</p>
+<ul>
+<li>发送方发消息失败</li>
+<li>接收方收消息失败</li>
+<li>接收方发送ack成功，发送方接收来自接收方ack失败</li>
+<li>接收方发送ack失败  </li>
+</ul>
+<h3 id="网络和服务问题"><a href="#网络和服务问题" class="headerlink" title="网络和服务问题"></a>网络和服务问题</h3><ul>
+<li><p>情景描述：弱网的情况下，服务端与客户端之间的传输会出现问题</p>
+</li>
+<li><p>解决：</p>
+<ul>
+<li>网络不佳或者请求服务器等待响应超时，通常会提示发送方失败，发送方再次调用接口发送。</li>
+<li>服务端需要根据针对请求的唯一 ID，供服务端去重使用</li>
+</ul>
+</li>
+</ul>
+<p>·</p>
+<h3 id="服务器出现故障"><a href="#服务器出现故障" class="headerlink" title="服务器出现故障"></a>服务器出现故障</h3><ul>
+<li><p>情景描述1：网络层已经投递成功，但是接收方在处理过程中出现了失败导致没有看到消息，服务端并不知道对等方是否真正处理了消息</p>
+</li>
+<li><p>解决：</p>
+<ul>
+<li>IM服务器在推送消息时，用SID标识本次请求，并将该消息加入”待ACK消息列表”</li>
+<li>接收方在处理完消息后，返回ACK，服务端在收到后将“待ACK消息列表”删除掉</li>
+<li>ack丢失：如果在一段时间没有收到接收方的ack<ul>
+<li>可能的原因：1. 网络原因 2. 接收方自身崩溃导致处理失败 </li>
+<li>服务端超时重传</li>
+<li>接收方去重：接收方可能收到了消息处理了，可能没有处理</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>情景描述2：当消息写入db后，下一步便是准备去通知接收方，可能在代码走到socket推送或者已经写入到内核缓冲区时，服务器出现宕机或者断电。在服务器恢复正常后，客户端重连，但是服务端这期间的消息通知不会重发</p>
+</li>
+<li><p>解决：</p>
+<ul>
+<li>当接收方重新上线时，本地存储的时间戳(版本号)返回给服务端，服务端将这个版本号之后的消息推送(返回)给接收方。          </li>
+</ul>
+</li>
+</ul>
+<h2 id="一致性"><a href="#一致性" class="headerlink" title="一致性"></a>一致性</h2><p>描述：消息的顺序，不影响对client的语义了解。使用类似全局的生成的有序唯一消息ID，使得消息在一定程度内保证了有了时序性，为什么是一定程度上呢，因为伴随了以下几个问题：</p>
+<ol>
+<li>服务端是多线程接收消息，可能先发的消息比后发的消息要先生成msgId落入库中</li>
+<li>服务端都是集群化部署，每个节点的性能上存在差异，可能在找到网关的长连接下推时存在早接收的消息晚下推了的情况</li>
+</ol>
+<p>其他问题：需不需要保证全局唯一的msgId</p>
+<h3 id="整流"><a href="#整流" class="headerlink" title="整流"></a>整流</h3><p>大部分情况下是允许小范围的消息乱序，人在看到或听到消息视图时，会进行自己的一定理解包容当时的聊天场景，但有时可能需要保证消息的绝对时序，操作要保证1-&gt;2-&gt;3的顺序执行，否则会出错。</p>
+<ul>
+<li>解决：<ul>
+<li>针对需要保证绝对时序的消息，将这些消息定义一个公有的packageId，然后为包内的每条消息加上seqId</li>
+<li>服务端整流：在一定超时时间内将它们根据seqId进行排序，然后找到gateway顺序下推</li>
+<li>客户端整流：先发的消息后到达，根据收到的msgId进行排序</li>
+</ul>
+</li>
+</ul>
+<h3 id="其他问题"><a href="#其他问题" class="headerlink" title="其他问题"></a>其他问题</h3><p>Q：需不需要保证全局唯一的msgId？</p>
+<p>A：维护一个公有全局的分布式唯一自增ID会存在性能上的问题，在IM情景单聊便维护在一个会话维度内的自增ID，群聊则维护一个在群里的分布式唯一自增ID</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.csdn.net/a_tu_/article/details/80389878" target="_blank" rel="noopener">RST</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/02/2018-04-28/" rel="prev" title="5月计划">
+      <i class="fa fa-chevron-left"></i> 5月计划
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/02/Kafka%E8%AF%AD%E4%B9%89/" rel="next" title="Kafka语义">
+      Kafka语义 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#IM系统经验总结"><span class="nav-number">1.</span> <span class="nav-text">IM系统经验总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#背景"><span class="nav-number">2.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#投递可靠性"><span class="nav-number">3.</span> <span class="nav-text">投递可靠性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#消息为什么会丢"><span class="nav-number">3.1.</span> <span class="nav-text">消息为什么会丢</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#网络和服务问题"><span class="nav-number">3.2.</span> <span class="nav-text">网络和服务问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务器出现故障"><span class="nav-number">3.3.</span> <span class="nav-text">服务器出现故障</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一致性"><span class="nav-number">4.</span> <span class="nav-text">一致性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#整流"><span class="nav-number">4.1.</span> <span class="nav-text">整流</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他问题"><span class="nav-number">4.2.</span> <span class="nav-text">其他问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class=partial"site-overview-wrap sidebar-panel">
+        [object Object]
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
