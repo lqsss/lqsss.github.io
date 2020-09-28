@@ -36,15 +36,64 @@ try {
 
 
 
-**q:**
+**Q:**
 
 **1. 服务端的socket在哪里初始化？**
 
 **2. 在哪里accept连接？**
 
-## 创建服务端Channel
 
-*   从`bind()`的调用一步一步地深入，其中`initAndRegister()`方法里`channel = this.channelFactory.newChannel();`
+
+服务端启动伴随着4个过程：
+
+1. 创建服务端Channel
+2. 初始化服务端Channel
+3. 注册selector
+4. 端口绑定
+
+
+## 服务端启动过程
+### 创建服务端Channel
+
+从`bind()`的调用一步一步地深入，其中方法里
+
+1. 创建服务端Channel对象以及初始化
+
+``AbstractBootstrap#initAndRegister()``
+
+```java
+   final ChannelFuture initAndRegister() {
+        Channel channel = null;
+        try {
+          //1.1 创建channel
+            channel = channelFactory.newChannel();
+         	//2.
+            init(channel);
+        } catch (Throwable t) {
+            if (channel != null) {
+                channel.unsafe().closeForcibly();
+                return new DefaultChannelPromise(channel, GlobalEventExecutor.INSTANCE).setFailure(t);
+            }
+            return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
+        }
+
+        ChannelFuture regFuture = config().group().register(channel);
+        if (regFuture.cause() != null) {
+            if (channel.isRegistered()) {
+                channel.close();
+            } else {
+                channel.unsafe().closeForcibly();
+            }
+        }
+        return regFuture;
+    }
+```
+
+
+
+1.1 创建channel
+
+``ReflectiveChannelFactory#newChannel()``
 
 ```java
 public T newChannel() {
@@ -59,9 +108,11 @@ public T newChannel() {
 
 
 
-上述代码在`ReflectiveChannelFactory`类里，它是`ChannelFactory`的一种实现方式，**是将该对象的clazz字段反射实例化生成channel，那么这个clazz又是从何而来呢？**这就要追溯到`.channel(NioServerSocketChannel.class)`这行代码里:
+上述代码在`ReflectiveChannelFactory`类里，它是``ChannelFactory``的一种实现方式，**是将该对象的clazz字段反射实例化生成channel，那么这个clazz又是从何而来呢？**这就要追溯到`.channel(NioServerSocketChannel.class)`这行代码里:
 
+ 
 
+``AbstractBootstrap#channel()``
 
 ```java
 public B channel(Class<? extends C> channelClass) {
@@ -75,12 +126,16 @@ public B channel(Class<? extends C> channelClass) {
 
 
 
-
 设置`channelFactory`字段。将class传入到`ReflectiveChannelFactory`构造函数。之前newChannel反射实例化的channel就是`NioServerSocketChannel`
 
-*   反射创建服务端Channel
 
-1.  调用jdk底层方法，创建ServerSocketChannel
+
+### 反射创建服务端Channel
+
+2.1 调用jdk底层方法，创建ServerSocketChannel
+
+``NioServerSocketChannel#NioServerSocketChannel()``
+
 ```java
 //反射实例化调用的构造函数 
 public NioServerSocketChannel() {
@@ -88,9 +143,11 @@ public NioServerSocketChannel() {
 }
 ```
 
+
 ```java
 private static java.nio.channels.ServerSocketChannel newSocket(SelectorProvider provider) {
     try {
+      //2.1.1 
         return provider.openServerSocketChannel();
       	//调用jdk底层方法，创建ServerSocketChannel
     } catch (IOException var2) {
@@ -130,7 +187,7 @@ protected AbstractChannel(Channel parent) {
 
 
 
-*   注册selector
+### 注册selector
 
     > 为了实现NIO中把ServerSocketChannel注册到 Selector中去，这样就是可以实现client请求的监听
 
