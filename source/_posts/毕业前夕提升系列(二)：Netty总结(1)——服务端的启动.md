@@ -65,9 +65,9 @@ try {
    final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
-          //1.1 创建channel
+          //1 创建channel
             channel = channelFactory.newChannel();
-         	//2.
+         	//2 初始化
             init(channel);
         } catch (Throwable t) {
             if (channel != null) {
@@ -76,7 +76,7 @@ try {
             }
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
-
+		//3 将channel注册到selector
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
@@ -91,7 +91,7 @@ try {
 
 
 
-1.1 创建channel
+1 创建channel
 
 ``ReflectiveChannelFactory#newChannel()``
 
@@ -132,7 +132,7 @@ public B channel(Class<? extends C> channelClass) {
 
 ### 反射创建服务端Channel
 
-2.1 调用jdk底层方法，创建ServerSocketChannel
+1.1 调用jdk底层方法，创建ServerSocketChannel
 
 ``NioServerSocketChannel#NioServerSocketChannel()``
 
@@ -147,9 +147,8 @@ public NioServerSocketChannel() {
 ```java
 private static java.nio.channels.ServerSocketChannel newSocket(SelectorProvider provider) {
     try {
-      //2.1.1 
+      //2.1.1 调用jdk底层方法，创建ServerSocketChannel
         return provider.openServerSocketChannel();
-      	//调用jdk底层方法，创建ServerSocketChannel
     } catch (IOException var2) {
         throw new ChannelException("Failed to open a server socket.", var2);
     }
@@ -158,7 +157,7 @@ private static java.nio.channels.ServerSocketChannel newSocket(SelectorProvider 
 
 
 
-2. NioServerSocketChannelConfig：tcp参数配置类
+1.2 NioServerSocketChannelConfig：tcp参数配置类
 
 ```java
 public NioServerSocketChannel(java.nio.channels.ServerSocketChannel channel) {
@@ -167,13 +166,11 @@ public NioServerSocketChannel(java.nio.channels.ServerSocketChannel channel) {
 }
 ```
 
-
-
-3. 设置非阻塞模式
+1.3 设置非阻塞模式
 
 在父类构造函数中`ch.configureBlocking(false);`设置为非阻塞模式。
 
-4. AbstractChannel
+1.4 AbstractChannel
 
 ```java
 protected AbstractChannel(Channel parent) {
@@ -187,11 +184,66 @@ protected AbstractChannel(Channel parent) {
 
 
 
+2 初始化channel
+
+- 设置：tcp参数(options)、一些用户自定义的属性(attributeKey)
+- 配置服务端handler加入到pipeline
+- 创建一个Acceptor连接器  下文会提到
+
+
+
 ### 注册selector
 
-    > 为了实现NIO中把ServerSocketChannel注册到 Selector中去，这样就是可以实现client请求的监听
+> 为了实现NIO中把ServerSocketChannel注册到 Selector中去，这样就是可以实现client请求的监听
 
-继续探讨`bind()`中的`initAndRegister()`方法里`ChannelFuture regFuture = this.config().group().register(channel);`
+
+
+3. 将channel注册到selector
+
+`` ChannelFuture regFuture = config().group().register(channel);``
+
+``AbstractChannel$AbstractUnsafe#register()``
+
+```java
+@Override
+public final void register(EventLoop eventLoop, final ChannelPromise promise) {
+    if (eventLoop == null) {
+        throw new NullPointerException("eventLoop");
+    }
+    if (isRegistered()) {
+        promise.setFailure(new IllegalStateException("registered to an event loop already"));
+        return;
+    }
+    if (!isCompatible(eventLoop)) {
+        promise.setFailure(
+            new IllegalStateException("incompatible event loop type: " + eventLoop.getClass().getName()));
+        return;
+    }
+    //3.1 绑定bossNio线程
+    AbstractChannel.this.eventLoop = eventLoop;
+
+    if (eventLoop.inEventLoop()) {
+        //3.2 实际注册方法
+        register0(promise);
+    } else {
+        try {
+            eventLoop.execute(new Runnable() {
+                @Override
+                public void run() {
+                    register0(promise);
+                }
+            });
+        } catch (Throwable t) {
+            logger.warn(
+                "Force-closing a channel whose registration task was not accepted by an event loop: {}",
+                AbstractChannel.this, t);
+            closeForcibly();
+            closeFuture.setClosed();
+            safeSetFailure(promise, t);
+        }
+    }
+}
+```
 
 
 
@@ -201,80 +253,52 @@ group：EventLoopGroup
 
 **这里调用的register()，会调用父类的next()， chooser策略从 EventExecutor[]数组中选择一个 SingleThreadEventLoop，使用最终会调用unsafe接口的register方法，AbstractChannel里的内部类AbstractUnsafe实现了该接口。**
 
+3.2 实际注册方法
+
+``AbstractChannel$AbstractUnsafe#register0()``
+
 ```java
-protected abstract class AbstractUnsafe implements Unsafe {
-        private volatile ChannelOutboundBuffer outboundBuffer = new ChannelOutboundBuffer(AbstractChannel.this);
-        private Handle recvHandle;
-        private boolean inFlush0;
-        private boolean neverRegistered = true;
-
-        protected AbstractUnsafe() {
+private void register0(ChannelPromise promise) {
+    try {
+        if (!promise.setUncancellable() || !this.ensureOpen(promise)) {
+            return;
         }
 
-
-        public final void register(EventLoop eventLoop, final ChannelPromise promise) {
-            if (eventLoop == null) {
-                throw new NullPointerException("eventLoop");
-            } else if (AbstractChannel.this.isRegistered()) {
-                promise.setFailure(new IllegalStateException("registered to an event loop already"));
-            } else if (!AbstractChannel.this.isCompatible(eventLoop)) {
-                promise.setFailure(new IllegalStateException("incompatible event loop type: " + eventLoop.getClass().getName()));
-            } else {
-                AbstractChannel.this.eventLoop = eventLoop;//绑定bossNio线程
-                if (eventLoop.inEventLoop()) {
-                    this.register0(promise);
-                } else {
-                    try {
-                        eventLoop.execute(new Runnable() {
-                            public void run() {
-                                AbstractUnsafe.this.register0(promise);
-                            }
-                        });
-                    } catch (Throwable var4) {
-                        AbstractChannel.logger.warn("Force-closing a channel whose registration task was not accepted by an event loop: {}", AbstractChannel.this, var4);
-                        this.closeForcibly();
-                        AbstractChannel.this.closeFuture.setClosed();
-                        this.safeSetFailure(promise, var4);
-                    }
-                }
-    
+        boolean firstRegistration = this.neverRegistered;
+        //3.2.1 jdk底层注册
+        AbstractChannel.this.doRegister();
+        this.neverRegistered = false;
+        AbstractChannel.this.registered = true;
+        
+        //3.2.2 触发事件：对应用户的handlerAdded
+        AbstractChannel.this.pipeline.invokeHandlerAddedIfNeeded();
+        
+        this.safeSetSuccess(promise);
+        //3.2.3 传播事件：channelRegistered
+        AbstractChannel.this.pipeline.fireChannelRegistered();
+        
+        //这个时机还没有进行绑定端口，所以这里还是false
+        if (AbstractChannel.this.isActive()) {
+            if (firstRegistration) {
+                AbstractChannel.this.pipeline.fireChannelActive();
+            } else if (AbstractChannel.this.config().isAutoRead()) {
+                this.beginRead();
             }
         }
-    
-        private void register0(ChannelPromise promise) {
-            try {
-                if (!promise.setUncancellable() || !this.ensureOpen(promise)) {
-                    return;
-                }
-    
-                boolean firstRegistration = this.neverRegistered;
-                AbstractChannel.this.doRegister();//jdk底层
-                this.neverRegistered = false;
-                AbstractChannel.this.registered = true;
-                AbstractChannel.this.pipeline.invokeHandlerAddedIfNeeded();
-              //触发事件:对应用户的handlerAdded
-                this.safeSetSuccess(promise);
-                AbstractChannel.this.pipeline.fireChannelRegistered();
-              //传播事件：channelRegistered
-                if (AbstractChannel.this.isActive()) {
-                    if (firstRegistration) {
-                        AbstractChannel.this.pipeline.fireChannelActive();
-                    } else if (AbstractChannel.this.config().isAutoRead()) {
-                        this.beginRead();
-                    }
-                }
-            } catch (Throwable var3) {
-                this.closeForcibly();
-                AbstractChannel.this.closeFuture.setClosed();
-                this.safeSetFailure(promise, var3);
-            }
-    
-        }
+    } catch (Throwable var3) {
+        this.closeForcibly();
+        AbstractChannel.this.closeFuture.setClosed();
+        this.safeSetFailure(promise, var3);
+    }
+
+}
 ```
 
 
 
-`doRegister()`由子类`AbstractNioChannel`实现
+3.2.1 jdk底层注册
+
+`AbstractNioChannel#doRegister()`
 
 ```java
 protected void doRegister() throws Exception {
@@ -313,22 +337,105 @@ protected void doRegister() throws Exception {
 
 `initAndRegister()`到此已经完毕了，包括了channel的创建、初始化、注册过程
 
-*   端口绑定
+
+
+### 端口绑定
 
 `doBind()`-&gt;`doBind0()`-&gt;AbstractChannel内部类`unsafe的bind`
 
-isActive():`ch.isOpen() &amp;&amp; ch.isConnected()`
 
-1.  最终调用jdk底层的channel
 
-2.  底层channel在绑定成功后，触发active事件
+4. ``AbstractChannel$AbstractUnsafe#bind()``
 
-    `pipeline.fireChannelActive();`
+```java
+@Override
+public final void bind(final SocketAddress localAddress, final ChannelPromise promise) {
+    assertEventLoop();
+
+    if (!promise.setUncancellable() || !ensureOpen(promise)) {
+        return;
+    }
+
+    // See: https://github.com/netty/netty/issues/576
+    if (Boolean.TRUE.equals(config().getOption(ChannelOption.SO_BROADCAST)) &&
+        localAddress instanceof InetSocketAddress &&
+        !((InetSocketAddress) localAddress).getAddress().isAnyLocalAddress() &&
+        !PlatformDependent.isWindows() && !PlatformDependent.maybeSuperUser()) {
+        // Warn a user about the fact that a non-root user can't receive a
+        // broadcast packet on *nix if the socket is bound on non-wildcard address.
+        logger.warn(
+            "A non-root user can't receive a broadcast packet if the socket " +
+            "is not bound to a wildcard address; binding to a non-wildcard " +
+            "address (" + localAddress + ") anyway as requested.");
+    }
+
+    boolean wasActive = isActive();
+    try {
+        //4.1 调用jdk底层的bind
+        doBind(localAddress);
+    } catch (Throwable t) {
+        safeSetFailure(promise, t);
+        closeIfClosed();
+        return;
+    }
+
+    //4.2 绑定之后，active变更，触发事件
+    if (!wasActive && isActive()) {
+        invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                pipeline.fireChannelActive();
+            }
+        });
+    }
+
+    safeSetSuccess(promise);
+}
+```
+
+
+
+4.1 调用jdk底层的bind 
+
+``NioServerSocketChannel#doBind()``
+
+```java
+@Override
+protected void doBind(SocketAddress localAddress) throws Exception {
+    if (PlatformDependent.javaVersion() >= 7) {
+        javaChannel().bind(localAddress, config.getBacklog());
+    } else {
+        javaChannel().socket().bind(localAddress, config.getBacklog());
+    }
+}
+```
+
+
+
+4.2 绑定之后，active变更，触发事件
+
+```java
+ if (!wasActive && isActive()) {
+        invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                //4.2.1 事件传播
+                pipeline.fireChannelActive();
+            }
+        });
+ }
+```
+
+
+
+`DefaultChannelPipeline$HeadContext#channelActive();`
 
 ```java
 @Override
 public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    //4.2.1.2 传播active事件
     ctx.fireChannelActive();
+    //4.2.1.2 传播read事件
     readIfIsAutoRead();
   //tail.read();传播一个read事件
   //为selectionKey新增一个之前传入readInterestOp参数的感兴趣事件(SelectionKey.OP_ACCEPT)
@@ -337,7 +444,60 @@ public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
 
 
-3. 触发read事件，经过层层调用，最终会向selector注册一个accept的感兴趣事件
+4.2.1.2  传播read事件，最终事件执行逻辑
+
+``AbstractChannel$AbstractUnsafe#beginRead()``
+
+```java
+@Override
+public final void beginRead() {
+    assertEventLoop();
+
+    if (!isActive()) {
+        return;
+    }
+
+    try {
+        //4.2.1.2.1 selector注册一个accept的感兴趣事件
+        doBeginRead();
+    } catch (final Exception e) {
+        invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                pipeline.fireExceptionCaught(e);
+            }
+        });
+        close(voidPromise());
+    }
+}
+```
+
+
+
+4.2.1.2.1 selector注册一个accept的感兴趣事件
+
+```java
+@Override
+protected void doBeginRead() throws Exception {
+    // Channel.read() or ChannelHandlerContext.read() was called
+    //服务端channel的selectionKey
+    final SelectionKey selectionKey = this.selectionKey;
+    if (!selectionKey.isValid()) {
+        return;
+    }
+
+    readPending = true;
+
+    //感兴趣的事件,注册时interestOps为0
+    final int interestOps = selectionKey.interestOps();
+    if ((interestOps & readInterestOp) == 0) {
+        //增加一个accept事件，readInterestOp为之前注册时传的SelectionKey.OP_ACCEPT
+        selectionKey.interestOps(interestOps | readInterestOp);
+    }
+}
+```
+
+
 
 ## 总结
 
