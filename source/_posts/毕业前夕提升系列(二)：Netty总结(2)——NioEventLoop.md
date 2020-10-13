@@ -28,8 +28,9 @@ private EventLoopGroup workerGroup = new NioEventLoopGroup();
 
 
 
+1. 构造函数
 
-构造函数
+``NioEventLoopGroup``
 
 ```java
 public NioEventLoopGroup() {
@@ -67,18 +68,14 @@ public NioEventLoopGroup(int nThreads, ThreadFactory threadFactory,
 
 ```java
 protected MultithreadEventLoopGroup(int nThreads, ThreadFactory threadFactory, Object... args) {
+    	//之前传入的线程数默认为0，所以这里默认设置为cpu*2
         super(nThreads == 0 ? DEFAULT_EVENT_LOOP_THREADS : nThreads, threadFactory, args);
 }
 ```
 
 
 
-
-之前传入的线程数默认为0，所以这里默认设置为cpu*2
-
-**MultithreadEventExecutorGroup.java**
-
-
+``MultithreadEventExecutorGroup.java``
 
 ```java
 protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
@@ -88,15 +85,16 @@ protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
         }
 
         if (executor == null) {
+            //1.1 线程创建器
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
 
-        children = new EventExecutor[nThreads];//1. 线程创建器
+        children = new EventExecutor[nThreads];//1.2 构造NioEventLoop
 
         for (int i = 0; i < nThreads; i ++) {   
             boolean success = false;
             try {
-                children[i] = newChild(executor, args);//2. 构造NioEventLoop
+                children[i] = newChild(executor, args);//1.2 构造NioEventLoop
                 success = true;
             } catch (Exception e) {
                 // TODO: Think about if this is a good exception type
@@ -124,7 +122,7 @@ protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
         }
 
         chooser = chooserFactory.newChooser(children);
-  //3. 创建线程选择器，选择器的作用就是给每个新的连接绑定一个新的nio线程 
+  //1.3 创建线程选择器，选择器的作用就是给每个新的连接绑定一个新的nio线程 
 
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
             @Override
@@ -147,22 +145,11 @@ protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
 
 
 
+### 1.1 Executor的创建
 
-**总结：**
+1.1.1 线程工厂，每次执行任务都会创建一个线程实体(FastLocalThread)
 
-**new NioEventLoopGroup();**
-
-1.  **创建一个线程创建器（ThreadPerTaskExecutor）**
-2.  **构造2倍cpu数量的NioEventLoop**
-3.  **创建线程选择器**
-
-
-
-### Executor的创建
-
-**ThreadPerTaskExecutor.java**
-
-每次执行任务都会创建一个线程实体(FastLocalThread)
+``ThreadPerTaskExecutor#newDefaultThreadFactory``
 
 ```java
   protected ThreadFactory newDefaultThreadFactory() {
@@ -170,11 +157,11 @@ protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
     }
 
 public DefaultThreadFactory(Class<?> poolType, boolean daemon, int priority) {
-        this(toPoolName(poolType), daemon, priority); 
         //poolType：NioEventLoopGroup.class
+        this(toPoolName(poolType), daemon, priority); 
     }
 
-//构造线程池的名字：nioEventLoopGroup-1-
+	//构造线程池的名字：nioEventLoopGroup-1-
     public static String toPoolName(Class<?> poolType) {
         if (poolType == null) {
             throw new NullPointerException("poolType");
@@ -232,7 +219,7 @@ public DefaultThreadFactory(Class<?> poolType, boolean daemon, int priority) {
         return t;
     }
 
-//包装了一个FastThreadLocalThread
+	//包装了一个FastThreadLocalThread extend Thread
     protected Thread newThread(Runnable r, String name) {
         return new FastThreadLocalThread(threadGroup, r, name);
     }
@@ -241,30 +228,66 @@ public DefaultThreadFactory(Class<?> poolType, boolean daemon, int priority) {
 
 
 
-### newChild()：创建NioEventLoop
+### 1.2 newChild()：创建NioEventLoop
 > NioEventLoop -&gt; SingleThreadEventLoop -&gt; SingleThreadEventExecutor -&gt; AbstractScheduledEventExecutor
 
 `SingleThreadEventExecutor`是netty中对本地线程的抽象，内部有一个Thread thread 属性，存储了一个java本地线程，所以NioEventLoop可以视为一个处理IO事件的线程模型。
 
-
+``NioEventLoopGroup#newChild()``
 
 ```java
 @Override
 protected EventLoop newChild(Executor  executor, Object... args) throws Exception {
+    //1.2.1 创建NioEventLoop对象
     return new NioEventLoop(this, executor, (SelectorProvider) args[0],
         ((SelectStrategyFactory) args[1]).newSelectStrategy(), (RejectedExecutionHandler) args[2]);
 }
 ```
 
 
-*   保存线程执行器
-*   创建一个任务队列：super里`taskQueue = newTaskQueue(this.maxPendingTasks);`
-*   创建一个selector
+
+1.2.1 创建NioEventLoop对象
+
+``NioEventLoop()``
+
+```java
+NioEventLoop(NioEventLoopGroup parent, Executor executor, SelectorProvider selectorProvider,
+             SelectStrategy strategy, RejectedExecutionHandler rejectedExecutionHandler) {
+    //1.2.1.1 父类构造函数，共享线程执行器Executor
+    super(parent, executor, false, DEFAULT_MAX_PENDING_TASKS, rejectedExecutionHandler);
+    if (selectorProvider == null) {
+        throw new NullPointerException("selectorProvider");
+    }
+    if (strategy == null) {
+        throw new NullPointerException("selectStrategy");
+    }
+    provider = selectorProvider;
+    
+    //1.2.1.2 创建一个selector
+    final SelectorTuple selectorTuple = openSelector();
+    selector = selectorTuple.selector;
+    unwrappedSelector = selectorTuple.unwrappedSelector;
+    selectStrategy = strategy;
+}
+```
+
+
+
+1.2.1.1 保存线程执行器、创建一个任务队列：super里`taskQueue = newTaskQueue(this.maxPendingTasks);`
+
+1.2.1.2 创建一个selector
+
 > 一个NioEventLoop属于某一个NioEventLoopGroup， 且处于同一个NioEventLoopGroup下的所有NioEventLoop 公用Executor、SelectorProvider、SelectStrategyFactory和RejectedExecutionHandler。
 
-### 线程选择器
 
-`chooser = chooserFactory.newChooser(children);`
+
+### 1.3 线程选择器
+
+作用：当新连接到来时，NioEventLoop[]里选择一个nioEventLoop进行绑定
+
+初始化入口：``chooser = chooserFactory.newChooser(children);``
+
+``DefaultEventExecutorChooserFactory#newChooser()``
 
 ```java
 @Override
@@ -323,10 +346,9 @@ private static final class PowerOfTwoEventExecutorChooser implements EventExecut
 
 
 
+**q：在nio线程数为2的幂时，``idx.getAndIncrement() & (executors.length - 1)``为什么可以达到递增循环的效果？**
 
-**q：在nio线程数为2的幂时，`idx.getAndIncrement() &amp; executors.length - 1`为什么可以达到递增循环的效果？**
-
-**a：因为2的幂-1转换为2进制的结果就是每个位置都是1，与下标做&amp;时，数值不会变(0&amp;1 = 0、1&amp;1 = 1 )；当index位置上的数都是1时，再递增就会进位，所谓位置变为0，首部新增一位1，再做&amp;，则轮询到了executors数组的首元素**
+ **a：因为2的幂-1转换为2进制的结果就是每个位置都是1，与下标做&amp;时，数值不会变(0&amp;1 = 0、1&amp;1 = 1 )；当index位置上的数都是1时，再递增就会进位，所谓位置变为0，首部新增一位1，再做&amp;，则轮询到了executors数组的首元素**
 
 新连接绑定到NioEventLoop上：
 
@@ -341,55 +363,30 @@ public EventExecutor next() {
 > *   所有的NIOEventLoop线程是使用相同的 executor、SelectorProvider、SelectStrategyFactory、RejectedExecutionHandler以及是属于某一个NIOEventLoopGroup的。 这一点从 newChild(executor, args); 方法就可以看出：newChild()的实现是在NIOEventLoopGroup中实现的。
 
 ## NioEventLoop启动
-```java
-@Override
-public final void register(EventLoop eventLoop, final ChannelPromise promise) {
-    if (eventLoop == null) {
-        throw new NullPointerException("eventLoop");
-    }
-    if (isRegistered()) {
-        promise.setFailure(new IllegalStateException("registered to an event loop already"));
-        return;
-    }
-    if (!isCompatible(eventLoop)) {
-        promise.setFailure(
-                new IllegalStateException("incompatible event loop type: " + eventLoop.getClass().getName()));
-        return;
-    }
 
-    AbstractChannel.this.eventLoop = eventLoop;//1
+触发的时机：
 
-    if (eventLoop.inEventLoop()) { //2
-        register0(promise);
-    } else {
-        try {
-            eventLoop.execute(new Runnable() {
-                @Override
-                public void run() {
-                    register0(promise);
-                }
-            });
-        } catch (Throwable t) {
-            logger.warn(
-                    "Force-closing a channel whose registration task was not accepted by an event loop: {}",
-                    AbstractChannel.this, t);
-            closeForcibly();
-            closeFuture.setClosed();
-            safeSetFailure(promise, t);
-        }
-    }
-}
-```
+- 服务端启动绑定端口
+- 新连接接入通过chooser绑定一个NioEventLoop
 
 
-1.  `channel.eventLoop().execute`：创建的NioServerSockcetChannel与Boss线程组的绑定，发生在unsafe的`register()`注册。
 
-2.  register0是具体注册的逻辑吗，但是需要由`eventLoop.inEventLoop()`判断当前线程否为nioEventLoop里的线程
+### 服务端启动绑定端口
 
+1. 触发时机
+   1.1 `channel.eventLoop().execute`：创建的NioServerSockcetChannel与Boss线程组中的eventloop绑定，发生在unsafe的`register()`注册。
 
-    1.  如果是直接执行register0逻辑
-                
-    2.  如果不是，则包装成一个注册的task交付给线程池新生成一个nio线程去执行`eventLoop.execute(new Runnable(){//...})`调用的是`SingleThreadEventExecutor`的`execute`方法。
+   1.2 register0是具体注册的逻辑，但是需要由`eventLoop.inEventLoop()`判断当前线程否为nioEventLoop里的线程
+
+   ​		1.2.1 如果是直接执行register0逻辑；如果不是，则包装成一个注册的task交付给线程池新生成一个nio线程去执行`eventLoop.execute(new Runnable(){//...})`调用的是`SingleThreadEventExecutor`的`execute`方法。
+
+   ​		1.2.2 unsafe的`register()`中才刚进行NioEventLoop与channel的绑定，里面的thread还是null，所以会进行接下来的启动线程
+
+   
+
+2. 创建并启动线程
+
+``SingleThreadEventExecutor#execute()``
 
 ```java
 @Override
@@ -397,10 +394,12 @@ public void execute(Runnable task) {
     if (task == null) {
         throw new NullPointerException("task");
     }
-      
+    
+    //2.1 判断当前线程
     boolean inEventLoop = inEventLoop();
     addTask(task);					//加入taskQueue
     if (!inEventLoop) {
+        //启动线程
         startThread();
         if (isShutdown() && removeTask(task)) {
             reject();
