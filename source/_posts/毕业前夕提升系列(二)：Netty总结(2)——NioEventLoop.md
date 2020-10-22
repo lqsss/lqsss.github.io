@@ -371,7 +371,7 @@ public EventExecutor next() {
 
 
 
-### 服务端启动绑定端口
+### 2.1 服务端启动绑定端口
 
 1. 触发时机
    1.1 `channel.eventLoop().execute`：创建的NioServerSockcetChannel与Boss线程组中的eventloop绑定，发生在unsafe的`register()`注册。
@@ -397,9 +397,11 @@ public void execute(Runnable task) {
     
     //2.1 判断当前线程
     boolean inEventLoop = inEventLoop();
-    addTask(task);					//加入taskQueue
+    //2.2 加入taskQueue
+    addTask(task);					
+    
+   	//2.3 启动线程
     if (!inEventLoop) {
-        //启动线程
         startThread();
         if (isShutdown() && removeTask(task)) {
             reject();
@@ -414,16 +416,18 @@ public void execute(Runnable task) {
 
 
 
-startThread()和doStartThread()方法，创建NioEventLoop底层的thread属性。
+2.3 ``SingleThreadEventExecutor#startThread()`` 启动线程
 
 ```java
 private void startThread() {
     if (state == ST_NOT_STARTED) {
+        
+        //2.3.1 CAS操作修改thread状态为ST_STARTED
         if (STATE_UPDATER.compareAndSet(this, ST_NOT_STARTED, ST_STARTED)) {
-          //CAS操作修改thread状态为ST_STARTED
+          	
             try {
+                //2.3.2 真正启动线程的函数
                 doStartThread();
-              //真正启动线程的函数
             } catch (Throwable cause) {
                 STATE_UPDATER.set(this, ST_NOT_STARTED);
                 PlatformDependent.throwException(cause);
@@ -431,14 +435,20 @@ private void startThread() {
         }
     }
 }
-      
+```
+
+
+
+2.3.2  ``SingleThreadEventExecutor#startThread()``
+
+```java    
 private void doStartThread() {
     assert thread == null;
     executor.execute(new Runnable() { //ThreadPerTaskExecutor
         @Override
         public void run() {
+            //2.3.2.1 将ThreadPerTaskExecutor创建的线程与thread属性绑定
             thread = Thread.currentThread();
-          	//将当前线程与thread属性绑定
             if (interrupted) {
                 thread.interrupt();
             }
@@ -446,8 +456,8 @@ private void doStartThread() {
             boolean success = false;
             updateLastExecutionTime();
             try {
+                //2.3.2.2 NioEventLoop.run()
                 SingleThreadEventExecutor.this.run();
-              //core：NioEventLoop.run()
                 success = true;
             } catch (Throwable t) {
                 logger.warn("Unexpected exception from an event executor: ", t);
@@ -506,7 +516,16 @@ private void doStartThread() {
 2.  **将NioEventLoop里的底层thread属性与创建的本地线程绑定。**
 3.  **NioEventLoop.run()启动。**
 
+
+
+###  2.2 新连接接入通过chooser绑定一个EventLoop
+
+//todo
+
 ## NioEventLoop执行
+
+
+
 ```java
 @Override
 protected void run() {
@@ -520,6 +539,7 @@ protected void run() {
           // fall-through to SELECT since the busy-wait is not supported with NIO
 
         case SelectStrategy.SELECT:
+          //3.1 检测I/O事件
           select(wakenUp.getAndSet(false));
 
           if (wakenUp.get()) {
@@ -531,24 +551,30 @@ protected void run() {
 
       cancelledKeys = 0;
       needsToSelectAgain = false;
+        //默认50
       final int ioRatio = this.ioRatio;
       if (ioRatio == 100) {
         try {
+          //3.2 处理就绪的 IO 事件, 然后处理它;
           processSelectedKeys();
         } finally {
           // Ensure we always run tasks.
+          //3.3 处理外部线程扔进taskQueue 中的任务.
           runAllTasks();
         }
       } else {
         final long ioStartTime = System.nanoTime();
         try {
+            
+          //3.2
           processSelectedKeys();
-          //查询就绪的 IO 事件, 然后处理它;
+          
         } finally {
           // Ensure we always run tasks.
           final long ioTime = System.nanoTime() - ioStartTime;
+          //3.3
           runAllTasks(ioTime * (100 - ioRatio) / ioRatio);
-          //运行 taskQueue 中的任务.
+         
         }
       }
     } catch (Throwable t) {
@@ -578,9 +604,9 @@ protected void run() {
 2.  **处理IO事件**
 3.  **处理异步任务队列里的任务(taskQueue，其它线程加入该队列的任务)**
 
-### 检测I/O事件
+### 3.1 检测I/O事件
 
-
+``NioEventLoop#select()``
 
 ```java
 private void select(boolean oldWakenUp) throws IOException {
@@ -588,6 +614,7 @@ private void select(boolean oldWakenUp) throws IOException {
   try {
     int selectCnt = 0;
     long currentTimeNanos = System.nanoTime();
+      //delayNanos(currentTimeNanos) 计算定时任务队列第一个任务的截止时间到现在时间的差
     long selectDeadLineNanos = currentTimeNanos + delayNanos(currentTimeNanos);
 
     for (;;) {
@@ -602,13 +629,14 @@ private void select(boolean oldWakenUp) throws IOException {
         break;
       }
 
+      // 如果没有到截止时间，taskQueue不为空，换成wakeUp状态
       if (hasTasks() && wakenUp.compareAndSet(false, true)) {
         selector.selectNow();
-        //如果任务队列里存在任务，则调用阻塞select
         selectCnt = 1;
         break;
       }
 
+       //阻塞式select
       int selectedKeys = selector.select(timeoutMillis);
       selectCnt ++; //轮询次数
 
@@ -628,7 +656,9 @@ private void select(boolean oldWakenUp) throws IOException {
         break;
       }
 
+      
       long time = System.nanoTime();
+       // 说明执行完一次阻塞式select操作，如果小于发生了空轮询
       if (time - TimeUnit.MILLISECONDS.toNanos(timeoutMillis) >= currentTimeNanos) {
         //空轮询次数
         selectCnt = 1;
@@ -752,7 +782,7 @@ private void rebuildSelector0() {
 
 **rebuildSelector：新建selector，将注册在老selector的channel以及它们的感兴趣事件重新注册到新的selector，得到新的selectionKey，更新一下NioChannel对应的key。最终将老的selector关闭。**
 
-### 处理selectionKey
+### 3.2 处理selectionKey,I/O相关逻辑
 
 #### select优化
 
@@ -996,7 +1026,7 @@ private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
 ```
 
 
-### 任务处理
+### 3.3 任务处理
 
 发生在NioEventLoop的事件循环里`run()`的`runAllTask()`
 
