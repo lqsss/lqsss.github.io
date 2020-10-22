@@ -752,41 +752,45 @@ private void rebuildSelector0() {
 
 **rebuildSelector：新建selector，将注册在老selector的channel以及它们的感兴趣事件重新注册到新的selector，得到新的selectionKey，更新一下NioChannel对应的key。最终将老的selector关闭。**
 
-### 处理selectionKey
+### 3.2 处理selectionKey
 
-#### select优化
+#### 3.2.1 select优化
 
 发生在NioEventLoop被创建的时候。
 
-
+``NioEventLoop#openSelector``
 
 ```java
 private SelectorTuple openSelector() {
   final Selector unwrappedSelector;
   try {
+    //3.2.1.1 jdk底层获取原生的selector
     unwrappedSelector = provider.openSelector();
   } catch (IOException e) {
     throw new ChannelException("failed to open a new selector", e);
   }
 
+  //默认是false，需要优化
   if (DISABLE_KEYSET_OPTIMIZATION) {       
-    //默认是false，需要优化
+
     return new SelectorTuple(unwrappedSelector);
   }
 
   //...
-
+  //3.2.1.1 需要优化的，进行包装 
   final Class<?> selectorImplClass = (Class<?>) maybeSelectorImplClass;
   final SelectedSelectionKeySet selectedKeySet = new SelectedSelectionKeySet();
-  // SelectedSelectionKeySet是我们优化的类型
+  // SelectedSelectionKeySet是我们优化的类型，底层是数组，add能达到O(1)
 
   Object maybeException = AccessController.doPrivileged(new PrivilegedAction<Object>() {
     @Override
     public Object run() {
       try {
+        
+        //3.2.1.2 反射获取selectedKeys、publicSelectedKeys的field
         Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys");
         Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");
-        // 反射获取selectedKeys、publicSelectedKeys的field
+        
 
         if (PlatformDependent.javaVersion() >= 9 && PlatformDependent.hasUnsafe()) {
 
@@ -808,14 +812,16 @@ private SelectorTuple openSelector() {
         if (cause != null) {
           return cause;
         }
-        cause = ReflectionUtil.trySetAccessible(publicSelectedKeysField, true);
+        cause = ReflectionUtil.
+(publicSelectedKeysField, true);
         if (cause != null) {
           return cause;
         }
 
+        //3.2.1.3 通过反射来替换原生selector里的两个hashSet字段为优化的数组结构
         selectedKeysField.set(unwrappedSelector, selectedKeySet);
         publicSelectedKeysField.set(unwrappedSelector, selectedKeySet);
-        //将这两个field设置为我们优化过的selectedKeySet结构，之后，有I/O事件到来的有关selectionKey就会存储在这个结构里 
+        
         return null;
       } catch (NoSuchFieldException e) {
         return e;
@@ -849,69 +855,9 @@ private SelectorTuple openSelector() {
 3.  将优化的数据结构塞进原生selector(`selectorImpl`)，替换掉步骤2得到的两个field
 4.  将NioEventLoop里的selectedKeys设置为新的优化结构
 
-**SelectorImpl是原生selector的实现**
-
-```java
-public abstract class SelectorImpl extends AbstractSelector {
-    protected Set<SelectionKey> selectedKeys = new HashSet();
-  // selectedKeys：可以准备被处理的key集合
-    protected HashSet<SelectionKey> keys = new HashSet();
-    private Set<SelectionKey> publicKeys;
-    private Set<SelectionKey> publicSelectedKeys;
-  // publicSelectedKeys：实际上就是selectedKeys，暴露出去而已，被设置为不能修改
-
-    protected SelectorImpl(SelectorProvider var1) {
-        super(var1);
-        if (Util.atBugLevel("1.4")) {
-            this.publicKeys = this.keys;
-            this.publicSelectedKeys = this.selectedKeys;
-        } else {
-            this.publicKeys = Collections.unmodifiableSet(this.keys);
-            this.publicSelectedKeys = Util.ungrowableSet(this.selectedKeys);
-        }
-    }
-}
-```
 
 
-那么替代`selectedKeys`**hashSet**这种结构，优化的结构是什么样的呢？
-
-**SelectedSelectionKeySet*
-
-
-
-```java
-final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
-
-    SelectionKey[] keys;
-    int size;
-
-    SelectedSelectionKeySet() {
-        keys = new SelectionKey[1024];
-    }
-
-    @Override
-    public boolean add(SelectionKey o) {
-        if (o == null) {
-            return false;
-        }
-
-        keys[size++] = o;
-        if (size == keys.length) {
-            increaseCapacity();
-        }
-
-        return true;
-    }
-}
-```
-
-
-
-
-底层其实就是维护了一个keys的数组，add操作是O(1)的复杂度，而HashSet这种需要更长的add时间。
-
-#### 具体处理
+#### 3.2.2 具体处理
 
 `processSelectedKeysOptimized()`具体处理selectionKeys的函数。
 
