@@ -807,7 +807,7 @@ private SelectorTuple openSelector() {
   }
 
   //...
-  //3.2.1.1 需要优化的，进行包装 
+  //3.2.1.1 需要优化的，进行包装
   final Class<?> selectorImplClass = (Class<?>) maybeSelectorImplClass;
   final SelectedSelectionKeySet selectedKeySet = new SelectedSelectionKeySet();
   // SelectedSelectionKeySet是我们优化的类型，底层是数组，add能达到O(1)
@@ -821,7 +821,6 @@ private SelectorTuple openSelector() {
         Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys");
         Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");
         
-
         if (PlatformDependent.javaVersion() >= 9 && PlatformDependent.hasUnsafe()) {
 
           long selectedKeysFieldOffset = PlatformDependent.objectFieldOffset(selectedKeysField);
@@ -889,7 +888,7 @@ private SelectorTuple openSelector() {
 
 #### 3.2.2 具体处理
 
-`processSelectedKeysOptimized()`具体处理selectionKeys的函数。
+``processSelectedKeysOptimized()``具体处理selectionKeys的函数，主要是对select获得keys里进行一次I/0处理，通过判断标志位来读(连接)写事件，如果NioEventLoop是BossGroup的话读事件可能是连接事件
 
 ```java
 private void processSelectedKeysOptimized() {
@@ -922,9 +921,11 @@ private void processSelectedKeysOptimized() {
 }
 
 private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
+    //3.2.2.1 获取channel的unsafe
     final AbstractNioChannel.NioUnsafe unsafe = ch.unsafe();
     // 获取Netty Channel中的 NioUnsafe 对象，用于后面的IO操作
 
+    
     if (!k.isValid()) {
       final EventLoop eventLoop;
       try {
@@ -938,11 +939,13 @@ private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
         return;
       }
       // close the channel if the key is not valid anymore
+      //3.2.2.2 如果key是不合法的，则调用关闭
       unsafe.close(unsafe.voidPromise());
       return;
     }
 
     try {
+      
       int readyOps = k.readyOps();
 
       if ((readyOps & SelectionKey.OP_CONNECT) != 0) {
