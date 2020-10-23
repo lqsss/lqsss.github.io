@@ -407,7 +407,10 @@ public void execute(Runnable task) {
             reject();
         }
     }
-      
+     
+  	//2.4 addTaskWakesUp表示增加任务时是否会让线程从阻塞中唤醒
+  	//例如DefaultEventExecutor里是通过BlockingQueue的阻塞来唤醒的，这里传的addTaskWakesUp为true
+  	//如果阻塞在selector.select()方法，这里前面的addTask并不能唤醒，需要主动唤醒
     if (!addTaskWakesUp && wakesUpForTask(task)) {
         wakeup(inEventLoop);
     }
@@ -420,6 +423,7 @@ public void execute(Runnable task) {
 
 ```java
 private void startThread() {
+		//判断底层线程是否开启
     if (state == ST_NOT_STARTED) {
         
         //2.3.1 CAS操作修改thread状态为ST_STARTED
@@ -507,6 +511,26 @@ private void doStartThread() {
     });
 }
 ```
+
+
+
+2.4 主动唤醒
+
+addTaskWakesUp字段表示增加任务时是否会让线程从阻塞中唤醒
+
+``NioEventLoop#wakeup``
+
+```java
+@Override
+protected void wakeup(boolean inEventLoop) {
+  if (!inEventLoop && wakenUp.compareAndSet(false, true)) {
+    selector.wakeup();
+  }
+}
+```
+
+- 例如DefaultEventExecutor里是通过BlockingQueue的阻塞来唤醒的，这里传的addTaskWakesUp为true
+- 如果阻塞在selector.select()方法，这里前面的addTask并不能唤醒，需要``selector.wakeup()``主动唤醒
 
 
 
