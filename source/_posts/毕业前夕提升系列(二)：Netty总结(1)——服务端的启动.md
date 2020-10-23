@@ -251,7 +251,7 @@ config：ServerBootstrapConfig
 
 group：EventLoopGroup
 
-**这里调用的register()，会调用父类的next()， chooser策略从 EventExecutor[]数组中选择一个 SingleThreadEventLoop，使用最终会调用unsafe接口的register方法，AbstractChannel里的内部类AbstractUnsafe实现了该接口。**
+**这里调用的register()，会调用父类的next()， chooser策略从 EventExecutor[]数组中选择一个  ，使用最终会调用unsafe接口的register方法，AbstractChannel里的内部类AbstractUnsafe实现了该接口。**
 
 3.2 实际注册方法
 

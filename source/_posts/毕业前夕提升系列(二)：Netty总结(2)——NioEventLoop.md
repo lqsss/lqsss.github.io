@@ -947,9 +947,7 @@ private void processSelectedKeysOptimized() {
 private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
     //3.2.2.1 获取channel的unsafe
     final AbstractNioChannel.NioUnsafe unsafe = ch.unsafe();
-    // 获取Netty Channel中的 NioUnsafe 对象，用于后面的IO操作
 
-    
     if (!k.isValid()) {
       final EventLoop eventLoop;
       try {
@@ -1034,18 +1032,21 @@ if (ioRatio == 100) {
 
 ```java
 protected boolean runAllTasks(long timeoutNanos) {
-    fetchFromScheduledTaskQueue(); //1. 
+    
+   	//3.3.2 任务的聚合
+    fetchFromScheduledTaskQueue(); 
     Runnable task = pollTask();
     if (task == null) {
         afterRunningAllTasks();
         return false;
     }
 
+    //3.3.3 任务的执行
     final long deadline = ScheduledFutureTask.nanoTime() + timeoutNanos;
     long runTasks = 0;
     long lastExecutionTime;
     for (;;) {
-        safeExecute(task);  //2. 
+        safeExecute(task);  
 
         runTasks ++;
 
@@ -1071,15 +1072,18 @@ protected boolean runAllTasks(long timeoutNanos) {
 }
 ```
 
+#### 3.3.1 任务分类和添加 
 
+- 普通任务
 
+- 定时任务
+  - 定时任务的添加时，判断是否为nioEventLoop线程，如果是的话可以直接添加，否则"添加定时任务"这个动作也需要打包成任务，在之后nioEventLoop的事件循环里执行，之所以这样做是因为定时任务队列是一个线程不安全的队列
 
-1.  任务的聚合
-2.  任务的执行
+#### 3.3.2 任务的聚合
 
-#### 任务的聚合
+将定时任务队列里过期的任务聚合添加到普通的taskQueue
 
-将定时任务队列里过期的任务聚合到taskQueue
+``SingleThreadEventExecutor#fetchFromScheduledTaskQueue``
 
 ```java
 private boolean fetchFromScheduledTaskQueue() {
@@ -1142,9 +1146,9 @@ private boolean fetchFromScheduledTaskQueue() {
 
 
 
-#### 任务的执行
+#### 3.3.3 任务的执行
 
-safeExecute
+``SingleThreadEventExecutor#safeExecute``
 
 ```java
 protected static void safeExecute(Runnable task) {
