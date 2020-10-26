@@ -165,35 +165,39 @@ private final class NioMessageUnsafe extends AbstractNioUnsafe {
 
 
 
-
 **总结：**
 
 1.  **`processSelectedKeys`处理到来的I/O事件(accept)**
 2.  while循环accept接收，创建新的NioSocketChannel存入readBuf
 
-## NioSocketChannel的创建
+## 2. NioSocketChannel的创建
 
-当accept一个jdk底层的NioChannel时，需要新包装一个Netty需要的NioSocketChannel。`buf.add(new NioSocketChannel(this, ch));`
+当accept一个jdk底层的NioChannel时，需要新包装一个Netty需要的NioSocketChannel。``buf.add(new NioSocketChannel(this, ch));``
 
 构造函数：
 
 ```java
 public NioSocketChannel(Channel parent, SocketChannel socket) {
+    //2.1 调用父类构造函数
     super(parent, socket);
+    //2.2 创建config
     config = new NioSocketChannelConfig(this, socket.socket());
 }
 ```
 
 
-AbstractNioChannel：
+
+#### 2.1 调用父类构造函数 
+
+``AbstractNioChannel``
 
 ```java
 protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
-    super(parent); //1 
-    this.ch = ch;  //2
-    this.readInterestOp = readInterestOp;//3 
+    super(parent); //2.1.1 传入服务端channel
+    this.ch = ch;  //2.1.2 保存jdk的客户端channel
+    this.readInterestOp = readInterestOp;//2.1.3 保存感兴趣的事件，这里传的是读事件
     try {
-      ch.configureBlocking(false);//4
+      ch.configureBlocking(false);//2.1.4 设置阻塞模型为非阻塞模式
     } catch (IOException e) {
       try {
         ch.close();
@@ -209,8 +213,7 @@ protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInter
 }
 ```
 
-
-AbstractChannel：
+``AbstractChannel``
 
 ```java
 protected AbstractChannel(Channel parent) {
@@ -223,17 +226,48 @@ protected AbstractChannel(Channel parent) {
 
 **创建流程如下：**
 
-1.  创建`id`、`unsafe`、`pipeline`，其中客户端channel持有的unsafe是`NioSocketChannelUnsafe`
-2.  保存jdk的客户端channel
-3.  保存感兴趣的事件——`SelectionKey.OP_READ`
-4.  设置阻塞模型为`false`，即非阻塞模式
-5.  新建客户端channel的配置——`NioSocketChannelConfig`。设置`TcpNoDelay`为`true`。
+2.1.1 创建`id`、`unsafe`、`pipeline`，其中客户端channel持有的unsafe是`NioSocketChannelUnsafe`
 
-## channel分类
+2.1.2 保存jdk的客户端channel
+
+2.1.3 保存感兴趣的事件——`SelectionKey.OP_READ`
+
+2.1.4 设置阻塞模型为非阻塞模式
+
+
+
+#### 2.2 创建config
+
+新建客户端channel的配置——`NioSocketChannelConfig`。设置`TcpNoDelay`为`true`。
+
+``DefaultSocketChannelConfig#new()``
+
+```java
+public DefaultSocketChannelConfig(SocketChannel channel, Socket javaSocket) {
+        super(channel);
+        if (javaSocket == null) {
+            throw new NullPointerException("javaSocket");
+        }
+        this.javaSocket = javaSocket;
+
+        // Enable TCP_NODELAY by default if possible.
+        if (PlatformDependent.canEnableTcpNoDelayByDefault()) {
+            try {
+                setTcpNoDelay(true);
+            } catch (Exception e) {
+                // Ignore.
+            }
+        }
+}
+```
+
+
+
+## 3. channel分类
 
 ![image-20190612200125222](https://blog-1257900554.cos.ap-beijing.myqcloud.com/image-20190612200125222.png)
 
-### AbstractChannel骨架类
+### 3.1 AbstractChannel骨架类
 ```java
 private final Channel parent;
 private final ChannelId id;
@@ -245,7 +279,7 @@ private volatile EventLoop eventLoop;
 ```
 
 
-### AbstractNioChannel
+### 3.2 AbstractNioChannel
 ```java
 private final SelectableChannel ch;
 protected final int readInterestOp;
@@ -253,16 +287,18 @@ volatile SelectionKey selectionKey;
 ```
 
 
-select进行读写方式的监听
+比骨架类多了select部分的功能，select进行读写方式的监听、保存jdk底层channel、设置非阻塞
 
-### NioServerSocketChannel、NioSocketChannel
+### 3.3 NioServerSocketChannel、NioSocketChannel
 
 不同：
 
-1.  向AbstractNioChannel里select注册accept事件（服务端），read事件（客户端）
-2.  unsafe不同，实现每一种读写逻辑不同
+1.  向AbstractNioChannel父类构造函数里select注册的事件不同，服务端是accept事件，客户端是read事件
+2.  底层unsafe不同，实现每一种读写逻辑不同，客户端是NioByteUnsafe 、服务端是NioMessageUnsafe
+    - NioMessageUnsafe的读，调用底层socket的accept读取连接
+    - NioByteUnsafe的读，读数据
 
-## 新连接接入
+## 4. 新连接接入
 
 ### ServerBootstrap里的ServerBootstrapAcceptor
 
@@ -282,43 +318,44 @@ void init(Channel channel) throws Exception {
 ```
 
 
-pipeline里是head-&gt;**ServerBootstrapAcceptor**-&gt;tail。
+pipeline里是head-&gt;**ServerBootstrapAcceptor**-&gt;tail
 
 ### 新连接后续接入过程
 
-1.  NioMessageUnsafe的read()
+4.1 NioMessageUnsafe的read()
+
 ```java
 @Override
 public void read() { 
   //...
-			int size = readBuf.size();
+	int size = readBuf.size();
       for (int i = 0; i < size; i ++) {
             readPending = false;
             pipeline.fireChannelRead(readBuf.get(i));//这里传播read事件
-           }
+      }
 }
 ```
 
-2. 传播到ServerBootstrapAcceptor里的channelRead()
+4.2 传播到``ServerBootstrapAcceptor#channelRead()``
 
 ```java
 public void channelRead(ChannelHandlerContext ctx, Object msg) {
     final Channel child = (Channel) msg;
-
+    
+	//4.2 1.添加用户自定义处理器childHandler，这里添加的是我们自定义实现的ChannelInitializer
     child.pipeline().addLast(childHandler); 
-    //1.添加用户自定义处理器childHandler
+
 
     setChannelOptions(child, childOptions, logger);
-    //2.设置childOptions
+    //4.2 2.设置childOptions
 
     for (Entry<AttributeKey<?>, Object> e: childAttrs) {
       child.attr((AttributeKey<Object>) e.getKey()).set(e.getValue());
     }
-    //2.childAttrs
+    //4.2 2 childAttrs
     try {
-      //3. 选择NioEventLoop并注册selector
+      //4.2 3 选择NioEventLoop并注册selector
       //之前是由BOSS线程组的NIO线程read()->发起的register行为(当前线程)，而这里的eventLoop从childGroup传来
-
       childGroup.register(child).addListener(new ChannelFutureListener() {                  
         @Override
         public void operationComplete(ChannelFuture future) throws Exception {
@@ -335,11 +372,56 @@ public void channelRead(ChannelHandlerContext ctx, Object msg) {
 ```
 
 
-ServerBootstrapAcceptor会做几件事情：
+
+4.2.1 添加用户自定义处理器childHandler的回调函数
+
+``ChannelInitializer#handlerAdded``
+
+```java
+@Override
+public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+    if (ctx.channel().isRegistered()) {
+        // This should always be true with our current DefaultChannelPipeline implementation.
+        // The good thing about calling initChannel(...) in handlerAdded(...) is that there will be no ordering
+        // surprises if a ChannelInitializer will add another ChannelInitializer. This is as all handlers
+        // will be added in the expected order.
+        //4.2.1.1 初始化channel，添加用户自定handler
+        initChannel(ctx);
+    }
+}
+```
+
+
+
+4.2.1.1 ``ChannelInitializer#initChannel``
+
+```java
+ private boolean initChannel(ChannelHandlerContext ctx) throws Exception {
+        if (initMap.putIfAbsent(ctx, Boolean.TRUE) == null) { // Guard against re-entrance.
+            try {
+                //4.2.1.1 nioSocketChannel的实现方法，用户代码在pipeline添加自定义hanler
+                initChannel((C) ctx.channel());
+            } catch (Throwable cause) {
+                // Explicitly call exceptionCaught(...) as we removed the handler before calling initChannel(...).
+                // We do so to prevent multiple calls to initChannel(...).
+                exceptionCaught(ctx, cause);
+            } finally {
+                ////4.2.1.2 删除当前ctx，也就是ChannelInitializer
+                remove(ctx);
+            }
+            return true;
+        }
+        return false;
+    }
+```
+
+
+
+触发read事件到ServerBootstrapAcceptor会做几件事情：
 
 *   添加用户自定义处理器childHandler
 *   设置设置childOptions、childAttrs
-*   选择NioEventLoop并注册selector
+*   选择NioEventLoop跟channel绑定，并将该channel注册到selector
 
 ### NioSocketChannel读事件注册
 
