@@ -14,14 +14,17 @@ categories: Netty
 2.  新连接是怎么注册到NioEventLoop的
    <!--more-->
 
-## 检测新连接
+## 1. 检测新连接
 
 **检测新连接**发生在Boss线程在事件循环里的第二步骤(处理到来的I/O事件`processSelectedKeys`)。
 
+``NioEventLoop#processSelectedKey(SelectionKey k, AbstractNioChannel ch)``
+
 ```java
 private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
+    //1.1 获取NioSocketChannel的unsafe(封装的底层读写连接操作)
     final AbstractNioChannel.NioUnsafe unsafe = ch.unsafe(); 
-   //获取NioSocketChannel的unsafe(封装的底层读写连接操作)
+
     if (!k.isValid()) {
         final EventLoop eventLoop;
         try {
@@ -67,7 +70,7 @@ private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
         // Also check for readOps of 0 to workaround possible JDK bug which may otherwise lead
         // to a spin loop
         if ((readyOps & (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT)) != 0 || readyOps == 0) {
-          //新连接到来事件
+          //1.2 新连接到来事件，调用read
             unsafe.read();
           
         }
@@ -79,22 +82,22 @@ private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
 
 
 
-主要是`unsafe.read();`这里unsafe是NioMessageUnsafe对象。
-
-
+1.2 ``NioMessageUnsafe#read()``
 
 ```java
 private final class NioMessageUnsafe extends AbstractNioUnsafe {
-
+	//存储读到的连接(NioSocketChannel对象)
     private final List<Object> readBuf = new ArrayList<Object>();
-  //存储NioSocketChannel对象
+
 
     @Override
     public void read() {
+        //1.2.1 断言是否是NioEventLoop
         assert eventLoop().inEventLoop();
-      //断言是否是NioEventLoop
+
         final ChannelConfig config = config();
         final ChannelPipeline pipeline = pipeline();
+        //1.2.2 处理服务端接收的速率
         final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
         allocHandle.reset(config);
 
@@ -104,8 +107,10 @@ private final class NioMessageUnsafe extends AbstractNioUnsafe {
         try {
             try {
                 do {
+                    
+                    //1.2.3 accept接收新来的连接,jdk底层的accept，创建channel加到readBuf
                     int localRead = doReadMessages(readBuf);
-                  //accept接收新来的连接
+                 
                     if (localRead == 0) {
                         break;
                     }
@@ -113,11 +118,11 @@ private final class NioMessageUnsafe extends AbstractNioUnsafe {
                         closed = true;
                         break;
                     }
-
+					//1.2.4 增加接收连接数
                     allocHandle.incMessagesRead(localRead);
-                  //增加接收连接数
+                  //1.2.5 是否自动读配置 && 读取的连接数比一次read最大的连接数(16)小
                 } while (allocHandle.continueReading());
-              //是否自动读配置 && 读取的连接数比一次read最大的连接数(16)小
+              
             } catch (Throwable t) {
                 exception = t;
             }
@@ -164,7 +169,7 @@ private final class NioMessageUnsafe extends AbstractNioUnsafe {
 **总结：**
 
 1.  **`processSelectedKeys`处理到来的I/O事件(accept)**
-2.  **while循环accept接收，创建新的NioSocketChannel存入`List&lt;Object&gt; readBuf`**
+2.  while循环accept接收，创建新的NioSocketChannel存入readBuf
 
 ## NioSocketChannel的创建
 
