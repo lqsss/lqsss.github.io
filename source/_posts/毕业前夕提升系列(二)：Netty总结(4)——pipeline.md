@@ -18,9 +18,9 @@ Q2：对于ChannelHandler的添加应该遵循什么样的顺序？
 
 Q3：**用户手动触发事件传播**，不同的触发方式有什么样的区别？
 
-## pipeline初始化
+## 1. pipeline初始化
 
-### 发生时机
+### 1.1 发生时机
 
 发生在NioSocketChannel创建时，`newChannelPipeline()`为创建一个ChannelPipeline的过程。每一个新创建的Channel都将会被分配一个新的ChannelPipeline。
 
@@ -35,7 +35,7 @@ protected AbstractChannel(Channel parent) {
 
 
 
-### pipeline节点结构
+### 1.2 pipeline节点结构
 
 pipeline的节点结构：`ChannelHandlerContext`
 
@@ -53,7 +53,7 @@ public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvok
 
       boolean isRemoved();//表示这节点是否被移除
   
-  		ChannelPipeline pipeline();
+  		ChannelPipeline pipeline();//属于哪个pipeline
 }
 ```
 
@@ -68,11 +68,11 @@ ChannelHandlerContext的继承父类：
 
 *   `ChannelOutboundInvoker`Outbound事件：传播写事件
 
-### 两大哨兵
+### 1.3 两大哨兵
 
 `TailContext、HeadContext`
 
-#### TailContext
+#### 1.3.1 TailContext
 ```java
 final class TailContext extends AbstractChannelHandlerContext implements ChannelInboundHandler {
 
@@ -81,6 +81,7 @@ final class TailContext extends AbstractChannelHandlerContext implements Channel
             setAddComplete();
         }
 
+    	//本身自己也是handler
         @Override
         public ChannelHandler handler() {
             return this;
@@ -102,7 +103,7 @@ final class TailContext extends AbstractChannelHandlerContext implements Channel
 ```
 
 
-#### HeadContext
+#### 1.3.2 HeadContext
 ```java
 HeadContext(DefaultChannelPipeline pipeline) {
     super(pipeline, null, HEAD_NAME, false, true);//1
@@ -116,7 +117,7 @@ HeadContext(DefaultChannelPipeline pipeline) {
 
 与TailContext区别在于，HeadContext是设置的为outbound。
 
-## 添加childHandler
+## 2. 往pipeline里添加childHandler
 
 Q:什么时候添加？ 
 
@@ -134,10 +135,11 @@ Q:什么时候添加？
 @Override
 public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
     final AbstractChannelHandlerContext newCtx;
+    //每一个channel都有pipeline
     synchronized (this) {
-        checkMultiplicity(handler); //1. 
+        checkMultiplicity(handler); //2.1 
 
-        newCtx = newContext(group, filterName(name, handler), handler);//2
+        newCtx = newContext(group, filterName(name, handler), handler);//2.2
 
         addLast0(newCtx);
 
@@ -162,17 +164,20 @@ public final ChannelPipeline addLast(EventExecutorGroup group, String name, Chan
             return this;
         }
     }
-    callHandlerAdded0(newCtx);//3
+    callHandlerAdded0(newCtx);//2.3
     return this;
 }
 ```
 
+### 2.1  判断是否重复添加
 
-### 1. 判断是否重复添加
+``DefaultChannelPipeline#checkMultiplicity``
+
 ```java
 private static void checkMultiplicity(ChannelHandler handler) {
     if (handler instanceof ChannelHandlerAdapter) {
         ChannelHandlerAdapter h = (ChannelHandlerAdapter) handler;
+        //如果hanlder非共享的，但已经被添加到pipeline
         if (!h.isSharable() && h.added) {
             throw new ChannelPipelineException(
                     h.getClass().getName() +
@@ -185,19 +190,18 @@ private static void checkMultiplicity(ChannelHandler handler) {
 
 
 
-### 2. 创建节点并添加至链表
+### 2.2 创建节点并添加至链表
 
 ```java
 newCtx = newContext(group, filterName(name, handler), handler);
+‘//在tail前插入newCtx
 addLast0(newCtx);
 ```
 
 
-### 3. 回调添加完成事件
+### 2.3 回调添加完成事件
 
-`callHandlerAdded0(newCtx);`
-
-
+`DefaultChannelPipeline#callHandlerAdded0(newCtx);`
 
 ```java
 private void callHandlerAdded0(final AbstractChannelHandlerContext ctx) {
@@ -236,11 +240,11 @@ private void callHandlerAdded0(final AbstractChannelHandlerContext ctx) {
 ```
 
 
-## 删除childHandler
+## 3. 删除childHandler
 
-场景：权限校验
+场景：权限校验，校验成功后就不需要校验handler
 
-*   remove
+``DefaultChannelPipeline#remove``
 
 ```java
 @Override
@@ -252,9 +256,9 @@ public final ChannelPipeline remove(ChannelHandler handler) {
 
 
 
-### 1. 找到节点
+### 3.1 找到节点
 
-*   getContextOrDie
+``DefaultChannelPipeline#getContextOrDie``
 
 ```java
 private AbstractChannelHandlerContext getContextOrDie(ChannelHandler handler) {
@@ -270,8 +274,8 @@ private AbstractChannelHandlerContext getContextOrDie(ChannelHandler handler) {
 
 
 
+``DefaultChannelPipeline#context``
 
-*   context
 ```java
 @Override
 public final ChannelHandlerContext context(ChannelHandler handler) {
@@ -297,8 +301,10 @@ public final ChannelHandlerContext context(ChannelHandler handler) {
 
 
 
+### 3.2 删除
 
-### 2.删除
+``DefaultChannelPipeline#remove``
+
 ```java
 private AbstractChannelHandlerContext remove(final AbstractChannelHandlerContext ctx) {
     assert ctx != head && ctx != tail;
@@ -467,7 +473,7 @@ public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception 
 
 1.  转型
 2.  用户代码回调处
-3.  帮用户自动释放bytebuf。
+3.  帮用户自动释放bytebuf
 
 ## outBound事件的传播
 

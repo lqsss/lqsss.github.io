@@ -425,10 +425,10 @@ public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 
 ### NioSocketChannel读事件注册
 
-该小节是讲述的register里的过程
+上述步骤的注册到nioEventLoop，已经成为active状态
 
-1.  触发ChannelActive-&gt;head
-2.  readIfIsAutoRead-&gt;pipeline.read()-&gt;unsafe.beginRead()-&gt;doBeginRead()
+1.  触发ChannelActive-&gt;head，从headCtx传播active事件
+2.  active事件里readIfIsAutoRead(配置自动读)->传播读事件，pipeline.read()->tailCtx->headCtx#unsafe.beginRead()-&gt;doBeginRead()
 3.  selectionKey注册一个readInterestOp
 
 ## 总结
