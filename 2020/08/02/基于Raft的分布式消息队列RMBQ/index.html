@@ -23,7 +23,7 @@
   <meta name="description" content="准备从以下方向论述  为什么要用消息队列（mq） 对于高可靠、强一致性的场景现在都有Rabbitmq解决方案了，那为什么还要用Raft算法实现一个mq">
 <meta property="og:type" content="article">
 <meta property="og:title" content="基于Raft的分布式消息队列RMBQ">
-<meta property="og:url" content="http://yoursite.com/2020/07/08/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97RMBQ/index.html">
+<meta property="og:url" content="http://yoursite.com/2020/08/02/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97RMBQ/index.html">
 <meta property="og:site_name" content="Lqsss&#39;s Blog">
 <meta property="og:description" content="准备从以下方向论述  为什么要用消息队列（mq） 对于高可靠、强一致性的场景现在都有Rabbitmq解决方案了，那为什么还要用Raft算法实现一个mq">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/IMG_1925.JPG">
@@ -31,14 +31,14 @@
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514151447.png">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514162715.png">
 <meta property="og:image" content="http://op7scj9he.bkt.clouddn.com/TIM%E5%9B%BE%E7%89%8720180514163908.png">
-<meta property="article:published_time" content="2020-07-08T07:33:59.787Z">
-<meta property="article:modified_time" content="2020-07-08T07:33:59.787Z">
+<meta property="article:published_time" content="2020-08-02T10:30:11.886Z">
+<meta property="article:modified_time" content="2020-08-02T10:30:11.886Z">
 <meta property="article:author" content="lqsss">
 <meta property="article:tag" content="schedule">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://op7scj9he.bkt.clouddn.com/IMG_1925.JPG">
 
-<link rel="canonical" href="http://yoursite.com/2020/07/08/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97RMBQ/">
+<link rel="canonical" href="http://yoursite.com/2020/08/02/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97RMBQ/">
 
 
 <script id="page-configurations">
@@ -171,7 +171,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/08/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97RMBQ/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97RMBQ/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
@@ -194,7 +194,7 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2020-07-08 15:33:59" itemprop="dateCreated datePublished" datetime="2020-07-08T15:33:59+08:00">2020-07-08</time>
+              <time title="Created: 2020-08-02 18:30:11" itemprop="dateCreated datePublished" datetime="2020-08-02T18:30:11+08:00">2020-08-02</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -345,11 +345,11 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/07/08/%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/" rel="prev" title="factory pattern">
-      <i class="fa fa-chevron-left"></i> factory pattern
+    <a href="/2020/07/08/%E5%86%8D%E6%8E%A2ThreadLocal/" rel="prev" title="再探ThreadLocal">
+      <i class="fa fa-chevron-left"></i> 再探ThreadLocal
     </a></div>
       <div class="post-nav-item">
-    <a href="/2020/07/08/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81-zookeeper/" rel="next" title="分布式锁实现 - zookeeper">
+    <a href="/2020/08/02/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81-zookeeper/" rel="next" title="分布式锁实现 - zookeeper">
       分布式锁实现 - zookeeper <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
@@ -426,7 +426,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">51</span>
+          <span class="site-state-item-count">52</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -439,7 +439,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-count">42</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -469,7 +469,7 @@
 <div class="copyright">
   
   &copy; 2018 – 
-  <span itemprop="copyrightYear">2020</span>
+  <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
@@ -478,12 +478,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="Symbols count total">NaNm</span>
+    <span title="Symbols count total">232k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="Reading time total">NaN:aN</span>
+    <span title="Reading time total">3:31</span>
 </div>
   <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
   </div>

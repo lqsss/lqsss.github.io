@@ -161,7 +161,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E5%86%85%E9%83%A8%E7%B1%BB/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(11)%E2%80%94%E2%80%94%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F%E5%9C%A8Netty%E7%9A%84%E5%BA%94%E7%94%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
@@ -175,7 +175,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/08/02/%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E5%86%85%E9%83%A8%E7%B1%BB/" class="post-title-link" itemprop="url">内部类</a>
+            <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(11)%E2%80%94%E2%80%94%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F%E5%9C%A8Netty%E7%9A%84%E5%BA%94%E7%94%A8/" class="post-title-link" itemprop="url">毕业前夕提升系列(二)：Netty总结(11)——观察者模式在Netty的应用</a>
         </h2>
 
         <div class="post-meta">
@@ -185,15 +185,22 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2020-08-02 18:45:37" itemprop="dateCreated datePublished" datetime="2020-08-02T18:45:37+08:00">2020-08-02</time>
+              <time title="Created: 2020-08-02 19:29:17" itemprop="dateCreated datePublished" datetime="2020-08-02T19:29:17+08:00">2020-08-02</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-03-16 09:58:09" itemprop="dateModified" datetime="2021-03-16T09:58:09+08:00">2021-03-16</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/grammar/" itemprop="url" rel="index"><span itemprop="name">grammar</span></a>
+                  <a href="/categories/Netty/" itemprop="url" rel="index"><span itemprop="name">Netty</span></a>
                 </span>
             </span>
 
@@ -203,14 +210,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">Symbols count in article: </span>
-              <span>2.9k</span>
+              <span>8.9k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>3 mins.</span>
+              <span>8 mins.</span>
             </span>
 
         </div>
@@ -222,13 +229,471 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="为什么需要内部类"><a href="#为什么需要内部类" class="headerlink" title="为什么需要内部类"></a>为什么需要内部类</h2><ol>
-<li>完善多重继承</li>
-<li>闭包与回调</li>
+          <p>netty中在使用<code>writeAndFlush</code>方法最终在<code>doWrite()</code>方法，是通过NIO的socketChannel的<code>write</code>方法，该方法在设置none-blocking模式下是异步写入的，如果client需要在写入成功后加上一些后续逻辑，一般是下面做法:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ChannelFuture channelFuture = chan.writeAndFlush(object);</span><br><span class="line">channelFuture.addListener((future) -&gt; &#123;</span><br><span class="line">    <span class="keyword">if</span> (future.isSuccess()) &#123;</span><br><span class="line"></span><br><span class="line">    &#125; eles &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="Netty的Promise"><a href="#Netty的Promise" class="headerlink" title="Netty的Promise"></a>Netty的Promise</h2><p>netty中的Promise类就是观察者的体现，我们用<code>writeAndFlush</code>来跟踪一下源码</p>
+<p><code>writeAndFlush()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ChannelFuture <span class="title">writeAndFlush</span><span class="params">(Object msg)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> writeAndFlush(msg, newPromise());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(11)%E2%80%94%E2%80%94%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F%E5%9C%A8Netty%E7%9A%84%E5%BA%94%E7%94%A8/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/skipList&redis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/02/skipList&redis/" class="post-title-link" itemprop="url">skipList&redis</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-02 19:29:17" itemprop="dateCreated datePublished" datetime="2020-08-02T19:29:17+08:00">2020-08-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-03-16 08:58:50" itemprop="dateModified" datetime="2021-03-16T08:58:50+08:00">2021-03-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/redis/" itemprop="url" rel="index"><span itemprop="name">redis</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>5.7k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>5 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>redis里的sorted set，内部实现使用的调表</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/08/02/skipList&redis/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(10)%E2%80%94%E2%80%94Netty%E7%BC%96%E7%A0%81%E5%99%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(10)%E2%80%94%E2%80%94Netty%E7%BC%96%E7%A0%81%E5%99%A8/" class="post-title-link" itemprop="url">毕业前夕提升系列(二)：Netty总结(10)——Netty编码器</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-02 19:29:17" itemprop="dateCreated datePublished" datetime="2020-08-02T19:29:17+08:00">2020-08-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-03-16 08:55:44" itemprop="dateModified" datetime="2021-03-16T08:55:44+08:00">2021-03-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Netty/" itemprop="url" rel="index"><span itemprop="name">Netty</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>15k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>14 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="Netty编码器"><a href="#Netty编码器" class="headerlink" title="Netty编码器"></a>Netty编码器</h3><p>将我们业务层的对象进行encode操作，转换成byte最终写入到channel中，我们一般需要两步：</p>
+<ol>
+<li>实现<code>MessageToByteEncoder</code> 类<code>encode()</code>方法</li>
+<li>作为<code>ChannelOutboundHandlerAdapter</code>加入到<code>ChannelPipeline</code></li>
 </ol>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/08/02/%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E5%86%85%E9%83%A8%E7%B1%BB/#more" rel="contents">
+              <a class="btn" href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(10)%E2%80%94%E2%80%94Netty%E7%BC%96%E7%A0%81%E5%99%A8/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/IM%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/02/IM%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">IM经验总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-02 19:29:17" itemprop="dateCreated datePublished" datetime="2020-08-02T19:29:17+08:00">2020-08-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-03-16 08:58:25" itemprop="dateModified" datetime="2021-03-16T08:58:25+08:00">2021-03-16</time>
+              </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>1.4k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="IM系统经验总结"><a href="#IM系统经验总结" class="headerlink" title="IM系统经验总结"></a>IM系统经验总结</h2>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/08/02/IM%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%B8%80)%EF%BC%9ASpringBoot%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%B8%80)%EF%BC%9ASpringBoot%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">毕业前夕提升系列(一)：SpringBoot总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-02 19:29:02" itemprop="dateCreated datePublished" datetime="2020-08-02T19:29:02+08:00">2020-08-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/SpringBoot/" itemprop="url" rel="index"><span itemprop="name">SpringBoot</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>8.6k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>8 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>新的客服系统使用的是SpringBoot框架，于是前来探究一下。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%B8%80)%EF%BC%9ASpringBoot%E6%80%BB%E7%BB%93/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E5%A0%86%E6%8E%92%E5%BA%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/08/02/%E5%A0%86%E6%8E%92%E5%BA%8F/" class="post-title-link" itemprop="url">堆排序</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-02 19:29:02" itemprop="dateCreated datePublished" datetime="2020-08-02T19:29:02+08:00">2020-08-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/programming-practice/" itemprop="url" rel="index"><span itemprop="name">programming practice</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>1.4k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>堆排序介绍和相关代码</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/08/02/%E5%A0%86%E6%8E%92%E5%BA%8F/#more" rel="contents">
                 Read more &raquo;
               </a>
             </div>
@@ -276,7 +741,7 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2020-08-02 18:45:37" itemprop="dateCreated datePublished" datetime="2020-08-02T18:45:37+08:00">2020-08-02</time>
+              <time title="Created: 2020-08-02 19:29:02" itemprop="dateCreated datePublished" datetime="2020-08-02T19:29:02+08:00">2020-08-02</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -340,7 +805,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/Spring%E6%80%BB%E7%BB%93/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(5)%E2%80%94%E2%80%94Netty%E4%B8%AD%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
@@ -354,7 +819,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/08/02/Spring%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">Spring总结</a>
+            <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(5)%E2%80%94%E2%80%94Netty%E4%B8%AD%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/" class="post-title-link" itemprop="url">毕业前夕提升系列(二)：Netty总结(5)——Netty中内存分配</a>
         </h2>
 
         <div class="post-meta">
@@ -372,95 +837,7 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Spring/" itemprop="url" rel="index"><span itemprop="name">Spring</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="Symbols count in article">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">Symbols count in article: </span>
-              <span>6.3k</span>
-            </span>
-            <span class="post-meta-item" title="Reading time">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>6 mins.</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Spring知识小结<br>1.IOC<br>2.AOP<br>3.动态代理</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/08/02/Spring%E6%80%BB%E7%BB%93/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/SpringBoot%E7%9A%84%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
-      <meta itemprop="name" content="lqsss">
-      <meta itemprop="description" content="There's no place like 127.0.0.1">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Lqsss's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/02/SpringBoot%E7%9A%84%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE/" class="post-title-link" itemprop="url">SpringBoot的自动配置</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-08-02 18:45:37" itemprop="dateCreated datePublished" datetime="2020-08-02T18:45:37+08:00">2020-08-02</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/SpringBoot/" itemprop="url" rel="index"><span itemprop="name">SpringBoot</span></a>
+                  <a href="/categories/Netty/" itemprop="url" rel="index"><span itemprop="name">Netty</span></a>
                 </span>
             </span>
 
@@ -489,10 +866,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>自动配置是SpringBoot的一大亮点，在应用中无时无刻不在使用。</p>
+          <p>本篇是讲Netty中byteBuf与底层I/O的交互</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/08/02/SpringBoot%E7%9A%84%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE/#more" rel="contents">
+              <a class="btn" href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(5)%E2%80%94%E2%80%94Netty%E4%B8%AD%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/#more" rel="contents">
                 Read more &raquo;
               </a>
             </div>
@@ -516,7 +893,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/ygc%E6%97%B6%E9%97%B4%E8%BF%87%E9%95%BF%E5%AE%9E%E4%BE%8B/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(4)%E2%80%94%E2%80%94pipeline/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
@@ -530,7 +907,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/08/02/ygc%E6%97%B6%E9%97%B4%E8%BF%87%E9%95%BF%E5%AE%9E%E4%BE%8B/" class="post-title-link" itemprop="url">ygc时间过长实例</a>
+            <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(4)%E2%80%94%E2%80%94pipeline/" class="post-title-link" itemprop="url">毕业前夕提升系列(二)：Netty总结(4)——pipeline</a>
         </h2>
 
         <div class="post-meta">
@@ -548,7 +925,7 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/jvm/" itemprop="url" rel="index"><span itemprop="name">jvm</span></a>
+                  <a href="/categories/Netty/" itemprop="url" rel="index"><span itemprop="name">Netty</span></a>
                 </span>
             </span>
 
@@ -558,14 +935,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">Symbols count in article: </span>
-              <span>2.3k</span>
+              <span>11k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>2 mins.</span>
+              <span>10 mins.</span>
             </span>
 
         </div>
@@ -577,11 +954,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>session状态机，ygc时间过长，经常需要重启才能维持正常的服务。实习结束后，该问题仍存在，直到某天之前坐在我旁边的技术厉害、经验老道的大哥一眼看出端倪。</p>
-<p>问题分析，顺便把部分jvm知识回顾</p>
+          <p>pipeline负责读写事件的传播</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/08/02/ygc%E6%97%B6%E9%97%B4%E8%BF%87%E9%95%BF%E5%AE%9E%E4%BE%8B/#more" rel="contents">
+              <a class="btn" href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(4)%E2%80%94%E2%80%94pipeline/#more" rel="contents">
                 Read more &raquo;
               </a>
             </div>
@@ -605,7 +981,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/Kafka%E8%AF%AD%E4%B9%89/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E6%80%BB%E7%BB%93%E5%92%8C%E5%B1%95%E6%9C%9B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
@@ -619,7 +995,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/08/02/Kafka%E8%AF%AD%E4%B9%89/" class="post-title-link" itemprop="url">Kafka语义</a>
+            <a href="/2020/08/02/%E6%80%BB%E7%BB%93%E5%92%8C%E5%B1%95%E6%9C%9B/" class="post-title-link" itemprop="url">总结和展望</a>
         </h2>
 
         <div class="post-meta">
@@ -637,7 +1013,7 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/distributed/" itemprop="url" rel="index"><span itemprop="name">distributed</span></a>
+                  <a href="/categories/schedule/" itemprop="url" rel="index"><span itemprop="name">schedule</span></a>
                 </span>
             </span>
 
@@ -647,7 +1023,7 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">Symbols count in article: </span>
-              <span>547</span>
+              <span>1.6k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
@@ -666,596 +1042,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>kafka语义：从生产者和消费者角度</p>
+          <h1 id="总结和展望"><a href="#总结和展望" class="headerlink" title="总结和展望"></a>总结和展望</h1><h2 id="背景交代"><a href="#背景交代" class="headerlink" title="背景交代"></a>背景交代</h2><p>书写该篇文章的时候，是在开题报告会当天的晚上。时间轴已经是国庆后从小米实习归来，距离19年元旦还剩两月，未来工作核心是进行一系列有关论文开展的工作。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/08/02/Kafka%E8%AF%AD%E4%B9%89/#more" rel="contents">
+              <a class="btn" href="/2020/08/02/%E6%80%BB%E7%BB%93%E5%92%8C%E5%B1%95%E6%9C%9B/#more" rel="contents">
                 Read more &raquo;
               </a>
             </div>
           <!--/noindex-->
         
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/5%E6%9C%88%E8%AE%A1%E5%88%92/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
-      <meta itemprop="name" content="lqsss">
-      <meta itemprop="description" content="There's no place like 127.0.0.1">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Lqsss's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/02/5%E6%9C%88%E8%AE%A1%E5%88%92/" class="post-title-link" itemprop="url">5月计划</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-08-02 18:45:37" itemprop="dateCreated datePublished" datetime="2020-08-02T18:45:37+08:00">2020-08-02</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/other/" itemprop="url" rel="index"><span itemprop="name">other</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="Symbols count in article">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">Symbols count in article: </span>
-              <span>267</span>
-            </span>
-            <span class="post-meta-item" title="Reading time">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>1 mins.</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><img src="https://upload-images.jianshu.io/upload_images/5753761-b514e014a31ac63a.gif?imageMogr2/auto-orient/strip" alt="e4b9c524b899a901343413611f950a7b0308f5ea.gif"></p>
-<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>秋招前夕，综合考虑了下研究方向和准备复习，项目的编写和基础知识的巩固
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/08/02/5%E6%9C%88%E8%AE%A1%E5%88%92/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(9)%E2%80%94%E2%80%94Netty%E8%A7%A3%E7%A0%81%E5%99%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
-      <meta itemprop="name" content="lqsss">
-      <meta itemprop="description" content="There's no place like 127.0.0.1">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Lqsss's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(9)%E2%80%94%E2%80%94Netty%E8%A7%A3%E7%A0%81%E5%99%A8/" class="post-title-link" itemprop="url">毕业前夕提升系列(二)：Netty总结(9)——Netty解码器</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-08-02 18:35:38" itemprop="dateCreated datePublished" datetime="2020-08-02T18:35:38+08:00">2020-08-02</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Netty/" itemprop="url" rel="index"><span itemprop="name">Netty</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="Symbols count in article">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">Symbols count in article: </span>
-              <span></span>
-            </span>
-            <span class="post-meta-item" title="Reading time">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>NaN:aN</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>根据不同的协议来进行数据流到对象的转换，decoder是网络编程中不可或缺的一个步骤。Netty有一个<code>ByteToMessageDecoder</code>抽象解码器，上层应用实现该类的<code>decode()</code>方法。</p>
-<h3 id="解码步骤"><a href="#解码步骤" class="headerlink" title="解码步骤"></a>解码步骤</h3><ol>
-<li>通过Cumulator积累字节流数据</li>
-<li>执行实现ByteToMessageDecoder子类的方法来解析对象</li>
-<li>将解析的ByteBuf对象向下传播</li>
-</ol>
-<h2 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h2><p><code>ByteToMessageDecoder</code>抽象类实现了<code>ChannelInboundHandlerAdapter</code>，加入到pipeline中，channelRead作为入口进行解码操作。</p>
-<p><code>channelRead(ChannelHandlerContext ctx, Object msg)</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">channelRead</span><span class="params">(ChannelHandlerContext ctx, Object msg)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (msg <span class="keyword">instanceof</span> ByteBuf) &#123;</span><br><span class="line">        CodecOutputList out = CodecOutputList.newInstance();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            ByteBuf data = (ByteBuf) msg;</span><br><span class="line">            first = cumulation == <span class="keyword">null</span>;</span><br><span class="line">          	<span class="comment">//第一次就是当前收到的data</span></span><br><span class="line">            <span class="keyword">if</span> (first) &#123;</span><br><span class="line">                cumulation = data;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">//1. 累加器进行字节流的累加</span></span><br><span class="line">                cumulation = cumulator.cumulate(ctx.alloc(), cumulation, data);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//2. 执行实现ByteToMessageDecoder子类的方法来解析对象</span></span><br><span class="line">            callDecode(ctx, cumulation, out);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (DecoderException e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> e;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> DecoderException(e);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (cumulation != <span class="keyword">null</span> &amp;&amp; !cumulation.isReadable()) &#123;</span><br><span class="line">                numReads = <span class="number">0</span>;</span><br><span class="line">                cumulation.release();</span><br><span class="line">                cumulation = <span class="keyword">null</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (++ numReads &gt;= discardAfterReads) &#123;</span><br><span class="line">                <span class="comment">// We did enough reads already try to discard some bytes so we not risk to see a OOME.</span></span><br><span class="line">                <span class="comment">// See https://github.com/netty/netty/issues/4275</span></span><br><span class="line">                numReads = <span class="number">0</span>;</span><br><span class="line">                discardSomeReadBytes();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">int</span> size = out.size();</span><br><span class="line">            decodeWasNull = !out.insertSinceRecycled();</span><br><span class="line">            <span class="comment">//3. 将解析的ByteBuf对象向下传播</span></span><br><span class="line">            fireChannelRead(ctx, out, size);</span><br><span class="line">            out.recycle();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        ctx.fireChannelRead(msg);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<ol>
-<li>累加器进行字节流的累加</li>
-</ol>
-<p>默认累加器实现<code>ByteToMessageDecoder#MERGE_CUMULATOR</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> Cumulator MERGE_CUMULATOR = <span class="keyword">new</span> Cumulator() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> ByteBuf <span class="title">cumulate</span><span class="params">(ByteBufAllocator alloc, ByteBuf cumulation, ByteBuf in)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">final</span> ByteBuf buffer;</span><br><span class="line">            <span class="comment">//1.1 超出累加器的容量</span></span><br><span class="line">            <span class="keyword">if</span> (cumulation.writerIndex() &gt; cumulation.maxCapacity() - in.readableBytes()</span><br><span class="line">                || cumulation.refCnt() &gt; <span class="number">1</span> || cumulation.isReadOnly()) &#123;</span><br><span class="line">                <span class="comment">// Expand cumulation (by replace it) when either there is not more room in the buffer</span></span><br><span class="line">                <span class="comment">// or if the refCnt is greater then 1 which may happen when the user use slice().retain() or</span></span><br><span class="line">                <span class="comment">// duplicate().retain() or if its read-only.</span></span><br><span class="line">                <span class="comment">//</span></span><br><span class="line">                <span class="comment">// See:</span></span><br><span class="line">                <span class="comment">// - https://github.com/netty/netty/issues/2327</span></span><br><span class="line">                <span class="comment">// - https://github.com/netty/netty/issues/1764</span></span><br><span class="line">                <span class="comment">//扩容</span></span><br><span class="line">                buffer = expandCumulation(alloc, cumulation, in.readableBytes());</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                buffer = cumulation;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//</span></span><br><span class="line">            buffer.writeBytes(in);</span><br><span class="line">            <span class="keyword">return</span> buffer;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="comment">// We must release in in all cases as otherwise it may produce a leak if writeBytes(...) throw</span></span><br><span class="line">            <span class="comment">// for whatever release (for example because of OutOfMemoryError)</span></span><br><span class="line">            in.release();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-
-
-<ol start="2">
-<li>执行实现ByteToMessageDecoder子类的方法来解析对象</li>
-</ol>
-<p><code>callDecode(ctx, cumulation, out)</code></p>
-<ul>
-<li>ctx：上下文</li>
-<li>in：这次接收到的数据</li>
-<li>out：得到的字节数据转成功的对象</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">callDecode</span><span class="params">(ChannelHandlerContext ctx, ByteBuf in, List&lt;Object&gt; out)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">//外层是循环</span></span><br><span class="line">        <span class="keyword">while</span> (in.isReadable()) &#123;</span><br><span class="line">            <span class="comment">//先mark一下的对象的数量</span></span><br><span class="line">            <span class="keyword">int</span> outSize = out.size();</span><br><span class="line"></span><br><span class="line">            <span class="comment">//如果存在已生成的对象</span></span><br><span class="line">            <span class="keyword">if</span> (outSize &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="comment">//传递到下文</span></span><br><span class="line">                fireChannelRead(ctx, out, outSize);</span><br><span class="line">                <span class="comment">//清理该list</span></span><br><span class="line">                out.clear();</span><br><span class="line"></span><br><span class="line">                <span class="comment">// Check if this handler was removed before continuing with decoding.</span></span><br><span class="line">                <span class="comment">// If it was removed, it is not safe to continue to operate on the buffer.</span></span><br><span class="line">                <span class="comment">//</span></span><br><span class="line">                <span class="comment">// See:</span></span><br><span class="line">                <span class="comment">// - https://github.com/netty/netty/issues/4635</span></span><br><span class="line">                <span class="keyword">if</span> (ctx.isRemoved()) &#123;</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                outSize = <span class="number">0</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">//mark一下当前数据的可读字节</span></span><br><span class="line">            <span class="keyword">int</span> oldInputLength = in.readableBytes();</span><br><span class="line">            <span class="comment">//调用子类实现的decode，将in的字节数据解码成对象到out里</span></span><br><span class="line">            decodeRemovalReentryProtection(ctx, in, out);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Check if this handler was removed before continuing the loop.</span></span><br><span class="line">            <span class="comment">// If it was removed, it is not safe to continue to operate on the buffer.</span></span><br><span class="line">            <span class="comment">//</span></span><br><span class="line">            <span class="comment">// See https://github.com/netty/netty/issues/1664</span></span><br><span class="line">            <span class="keyword">if</span> (ctx.isRemoved()) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">//经过解码后，没有新生成的对象</span></span><br><span class="line">            <span class="keyword">if</span> (outSize == out.size()) &#123;</span><br><span class="line">                <span class="comment">//而且in的字节流也没有被消耗，说明这一次无法</span></span><br><span class="line">                <span class="keyword">if</span> (oldInputLength == in.readableBytes()) &#123;</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="comment">//可能被消耗了部分，需要后面几次继续解码才能形成一个对象</span></span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">//没有消耗任何数据就解码出了对象，有问题</span></span><br><span class="line">            <span class="keyword">if</span> (oldInputLength == in.readableBytes()) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> DecoderException(</span><br><span class="line">                    StringUtil.simpleClassName(getClass()) +</span><br><span class="line">                    <span class="string">".decode() did not read anything but decoded a message."</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">//如果是进行单次解码方法调用，直接break</span></span><br><span class="line">            <span class="keyword">if</span> (isSingleDecode()) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (DecoderException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> e;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception cause) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> DecoderException(cause);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<ol start="3">
-<li>将解析的ByteBuf对象向下传播</li>
-</ol>
-<p><code>fireChannelRead(ctx, out, size);</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">fireChannelRead</span><span class="params">(ChannelHandlerContext ctx, CodecOutputList msgs, <span class="keyword">int</span> numElements)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numElements; i ++) &#123;</span><br><span class="line">            ctx.fireChannelRead(msgs.getUnsafe(i));</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(8)%E2%80%94%E2%80%94Netty%E8%BD%BB%E9%87%8F%E7%BA%A7%E5%AF%B9%E8%B1%A1%E6%B1%A0-Recyler/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
-      <meta itemprop="name" content="lqsss">
-      <meta itemprop="description" content="There's no place like 127.0.0.1">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Lqsss's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(8)%E2%80%94%E2%80%94Netty%E8%BD%BB%E9%87%8F%E7%BA%A7%E5%AF%B9%E8%B1%A1%E6%B1%A0-Recyler/" class="post-title-link" itemprop="url">毕业前夕提升系列(二)：Netty总结(8)——Netty轻量级对象池-Recyler</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-08-02 18:35:38" itemprop="dateCreated datePublished" datetime="2020-08-02T18:35:38+08:00">2020-08-02</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Netty/" itemprop="url" rel="index"><span itemprop="name">Netty</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="Symbols count in article">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">Symbols count in article: </span>
-              <span></span>
-            </span>
-            <span class="post-meta-item" title="Reading time">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>NaN:aN</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Recyler的使用"><a href="#Recyler的使用" class="headerlink" title="Recyler的使用"></a>Recyler的使用</h2><h2 id="为什么要使用Recyler"><a href="#为什么要使用Recyler" class="headerlink" title="为什么要使用Recyler"></a>为什么要使用Recyler</h2><p>在对象池里直接复用之前已经创建好的对象</p>
-<ol>
-<li>减少内存分配的频率</li>
-<li>减少对象的创建与销毁，减少young gc的次数</li>
-</ol>
-<h2 id="Recyler细节"><a href="#Recyler细节" class="headerlink" title="Recyler细节"></a>Recyler细节</h2><h3 id="Recyler结构"><a href="#Recyler结构" class="headerlink" title="Recyler结构"></a>Recyler结构</h3><ul>
-<li><code>threadLocal</code></li>
-</ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> FastThreadLocal&lt;Stack&lt;T&gt;&gt; threadLocal = <span class="keyword">new</span> FastThreadLocal&lt;Stack&lt;T&gt;&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> Stack&lt;T&gt; <span class="title">initialValue</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> Stack&lt;T&gt;(Recycler.<span class="keyword">this</span>, Thread.currentThread(), maxCapacityPerThread, maxSharedCapacityFactor,</span><br><span class="line">                    ratioMask, maxDelayedQueuesPerThread);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onRemoval</span><span class="params">(Stack&lt;T&gt; value)</span> </span>&#123;</span><br><span class="line">            <span class="comment">// Let us remove the WeakOrderQueue from the WeakHashMap directly if its safe to remove some overhead</span></span><br><span class="line">            <span class="keyword">if</span> (value.threadRef.get() == Thread.currentThread()) &#123;</span><br><span class="line">               <span class="keyword">if</span> (DELAYED_RECYCLED.isSet()) &#123;</span><br><span class="line">                   DELAYED_RECYCLED.get().remove(value);</span><br><span class="line">               &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure>
-
-<p>每一个线程都有一个FastThreadLocal的线程变量，存储的数据是Stack<T></p>
-<ul>
-<li><code>Stack</code></li>
-</ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Stack(Recycler&lt;T&gt; parent, Thread thread, <span class="keyword">int</span> maxCapacity, <span class="keyword">int</span> maxSharedCapacityFactor,</span><br><span class="line">              <span class="keyword">int</span> ratioMask, <span class="keyword">int</span> maxDelayedQueues) &#123;</span><br><span class="line">            <span class="keyword">this</span>.parent = parent;</span><br><span class="line">            threadRef = <span class="keyword">new</span> WeakReference&lt;Thread&gt;(thread);</span><br><span class="line">    <span class="comment">//element的最大容量</span></span><br><span class="line">            <span class="keyword">this</span>.maxCapacity = maxCapacity;</span><br><span class="line">    <span class="comment">//该字段表示该线程创建的对象能在其他线程最大缓存对象的数量</span></span><br><span class="line">            availableSharedCapacity = <span class="keyword">new</span> AtomicInteger(max(maxCapacity / maxSharedCapacityFactor, LINK_CAPACITY));</span><br><span class="line">    <span class="comment">//存储handle</span></span><br><span class="line">            elements = <span class="keyword">new</span> DefaultHandle[min(INITIAL_CAPACITY, maxCapacity)];</span><br><span class="line">    <span class="comment">//并不是每次都能把对象回收，回收的比率</span></span><br><span class="line">            <span class="keyword">this</span>.ratioMask = ratioMask;</span><br><span class="line">    <span class="comment">//通过get获取对象，这个对象是由当前thread管理，但是最终在其他线程进行释放，会将该对象放在其他线程里数据结构里(WeakOrderQueue),该字段表示该线程最大缓存对象的数量</span></span><br><span class="line">            <span class="keyword">this</span>.maxDelayedQueues = maxDelayedQueues;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
-
-<p>存储DefaultHandle对象，即可复用对象。内部elment数组，是一个个handle，handle会被外部变量引用</p>
-<p>各参数默认值：</p>
-<p>maxCapacity：4 * 1024;</p>
-<p>maxSharedCapacityFactor：2</p>
-<p>ratioMask：7</p>
-<p>maxDelayedQueues：默认是2倍cpu核数</p>
-<p>availableSharedCapacity：16</p>
-<ul>
-<li><p>WeakOrderQueue：存储其它线程回收到本线程stack的对象，当某个线程从stack中获取不到对象时，就会从WeakOrderQueue中获取对象</p>
-<p>//todo</p>
-</li>
-</ul>
-<h2 id="从Recyler获取对象"><a href="#从Recyler获取对象" class="headerlink" title="从Recyler获取对象"></a>从Recyler获取对象</h2><h3 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h3><ol>
-<li>获取当前线程的stack</li>
-<li>从stack里面弹出对象</li>
-<li>创建对象并绑定Stack</li>
-</ol>
-<h3 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h3><p><code>Recyler#get()</code>:从获取handle对象</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> T <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">//maxCapacityPerThread为0，指对象池不再容纳对象</span></span><br><span class="line">    <span class="keyword">if</span> (maxCapacityPerThread == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">//直接创建新的对象</span></span><br><span class="line">        <span class="keyword">return</span> newObject((Handle&lt;T&gt;) NOOP_HANDLE);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//1. 获取当前线程的stack</span></span><br><span class="line">    Stack&lt;T&gt; stack = threadLocal.get();</span><br><span class="line">    <span class="comment">//2. 从stack里pop出对象</span></span><br><span class="line">    DefaultHandle&lt;T&gt; handle = stack.pop();</span><br><span class="line">    <span class="keyword">if</span> (handle == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">//2.1 如果stack里为空，创建handle</span></span><br><span class="line">        handle = stack.newHandle();</span><br><span class="line">        <span class="comment">//3. 创建新对象并绑定Stack</span></span><br><span class="line">        handle.value = newObject(handle);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> (T) handle.value;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><code>NOOP_HANDLE</code>不作任何回收的Handle对象</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SuppressWarnings</span>(<span class="string">"rawtypes"</span>)</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Handle NOOP_HANDLE = <span class="keyword">new</span> Handle() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">recycle</span><span class="params">(Object object)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// NOOP</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-
-
-<ol start="2">
-<li>从stack弹出对象<code>DefaultHandle&lt;T&gt; handle = stack.pop();</code></li>
-</ol>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">DefaultHandle&lt;T&gt; <span class="title">pop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> size = <span class="keyword">this</span>.size;</span><br><span class="line">    <span class="comment">//当前线程的stack已经没有对象</span></span><br><span class="line">    <span class="keyword">if</span> (size == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">//2.1 可能有其他线程在共用该线程的对象</span></span><br><span class="line">        <span class="keyword">if</span> (!scavenge()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        size = <span class="keyword">this</span>.size;</span><br><span class="line">    &#125;</span><br><span class="line">    size --;</span><br><span class="line">    DefaultHandle ret = elements[size];</span><br><span class="line">    elements[size] = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">if</span> (ret.lastRecycledId != ret.recycleId) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"recycled multiple times"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//初始化</span></span><br><span class="line">    ret.recycleId = <span class="number">0</span>;</span><br><span class="line">    ret.lastRecycledId = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">this</span>.size = size;</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>2.1 当前线程的stack没有可用的对象复用，其他线程可能有回收过本线程创建的对象</p>
-<p><code>scavenge()</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">scavenge</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// continue an existing scavenge, if any</span></span><br><span class="line">    <span class="comment">//2.1.1 扫描一些可复用对象的逻辑</span></span><br><span class="line">    <span class="keyword">if</span> (scavengeSome()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// reset our scavenge cursor</span></span><br><span class="line">    <span class="comment">//如果WeakOrderQueue也没有，cursor移到head</span></span><br><span class="line">    prev = <span class="keyword">null</span>;</span><br><span class="line">    cursor = head;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><code>scavengeSome()</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">scavengeSome</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    WeakOrderQueue prev;</span><br><span class="line">    WeakOrderQueue cursor = <span class="keyword">this</span>.cursor;</span><br><span class="line">    <span class="keyword">if</span> (cursor == <span class="keyword">null</span>) &#123;</span><br><span class="line">        prev = <span class="keyword">null</span>;</span><br><span class="line">        cursor = head;</span><br><span class="line">        <span class="keyword">if</span> (cursor == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        prev = <span class="keyword">this</span>.prev;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">boolean</span> success = <span class="keyword">false</span>;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="comment">//2.1.1.1 将该weakQueue的link对象转到该线程stack上</span></span><br><span class="line">        <span class="keyword">if</span> (cursor.transfer(<span class="keyword">this</span>)) &#123;</span><br><span class="line">            success = <span class="keyword">true</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        WeakOrderQueue next = cursor.next;</span><br><span class="line">        <span class="keyword">if</span> (cursor.owner.get() == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">// If the thread associated with the queue is gone, unlink it, after</span></span><br><span class="line">            <span class="comment">// performing a volatile read to confirm there is no data left to collect.</span></span><br><span class="line">            <span class="comment">// We never unlink the first queue, as we don't want to synchronize on updating the head.</span></span><br><span class="line">            <span class="keyword">if</span> (cursor.hasFinalData()) &#123;</span><br><span class="line">                <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (cursor.transfer(<span class="keyword">this</span>)) &#123;</span><br><span class="line">                        success = <span class="keyword">true</span>;</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (prev != <span class="keyword">null</span>) &#123;</span><br><span class="line">                prev.setNext(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            prev = cursor;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        cursor = next;</span><br><span class="line"></span><br><span class="line">    &#125; <span class="keyword">while</span> (cursor != <span class="keyword">null</span> &amp;&amp; !success);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.prev = prev;</span><br><span class="line">    <span class="keyword">this</span>.cursor = cursor;</span><br><span class="line">    <span class="keyword">return</span> success;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>2.1.1.1 将该weakQueue的link对象转到该线程stack上</p>
-<p><code>transfer(Stack&lt;?&gt; dst)</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"> <span class="function"><span class="keyword">boolean</span> <span class="title">transfer</span><span class="params">(Stack&lt;?&gt; dst)</span> </span>&#123;</span><br><span class="line">        Link head = <span class="keyword">this</span>.head.link;</span><br><span class="line">        <span class="keyword">if</span> (head == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">     <span class="comment">//如果当前WeakOrderQueue已经读到最后的link节点了（LINK_CAPACITY为handle数组的极限大小）</span></span><br><span class="line">        <span class="keyword">if</span> (head.readIndex == LINK_CAPACITY) &#123;</span><br><span class="line">            <span class="keyword">if</span> (head.next == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//将下一个weakOrderQueue作为当前的head</span></span><br><span class="line">            <span class="keyword">this</span>.head.link = head = head.next;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">     	<span class="comment">//获取head的readIndex</span></span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">int</span> srcStart = head.readIndex;</span><br><span class="line">        <span class="keyword">int</span> srcEnd = head.get();</span><br><span class="line">     </span><br><span class="line">       <span class="comment">//计算出需要转移的数据大小</span></span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">int</span> srcSize = srcEnd - srcStart;</span><br><span class="line">        <span class="keyword">if</span> (srcSize == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">     	<span class="comment">//获取待转移目标stack目前的可用偏移量</span></span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">int</span> dstSize = dst.size;</span><br><span class="line">     	<span class="comment">//预期需要的容量</span></span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">int</span> expectedCapacity = dstSize + srcSize;</span><br><span class="line">			</span><br><span class="line">     	<span class="comment">//超出stack数组的最大容量</span></span><br><span class="line">        <span class="keyword">if</span> (expectedCapacity &gt; dst.elements.length) &#123;</span><br><span class="line">            <span class="comment">//最终实际大小：进行左移1位进行扩容</span></span><br><span class="line">            <span class="keyword">final</span> <span class="keyword">int</span> actualCapacity = dst.increaseCapacity(expectedCapacity);</span><br><span class="line">            <span class="comment">//copy终点</span></span><br><span class="line">            srcEnd = min(srcStart + actualCapacity - dstSize, srcEnd);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (srcStart != srcEnd) &#123;</span><br><span class="line">            <span class="keyword">final</span> DefaultHandle[] srcElems = head.elements;</span><br><span class="line">            <span class="keyword">final</span> DefaultHandle[] dstElems = dst.elements;</span><br><span class="line">            <span class="keyword">int</span> newDstSize = dstSize;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = srcStart; i &lt; srcEnd; i++) &#123;</span><br><span class="line">                DefaultHandle element = srcElems[i];</span><br><span class="line">                <span class="keyword">if</span> (element.recycleId == <span class="number">0</span>) &#123;</span><br><span class="line">                    element.recycleId = element.lastRecycledId;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (element.recycleId != element.lastRecycledId) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"recycled already"</span>);</span><br><span class="line">                &#125;</span><br><span class="line">                srcElems[i] = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (dst.dropHandle(element)) &#123;</span><br><span class="line">                    <span class="comment">// Drop the object.</span></span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                element.stack = dst;</span><br><span class="line">                dstElems[newDstSize ++] = element;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (srcEnd == LINK_CAPACITY &amp;&amp; head.next != <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="comment">// Add capacity back as the Link is GCed.</span></span><br><span class="line">                <span class="keyword">this</span>.head.reclaimSpace(LINK_CAPACITY);</span><br><span class="line">                <span class="keyword">this</span>.head.link = head.next;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            head.readIndex = srcEnd;</span><br><span class="line">            <span class="keyword">if</span> (dst.size == newDstSize) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            dst.size = newDstSize;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// The destination stack is full already.</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<ol start="3">
-<li>如果stack为空，创建一个默认handle：<code>newHandle()</code></li>
-</ol>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">DefaultHandle&lt;T&gt; <span class="title">newHandle</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> DefaultHandle&lt;T&gt;(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<ol start="4">
-<li>创建新对象并绑定Stack <code>handle.value = newObject(handle);</code></li>
-</ol>
-<p><code>Recyler#newObject(Handle&lt;T&gt; handle)</code>，实现该接口，将handle与对象绑定，随后被对象的handle进行回收</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> T <span class="title">newObject</span><span class="params">(Handle&lt;T&gt; handle)</span></span>;</span><br></pre></td></tr></table></figure>
-
-
-
-<h2 id="回收对象"><a href="#回收对象" class="headerlink" title="回收对象"></a>回收对象</h2><h3 id="同线程回收对象"><a href="#同线程回收对象" class="headerlink" title="同线程回收对象"></a>同线程回收对象</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">recycle</span><span class="params">(Object object)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (object != value) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"object does not belong to handle"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Stack&lt;?&gt; stack = <span class="keyword">this</span>.stack;</span><br><span class="line">    <span class="keyword">if</span> (lastRecycledId != recycleId || stack == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"recycled already"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    stack.push(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>回收对象入口：<code>Recycler$Stack#push()</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">push</span><span class="params">(DefaultHandle&lt;?&gt; item)</span> </span>&#123;</span><br><span class="line">    Thread currentThread = Thread.currentThread();</span><br><span class="line">    <span class="comment">//判断即将回收的对象是否是当前进行回收的线程创建的</span></span><br><span class="line">    <span class="keyword">if</span> (threadRef.get() == currentThread) &#123;</span><br><span class="line">        <span class="comment">// The current Thread is the thread that belongs to the Stack, we can try to push the object now.</span></span><br><span class="line">        <span class="comment">//1. 同线程回收入口</span></span><br><span class="line">        pushNow(item);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// The current Thread is not the one that belongs to the Stack</span></span><br><span class="line">        <span class="comment">// (or the Thread that belonged to the Stack was collected already), we need to signal that the push</span></span><br><span class="line">        <span class="comment">// happens later.</span></span><br><span class="line">        <span class="comment">//2. 回收非本线程的对象</span></span><br><span class="line">        pushLater(item, currentThread);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<ol>
-<li>同线程回收入口<code>pushNow()</code></li>
-</ol>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">pushNow</span><span class="params">(DefaultHandle&lt;?&gt; item)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//第一次的话肯定为0</span></span><br><span class="line">    <span class="keyword">if</span> ((item.recycleId | item.lastRecycledId) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"recycled already"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//OWN_THREAD_ID 默认值</span></span><br><span class="line">    item.recycleId = item.lastRecycledId = OWN_THREAD_ID;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> size = <span class="keyword">this</span>.size;</span><br><span class="line">    <span class="comment">//1.1 大于最大容量或者达到需要drop的比例，并不是回收调所有对象</span></span><br><span class="line">    <span class="keyword">if</span> (size &gt;= maxCapacity || dropHandle(item)) &#123;</span><br><span class="line">        <span class="comment">// Hit the maximum capacity or should drop - drop the possibly youngest object.</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (size == elements.length) &#123;</span><br><span class="line">        elements = Arrays.copyOf(elements, min(size &lt;&lt; <span class="number">1</span>, maxCapacity));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    elements[size] = item;</span><br><span class="line">    <span class="keyword">this</span>.size = size + <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>1.1 判断是否drop掉，不进行回收：<code>Stack#dropHandle()</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">dropHandle</span><span class="params">(DefaultHandle&lt;?&gt; handle)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!handle.hasBeenRecycled) &#123;</span><br><span class="line">        <span class="keyword">if</span> ((++handleRecycleCount &amp; ratioMask) != <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="comment">// Drop the object.</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        handle.hasBeenRecycled = <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><code>ratioMask</code>为8，每一次预回收时，handleRecycleCount++，每次进行&amp;运算不等0就丢弃，不进行回收</p>
-<h3 id="异线程回收对象"><a href="#异线程回收对象" class="headerlink" title="异线程回收对象"></a>异线程回收对象</h3><ol>
-<li>获取WeakOrderQueue</li>
-<li>创建WeakOrderQueue</li>
-<li>将对象追加到WeakOrderQueue</li>
-</ol>
-<p><code>pushLater()</code>异线程回收入口</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">pushLater</span><span class="params">(DefaultHandle&lt;?&gt; item, Thread thread)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// we don't want to have a ref to the queue as the value in our weak map</span></span><br><span class="line">    <span class="comment">// so we null it out; to ensure there are no races with restoring it later</span></span><br><span class="line">    <span class="comment">// we impose a memory ordering here (no-op on x86)</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//1.1 获得本线程的Map&lt;Stack&lt;?&gt;, WeakOrderQueue&gt;</span></span><br><span class="line">    Map&lt;Stack&lt;?&gt;, WeakOrderQueue&gt; delayedRecycled = DELAYED_RECYCLED.get();</span><br><span class="line">    <span class="comment">//1.2 通过回收对象的stack来获取本线程的WeakOrderQueue</span></span><br><span class="line">    WeakOrderQueue queue = delayedRecycled.get(<span class="keyword">this</span>);</span><br><span class="line">    <span class="comment">//2.在找不到queue的情况下，创建weakOrderQueue</span></span><br><span class="line">    <span class="keyword">if</span> (queue == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">//2.1 如果可以延迟回收的数量已经达到上限，则塞进去一个无用的WeakOrderQueue</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (delayedRecycled.size() &gt;= maxDelayedQueues) &#123;</span><br><span class="line">            <span class="comment">// Add a dummy queue so we know we should drop the object</span></span><br><span class="line">            delayedRecycled.put(<span class="keyword">this</span>, WeakOrderQueue.DUMMY);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// Check if we already reached the maximum number of delayed queues and if we can allocate at all.</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">//2.2 判断该stack是否满足条件，满足则创建新的queue对象</span></span><br><span class="line">        <span class="keyword">if</span> ((queue = WeakOrderQueue.allocate(<span class="keyword">this</span>, thread)) == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">// drop object</span></span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//2.3 将新创建的queue插入Map&lt;Stack&lt;?&gt;, WeakOrderQueue&gt;线程变量里</span></span><br><span class="line">        <span class="comment">//this</span></span><br><span class="line">        delayedRecycled.put(<span class="keyword">this</span>, queue);</span><br><span class="line">        <span class="comment">//发现是无用的WeakOrderQueue，则当前stack不进行回收，直接drop</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (queue == WeakOrderQueue.DUMMY) &#123;</span><br><span class="line">        <span class="comment">// drop object</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//2.4 将该回收对象加入到weakQueue中</span></span><br><span class="line">    queue.add(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p><code>DELAYED_RECYCLED</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> FastThreadLocal&lt;Map&lt;Stack&lt;?&gt;, WeakOrderQueue&gt;&gt; DELAYED_RECYCLED =</span><br><span class="line">    <span class="keyword">new</span> FastThreadLocal&lt;Map&lt;Stack&lt;?&gt;, WeakOrderQueue&gt;&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> Map&lt;Stack&lt;?&gt;, WeakOrderQueue&gt; initialValue() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> WeakHashMap&lt;Stack&lt;?&gt;, WeakOrderQueue&gt;();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>解释一下DELAYED_RECYCLED这个数据结构，它是一个本地线程变量，存储的key为Stack，value为WeakOrderQueue，当其他线程创建的对象被该线程回收，那么就存储创建对象的线程对应的Stack和WeakOrderQueue。</p>
-<ul>
-<li>例如线程1创建的对象需要线程2回收，则DELAYED_RECYCLED会存储线程2的Stack和线程2对应的WeakOrderQueue，然后加入到该queue中</li>
-</ul>
-<h4 id="1-获取WeakOrderQueue"><a href="#1-获取WeakOrderQueue" class="headerlink" title="1. 获取WeakOrderQueue"></a>1. 获取WeakOrderQueue</h4><p>假如线程1的对象由线程2来回收，这里DELAYED_RECYCLED.get()获取线程2的Map&lt;Stack&lt;?&gt;, WeakOrderQueue&gt;，然后获取相对应的WeakOrderQueue</p>
-<h4 id="2-创建WeakOrderQueue"><a href="#2-创建WeakOrderQueue" class="headerlink" title="2. 创建WeakOrderQueue"></a>2. 创建WeakOrderQueue</h4><p>2.2 判断该stack是否满足条件，满足则创建新的queue对象</p>
-<p><code>WeakOrderQueue.allocate(this, thread))</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> WeakOrderQueue <span class="title">allocate</span><span class="params">(Stack&lt;?&gt; stack, Thread thread)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// We allocated a Link so reserve the space</span></span><br><span class="line">    <span class="keyword">return</span> Head.reserveSpace(stack.availableSharedCapacity, LINK_CAPACITY)</span><br><span class="line">        ? newQueue(stack, thread) : <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p><code>Recycler#reserveSpace(Stack&lt;?&gt; stack, Thread thread)</code></p>
-<p>参数：</p>
-<ul>
-<li>AtomicInteger availableSharedCapacity：stack目前能够允许外部线程能够缓存对象的空间大小</li>
-<li>int space：所需空间大小，这里传的是<code>INK_CAPACITY</code> 默认16，需要16k大小</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">INK_CAPACITY = safeFindNextPositivePowerOfTwo(</span><br><span class="line">        max(SystemPropertyUtil.getInt(<span class="string">"io.netty.recycler.linkCapacity"</span>, <span class="number">16</span>), <span class="number">16</span>));</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//2.2.1 判断该stack能否还能缓存space大小的对象</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">reserveSpace</span><span class="params">(AtomicInteger availableSharedCapacity, <span class="keyword">int</span> space)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">assert</span> space &gt;= <span class="number">0</span>;</span><br><span class="line">   	<span class="comment">//cas操作更新剩余空间</span></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        <span class="keyword">int</span> available = availableSharedCapacity.get();</span><br><span class="line">        <span class="comment">//不够满足的话则返回false</span></span><br><span class="line">        <span class="keyword">if</span> (available &lt; space) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//最终更新量为available - space</span></span><br><span class="line">        <span class="keyword">if</span> (availableSharedCapacity.compareAndSet(available, available - space)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>创建新的WeakQueue对象<code>newQueue(Stack&lt;?&gt; stack, Thread thread)</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> WeakOrderQueue <span class="title">newQueue</span><span class="params">(Stack&lt;?&gt; stack, Thread thread)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//2.2.2 创建WeakQueue对象</span></span><br><span class="line">    <span class="keyword">final</span> WeakOrderQueue queue = <span class="keyword">new</span> WeakOrderQueue(stack, thread);</span><br><span class="line">    <span class="comment">// Done outside of the constructor to ensure WeakOrderQueue.this does not escape the constructor and so</span></span><br><span class="line">    <span class="comment">// may be accessed while its still constructed.</span></span><br><span class="line">    stack.setHead(queue);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> queue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>2.2.2 创建WeakQueue对象</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">WeakOrderQueue</span><span class="params">(Stack&lt;?&gt; stack, Thread thread)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//2.2.2.1 创建一个Link节点</span></span><br><span class="line">    tail = <span class="keyword">new</span> Link();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Its important that we not store the Stack itself in the WeakOrderQueue as the Stack also is used in</span></span><br><span class="line">    <span class="comment">// the WeakHashMap as key. So just store the enclosed AtomicInteger which should allow to have the</span></span><br><span class="line">    <span class="comment">// Stack itself GCed.</span></span><br><span class="line">    <span class="comment">//2.2.2.2 创建头结节点</span></span><br><span class="line">    head = <span class="keyword">new</span> Head(stack.availableSharedCapacity);</span><br><span class="line">    <span class="comment">//2.2.2.3 将link节点跟在head节点后</span></span><br><span class="line">    head.link = tail;</span><br><span class="line">    <span class="comment">//owner拥有者字段是对回收对象创建者线程的弱引用</span></span><br><span class="line">    owner = <span class="keyword">new</span> WeakReference&lt;Thread&gt;(thread);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p><img src="C:%5CUsers%5C51344%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20200516234034054.png" alt="image-20200516234034054"></p>
-<blockquote>
-<ul>
-<li>每一个thread对应stack，维护一个数组存储着可以复用的对象()handle)，该stack是用来存储该线程回收的对象。</li>
-<li>如果该对象是由本线程1创建，但是由其他线程2回收，可以通过类常量DELAYED_RECYCLED来获取，DELAYED_RECYCLED结构是(Map&lt;Stack&lt;?&gt;,WeakQueue&gt;) ，找到或创建合适的weakQueue，将该对象回收存储在一个link节点与该WeakQueue关联，然后放入线程2的DELAYED_RECYCLED里</li>
-</ul>
-</blockquote>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://my.oschina.net/hutaishi/blog/1929605/print" target="_blank" rel="noopener">Netty之Recycler实现对象池</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(7)%E2%80%94%E2%80%94ByteBuf%E7%9A%84%E9%87%8A%E6%94%BE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
-      <meta itemprop="name" content="lqsss">
-      <meta itemprop="description" content="There's no place like 127.0.0.1">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Lqsss's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(7)%E2%80%94%E2%80%94ByteBuf%E7%9A%84%E9%87%8A%E6%94%BE/" class="post-title-link" itemprop="url">毕业前夕提升系列(二)：Netty总结(7)——ByteBuf的释放</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-08-02 18:35:38" itemprop="dateCreated datePublished" datetime="2020-08-02T18:35:38+08:00">2020-08-02</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Netty/" itemprop="url" rel="index"><span itemprop="name">Netty</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="Symbols count in article">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">Symbols count in article: </span>
-              <span></span>
-            </span>
-            <span class="post-meta-item" title="Reading time">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>NaN:aN</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <a id="more"></a>
-
-<h2 id="ByteBuf的释放"><a href="#ByteBuf的释放" class="headerlink" title="ByteBuf的释放"></a>ByteBuf的释放</h2><p><code>byteBuf.release();</code> -&gt;<code>release0(int decrement)</code>，最终会走到<code>PoolByteBuf#deallocate（）</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">release0</span><span class="params">(<span class="keyword">int</span> decrement)</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">int</span> oldRef = refCntUpdater.getAndAdd(<span class="keyword">this</span>, -decrement);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//过去的引用值和减去的值相等，引用为0，就可以被释放了</span></span><br><span class="line">    <span class="keyword">if</span> (oldRef == decrement) &#123;</span><br><span class="line">        <span class="comment">//具体释放逻辑</span></span><br><span class="line">        deallocate();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (oldRef &lt; decrement || oldRef - decrement &gt; oldRef) &#123;</span><br><span class="line">        <span class="comment">// Ensure we don't over-release, and avoid underflow.</span></span><br><span class="line">        refCntUpdater.getAndAdd(<span class="keyword">this</span>, decrement);</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalReferenceCountException(oldRef, -decrement);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (handle &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">long</span> handle = <span class="keyword">this</span>.handle;</span><br><span class="line">        <span class="comment">//该pooledByteBuf引用地址不再指向任何一块内存</span></span><br><span class="line">        <span class="keyword">this</span>.handle = -<span class="number">1</span>;</span><br><span class="line">        </span><br><span class="line">        memory = <span class="keyword">null</span>;</span><br><span class="line">        tmpNioBuf = <span class="keyword">null</span>;</span><br><span class="line">        <span class="comment">//1.2.</span></span><br><span class="line">        chunk.arena.free(chunk, handle, maxLength, cache);</span><br><span class="line">        chunk = <span class="keyword">null</span>;</span><br><span class="line">        <span class="comment">//3. </span></span><br><span class="line">        recycle();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>释放流程：</p>
-<p><code>chunk.arena.free(chunk, handle, maxLength, cache);</code>对应下列1、2过程</p>
-<p><code>recycle();</code>对应下列3过程</p>
-<ol>
-<li>释放的话，会把连续的内存区段加到缓存</li>
-<li>如果加缓存失败，会标记连续的内存区段为未使用（page按层标记，subPage会标记位视图为0）</li>
-<li>ByteBuf会加到对象池里（ByteBuf被释放后，本身这个对象也不会被销毁，加入到对象池，等到下次复用）</li>
-</ol>
-<h2 id="加缓存或者标记未使用"><a href="#加缓存或者标记未使用" class="headerlink" title="加缓存或者标记未使用"></a>加缓存或者标记未使用</h2><h3 id="释放内存入口"><a href="#释放内存入口" class="headerlink" title="释放内存入口"></a>释放内存入口</h3><ol>
-<li><code>PoolAreana#free()</code></li>
-</ol>
-<p>通过<code>PoolAreana</code>创建多个<code>PoolChunk</code>，<code>PoolChunk</code>里有个属性是<code>PoolAreana</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">free</span><span class="params">(PoolChunk&lt;T&gt; chunk, <span class="keyword">long</span> handle, <span class="keyword">int</span> normCapacity, PoolThreadCache cache)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (chunk.unpooled) &#123;</span><br><span class="line">        <span class="keyword">int</span> size = chunk.chunkSize();</span><br><span class="line">        destroyChunk(chunk);</span><br><span class="line">        activeBytesHuge.add(-size);</span><br><span class="line">        deallocationsHuge.increment();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">//1.1 池化的内存才会有加入缓存复用的机制</span></span><br><span class="line">        SizeClass sizeClass = sizeClass(normCapacity);</span><br><span class="line">        <span class="comment">//1.2 添加到cache</span></span><br><span class="line">        <span class="keyword">if</span> (cache != <span class="keyword">null</span> &amp;&amp; cache.add(<span class="keyword">this</span>, chunk, handle, normCapacity, sizeClass)) &#123;</span><br><span class="line">            <span class="comment">// cached so not free it.</span></span><br><span class="line">            <span class="comment">//添加到cache则不释放这块内存</span></span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//1.3 未成功添加缓存则释放</span></span><br><span class="line">        freeChunk(chunk, handle, sizeClass);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="添加缓存"><a href="#添加缓存" class="headerlink" title="添加缓存"></a>添加缓存</h3><ol start="2">
-<li><code>cache.add(this, chunk, handle, normCapacity, sizeClass)</code></li>
-</ol>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">add</span><span class="params">(PoolArena&lt;?&gt; area, PoolChunk chunk, <span class="keyword">long</span> handle, <span class="keyword">int</span> normCapacity, SizeClass sizeClass)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 2.1 得到tiny/normal规格的MemoryRegionCache</span></span><br><span class="line">    MemoryRegionCache&lt;?&gt; cache = cache(area, normCapacity, sizeClass);</span><br><span class="line">    <span class="comment">// 没有cache则直接返回false</span></span><br><span class="line">    <span class="keyword">if</span> (cache == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 2.2 将相应的PoolChunk和handle信息添加到缓存，方便下次取出</span></span><br><span class="line">    <span class="keyword">return</span> cache.add(chunk, handle);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>2.1 <code>MemoryRegionCache#cache(area, normCapacity, sizeClass);</code>得到tiny规格的<code>MemoryRegionCache</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> MemoryRegionCache&lt;?&gt; cacheForTiny(PoolArena&lt;?&gt; area, <span class="keyword">int</span> normCapacity) &#123;</span><br><span class="line">    <span class="comment">//2.1.1 获取subPage的idex，16则对应的idx为1</span></span><br><span class="line">    <span class="keyword">int</span> idx = PoolArena.tinyIdx(normCapacity);</span><br><span class="line">    <span class="keyword">if</span> (area.isDirect()) &#123;</span><br><span class="line">        <span class="comment">//2.1.2 通过idx从tinySubPageDirectCaches中找出对应的MemoryRegionCache</span></span><br><span class="line">        <span class="keyword">return</span> cache(tinySubPageDirectCaches, idx);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> cache(tinySubPageHeapCaches, idx);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>2.1.2 <code>cache(tinySubPageDirectCaches, idx);</code></p>
-<p>这里<code>tinySubPageDirectCaches</code>是<code>PooledByteBufAllocator</code>创建时，创建线程本地变量<code>PoolThreadCache</code>时初始化的。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> MemoryRegionCache&lt;ByteBuffer&gt;[] tinySubPageDirectCaches;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* 创建tiny规格的MemoryRegionCache</span></span><br><span class="line"><span class="comment">* cacheSize: 单位缓存的大小，默认512字节</span></span><br><span class="line"><span class="comment">* numCaches: 创建cache数组的数量，默认32</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> &lt;T&gt; MemoryRegionCache&lt;T&gt;[] createSubPageCaches(</span><br><span class="line">    <span class="keyword">int</span> cacheSize, <span class="keyword">int</span> numCaches, SizeClass sizeClass) &#123;</span><br><span class="line">    <span class="keyword">if</span> (cacheSize &gt; <span class="number">0</span> &amp;&amp; numCaches &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="meta">@SuppressWarnings</span>(<span class="string">"unchecked"</span>)</span><br><span class="line">        MemoryRegionCache&lt;T&gt;[] cache = <span class="keyword">new</span> MemoryRegionCache[numCaches];</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; cache.length; i++) &#123;</span><br><span class="line">            <span class="comment">// <span class="doctag">TODO:</span> maybe use cacheSize / cache.length</span></span><br><span class="line">            cache[i] = <span class="keyword">new</span> SubPageMemoryRegionCache&lt;T&gt;(cacheSize, sizeClass);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> cache;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>2.2 将相应的PoolChunk和handle信息添加到缓存，方便下次取出</p>
-<p><code>MemoryRegionCache#add(PoolChunk&lt;T&gt; chunk, long handle)</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">add</span><span class="params">(PoolChunk&lt;T&gt; chunk, <span class="keyword">long</span> handle)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//2.2.1 创建Entry对象并添加到queue里</span></span><br><span class="line">    Entry&lt;T&gt; entry = newEntry(chunk, handle);</span><br><span class="line">    <span class="keyword">boolean</span> queued = queue.offer(entry);</span><br><span class="line">    <span class="comment">//2.2.2 如果加入queue失败</span></span><br><span class="line">    <span class="keyword">if</span> (!queued) &#123;</span><br><span class="line">        <span class="comment">// If it was not possible to cache the chunk, immediately recycle the entry</span></span><br><span class="line">        entry.recycle();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> queued;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>首先，我们看看<code>PoolThreadCache$Entry</code>结构</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Entry</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> Handle&lt;Entry&lt;?&gt;&gt; recyclerHandle;<span class="comment">//回收handle</span></span><br><span class="line">    PoolChunk&lt;T&gt; chunk;<span class="comment">//具体某一块内存</span></span><br><span class="line">    <span class="keyword">long</span> handle = -<span class="number">1</span>;<span class="comment">//chunk+handle：指向某一块内存的位置，handle是一个相对地址</span></span><br><span class="line"></span><br><span class="line">    Entry(Handle&lt;Entry&lt;?&gt;&gt; recyclerHandle) &#123;</span><br><span class="line">        <span class="keyword">this</span>.recyclerHandle = recyclerHandle;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">recycle</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        chunk = <span class="keyword">null</span>;</span><br><span class="line">        handle = -<span class="number">1</span>;</span><br><span class="line">        recyclerHandle.recycle(<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>2.2.1 创建Entry对象</p>
-<p><code>PoolThreadCache#newEntry()</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> Entry <span class="title">newEntry</span><span class="params">(PoolChunk&lt;?&gt; chunk, <span class="keyword">long</span> handle)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//从对象池里取Entry，减少gc</span></span><br><span class="line">    Entry entry = RECYCLER.get();</span><br><span class="line">    entry.chunk = chunk;</span><br><span class="line">    entry.handle = handle;</span><br><span class="line">    <span class="keyword">return</span> entry;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="添加缓存失败"><a href="#添加缓存失败" class="headerlink" title="添加缓存失败"></a>添加缓存失败</h3><p>1.3 未成功添加缓存则释放</p>
-<p><code>PoolArena#freeChunk(chunk, handle, sizeClass);</code></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">freeChunk</span><span class="params">(PoolChunk&lt;T&gt; chunk, <span class="keyword">long</span> handle, SizeClass sizeClass)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">boolean</span> destroyChunk;</span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">        <span class="keyword">switch</span> (sizeClass) &#123;</span><br><span class="line">        <span class="keyword">case</span> Normal:</span><br><span class="line">            <span class="comment">//统计normal规格的释放数量</span></span><br><span class="line">            ++deallocationsNormal;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> Small:</span><br><span class="line">            ++deallocationsSmall;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> Tiny:</span><br><span class="line">            ++deallocationsTiny;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> Error();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//1.3.1 根据不同的规格释放在chunk上指向的内存</span></span><br><span class="line">        destroyChunk = !chunk.parent.free(chunk, handle);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//1.3.2 通过调用UNSAFE的本地方法，清理内存</span></span><br><span class="line">    <span class="keyword">if</span> (destroyChunk) &#123;</span><br><span class="line">        <span class="comment">// destroyChunk not need to be called while holding the synchronized lock.</span></span><br><span class="line">        destroyChunk(chunk);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>1.3.1  根据不同的规格释放在chunk上指向的内存</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">free</span><span class="params">(PoolChunk&lt;T&gt; chunk, <span class="keyword">long</span> handle)</span> </span>&#123;</span><br><span class="line">    chunk.free(handle);</span><br><span class="line">    <span class="keyword">if</span> (chunk.usage() &lt; minUsage) &#123;</span><br><span class="line">        remove(chunk);</span><br><span class="line">        <span class="comment">// Move the PoolChunk down the PoolChunkList linked-list.</span></span><br><span class="line">        <span class="keyword">return</span> move0(chunk);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">free</span><span class="params">(<span class="keyword">long</span> handle)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> memoryMapIdx = memoryMapIdx(handle);</span><br><span class="line">    <span class="keyword">int</span> bitmapIdx = bitmapIdx(handle);</span><br><span class="line">	</span><br><span class="line">    <span class="comment">//根据handle来释放page</span></span><br><span class="line">    <span class="keyword">if</span> (bitmapIdx != <span class="number">0</span>) &#123; <span class="comment">// free a subpage</span></span><br><span class="line">        PoolSubpage&lt;T&gt; subpage = subpages[subpageIdx(memoryMapIdx)];</span><br><span class="line">        <span class="keyword">assert</span> subpage != <span class="keyword">null</span> &amp;&amp; subpage.doNotDestroy;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="comment">// Obtain the head of the PoolSubPage pool that is owned by the PoolArena and synchronize on it.</span></span><br><span class="line">        <span class="comment">// This is need as we may add it back and so alter the linked-list structure.</span></span><br><span class="line">        <span class="comment">//找到包含头节点的PoolSubpage</span></span><br><span class="line">        PoolSubpage&lt;T&gt; head = arena.findSubpagePoolHead(subpage.elemSize);</span><br><span class="line">        <span class="keyword">synchronized</span> (head) &#123;</span><br><span class="line">            <span class="comment">//同步将这个位视图的置为0</span></span><br><span class="line">            <span class="keyword">if</span> (subpage.free(head, bitmapIdx &amp; <span class="number">0x3FFFFFFF</span>)) &#123;</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    freeBytes += runLength(memoryMapIdx);</span><br><span class="line">    setValue(memoryMapIdx, depth(memoryMapIdx));</span><br><span class="line">    updateParentsFree(memoryMapIdx);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
       
     </div>
 
@@ -1341,7 +1136,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">51</span>
+          <span class="site-state-item-count">52</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1354,7 +1149,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-count">42</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -1384,7 +1179,7 @@
 <div class="copyright">
   
   &copy; 2018 – 
-  <span itemprop="copyrightYear">2020</span>
+  <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
@@ -1393,12 +1188,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="Symbols count total">NaNm</span>
+    <span title="Symbols count total">232k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="Reading time total">NaN:aN</span>
+    <span title="Reading time total">3:31</span>
 </div>
   <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
   </div>

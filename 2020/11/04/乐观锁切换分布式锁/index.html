@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="背景系统里使用redis里watch-multi-exec一种CAS机制来控制并发的更新操作，目前使用的场景：  chat里的房间信息(e.g. 成员变化) session系统的会话信息，涉及到的更新场景较多(e.g. 会话状态变化、聊天时间、评价、虚商等) mcc里员工信息(e.g. 工作状态、服务的会话) 但一直以来，都是开发人员自行维护了单机redis来实现上面一套，存在一定的风险，而公司运">
+<meta property="og:type" content="article">
+<meta property="og:title" content="乐观锁切换分布式锁">
+<meta property="og:url" content="http://yoursite.com/2020/11/04/%E4%B9%90%E8%A7%82%E9%94%81%E5%88%87%E6%8D%A2%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="背景系统里使用redis里watch-multi-exec一种CAS机制来控制并发的更新操作，目前使用的场景：  chat里的房间信息(e.g. 成员变化) session系统的会话信息，涉及到的更新场景较多(e.g. 会话状态变化、聊天时间、评价、虚商等) mcc里员工信息(e.g. 工作状态、服务的会话) 但一直以来，都是开发人员自行维护了单机redis来实现上面一套，存在一定的风险，而公司运">
+<meta property="og:image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/1042d64d-8146-4500-bf56-961256deaeff.png">
+<meta property="og:image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/1bdac699-2902-44b5-a30f-1b768c4fc4f9.png">
+<meta property="og:image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/81e22b2f-32b5-4b56-8191-d60a7d18658b.png">
+<meta property="article:published_time" content="2020-11-04T07:41:00.555Z">
+<meta property="article:modified_time" content="2021-03-16T03:30:05.706Z">
+<meta property="article:author" content="lqsss">
+<meta property="article:tag" content="disturbuted lock">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/1042d64d-8146-4500-bf56-961256deaeff.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/11/04/%E4%B9%90%E8%A7%82%E9%94%81%E5%88%87%E6%8D%A2%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>乐观锁切换分布式锁 | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/11/04/%E4%B9%90%E8%A7%82%E9%94%81%E5%88%87%E6%8D%A2%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          乐观锁切换分布式锁
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-11-04 15:41:00" itemprop="dateCreated datePublished" datetime="2020-11-04T15:41:00+08:00">2020-11-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-03-16 11:30:05" itemprop="dateModified" datetime="2021-03-16T11:30:05+08:00">2021-03-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Concurrency-programming/" itemprop="url" rel="index"><span itemprop="name">Concurrency programming</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>2.7k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>2 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>系统里使用redis里watch-multi-exec一种CAS机制来控制并发的更新操作，目前使用的场景：</p>
+<ol>
+<li>chat里的房间信息(e.g. 成员变化)</li>
+<li>session系统的会话信息，涉及到的更新场景较多(e.g. 会话状态变化、聊天时间、评价、虚商等)</li>
+<li>mcc里员工信息(e.g. 工作状态、服务的会话)</li>
+<li>但一直以来，都是开发人员自行维护了单机redis来实现上面一套，存在一定的风险，而公司运维维护了一套在底层storage上有一层类似codis的代理中间件，watch/multi/exec事务有关的命令不支持。</li>
+</ol>
+<a id="more"></a>
+
+<h2 id="redis分布式锁"><a href="#redis分布式锁" class="headerlink" title="redis分布式锁"></a>redis分布式锁</h2><h3 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h3><h4 id="通过setNx命令"><a href="#通过setNx命令" class="headerlink" title="通过setNx命令"></a>通过setNx命令</h4><ol>
+<li><p>针对一个key进行加锁解锁操作，需要是相同的value，value保证是唯一</p>
+</li>
+<li><p>需要过期时间避免死锁</p>
+</li>
+<li><p>lua脚本实现原子操作</p>
+<ul>
+<li>加锁</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * KEYS[1] lockedKey</span></span><br><span class="line"><span class="comment"> * ARGV[1] lockValue</span></span><br><span class="line"><span class="comment"> * ARGV[2] expireTime</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String REENTRANT_LOCK = <span class="string">"if (redis.call(\"exists\", KEYS[1]) == 0) then\n"</span> +</span><br><span class="line">        <span class="string">"redis.call(\"hincrby\", KEYS[1], ARGV[1], 1); \n"</span> +</span><br><span class="line">        <span class="string">"redis.call(\"expire\", KEYS[1], tonumber(ARGV[2])); \n"</span> +</span><br><span class="line">        <span class="string">"return nil; \n"</span> +</span><br><span class="line">        <span class="string">"end; \n"</span> +</span><br><span class="line">        <span class="string">"if (redis.call(\"hexists\", KEYS[1], ARGV[1]) == 1) then \n"</span> +</span><br><span class="line">        <span class="string">"redis.call(\"hincrby\", KEYS[1], ARGV[1], 1); \n"</span> +</span><br><span class="line">        <span class="string">"redis.call(\"expire\", KEYS[1], tonumber(ARGV[2])); "</span> +</span><br><span class="line">        <span class="string">"return nil; \n"</span> +</span><br><span class="line">        <span class="string">"end; \n"</span> +</span><br><span class="line">        <span class="string">"return redis.call(\"pttl\", KEYS[1]);"</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>解锁</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"> * KEYS[1] lockedKey</span></span><br><span class="line"><span class="comment"> * ARGV[1] lockValue</span></span><br><span class="line"><span class="comment"> * ARGV[2] expireTime</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String REENTRANT_UNLOCK = <span class="string">"if (redis.call('hexists', KEYS[1], ARGV[1]) == 0) then "</span> +</span><br><span class="line">        <span class="string">"return 0;"</span> +</span><br><span class="line">        <span class="string">"end; "</span> +</span><br><span class="line">        <span class="string">"local counter = redis.call('hincrby', KEYS[1], ARGV[1], -1); "</span> +</span><br><span class="line">        <span class="string">"if (counter &gt; 0) then "</span> +</span><br><span class="line">        <span class="string">"redis.call('expire', KEYS[1], tonumber(ARGV[2])); "</span> +</span><br><span class="line">        <span class="string">"return 1; "</span> +</span><br><span class="line">        <span class="string">"else "</span> +</span><br><span class="line">        <span class="string">"redis.call('del', KEYS[1]); "</span> +</span><br><span class="line">        <span class="string">"return 1; "</span> +</span><br><span class="line">        <span class="string">"end; "</span> +</span><br><span class="line">        <span class="string">"return nil;"</span>;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>这里是通过redis的map数据结构<br>key：/lock/xxx<br>field：tid-uuid<br>value：state(重入次数)</p>
+<h4 id="基于主从、读写不分离"><a href="#基于主从、读写不分离" class="headerlink" title="基于主从、读写不分离"></a>基于主从、读写不分离</h4><p>redis加锁后的代码执行时间可能超出获取锁的过期时间，导致不安全的情况。redisson里面会有一种watchDog机制来续租锁的保持情况，这里使用kafka多层时间轮的实现来进行高效的延迟任务执行。</p>
+<p><img src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/1042d64d-8146-4500-bf56-961256deaeff.png" alt=""></p>
+<p>上图简单说明了，如果过期时间设置不当或者出现stw或者其他低优先级的进程调度，可能会出现多个线程同时得到锁的非安全场景。</p>
+<p><img src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/1bdac699-2902-44b5-a30f-1b768c4fc4f9.png" alt=""></p>
+<ol>
+<li><p>在获取锁时，包装一个delay = 1/2 * leaseTime的续租任务加入到timingwheel上</p>
+</li>
+<li><p>当时间过了1/2 * leaseTime，timingwheel的指针扫到该续租任务，执行。访问redis，为锁住的key重设leaseTime过期时间。</p>
+</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">     * KEYS[1] lockedKey</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">     * ARGV[1] lockValue (thread_id)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">     * ARGV[2] expireTime</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String REENTRANT_RENEWAL = <span class="string">"if (redis.call('hexists', KEYS[1], ARGV[1]) == 1) then "</span> +</span><br><span class="line">            <span class="string">"redis.call('expire', KEYS[1], tonumber(ARGV[2])); "</span> +</span><br><span class="line">            <span class="string">"return 1; "</span> +</span><br><span class="line">            <span class="string">"end; "</span> +</span><br><span class="line">            <span class="string">"return 0;"</span>;</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><p>续租任务执行完成后，则继续将其续租任务加入到timingwheel中，否则取消任务</p>
+</li>
+<li><p>当业务执行完毕后，进行解锁，并取消任务(如果存在任务)</p>
+</li>
+</ol>
+<h4 id="弊端"><a href="#弊端" class="headerlink" title="弊端"></a>弊端</h4><ol>
+<li>基于master-slave的部署方式，client1从master获取锁后，master意外宕机，此时进行了主从切换，但slave里还未来得及同步到之前master节点锁的获取情况，client2此时尝试获取锁，也能获取锁，这种是不安全的情况。</li>
+<li>我司pub/sub命令在线上被禁用，无法通过这种天然的通知机制来传递解锁事件(暂时不想加其他中间件增加复杂度)，唤醒等待锁的线程；目前在实现上使用了间隔一段时间(根据ttl和请求的剩余timeout)去请求锁，超过最大timeout则直接失败，存在一定cpu资源的浪费</li>
+</ol>
+<h4 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h4><p><img src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/81e22b2f-32b5-4b56-8191-d60a7d18658b.png" alt=""></p>
+<h3 id="Redlock"><a href="#Redlock" class="headerlink" title="Redlock"></a>Redlock</h3><p>为了解决上述master-slave切换导致的不安全场景，官方Redlock的实现，首先是部署redis-cluster协议的集群，client依次向集群每个节点去请求锁(setNx)，当获取(1 / 2 * N + 1)的锁时，才算认为获取锁成功。</p>
+<p>也存在一定的问题，<a href="https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html" target="_blank" rel="noopener">https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html</a></p>
+<ul>
+<li><p>网络延时边界，即假设数据包一定能在某个最大延时之内到达</p>
+</li>
+<li><p>进程停顿边界，即进程停顿一定在某个最大时间之内</p>
+</li>
+<li><p>时钟错误边界，即不会从一个坏的 NTP 服务器处取得时间</p>
+</li>
+</ul>
+<h3 id="etcd、zk"><a href="#etcd、zk" class="headerlink" title="etcd、zk"></a>etcd、zk</h3><ul>
+<li>etcd里每个 key 带有一个 Revision值，etcd 每进行一次事务对应的全局 Revision 值都会加一，因此每个 key 对应的 Revision 属性值都是全局唯一的。通过比较 Revision 的大小就可以知道进行写操作的顺序。多个请求方根据 Revision 值大小依次获得锁。</li>
+<li>zk也是类似的，生成自增的临时节点，获取锁时判断自己创建的子节点是否为当前子节点列表中序号最小的子节点。</li>
+</ul>
+<p>非要优秀，适合CP场景，而我们目前线上跑的用redis那套CAS代码实现上，允许更新失败，聊天会话业务快一点更适合redis来实现，不用那么准确。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/disturbuted-lock/" rel="tag"># disturbuted lock</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/10/26/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(3)%E2%80%94%E2%80%94%E6%96%B0%E8%BF%9E%E6%8E%A5%E6%8E%A5%E5%85%A5/" rel="prev" title="毕业前夕提升系列(二)：毕业前夕提升系列(二)：Netty总结(3)——新连接接入">
+      <i class="fa fa-chevron-left"></i> 毕业前夕提升系列(二)：毕业前夕提升系列(二)：Netty总结(3)——新连接接入
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis分布式锁"><span class="nav-number">2.</span> <span class="nav-text">redis分布式锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实现细节"><span class="nav-number">2.1.</span> <span class="nav-text">实现细节</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#通过setNx命令"><span class="nav-number">2.1.1.</span> <span class="nav-text">通过setNx命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#基于主从、读写不分离"><span class="nav-number">2.1.2.</span> <span class="nav-text">基于主从、读写不分离</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#弊端"><span class="nav-number">2.1.3.</span> <span class="nav-text">弊端</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#代码结构"><span class="nav-number">2.1.4.</span> <span class="nav-text">代码结构</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Redlock"><span class="nav-number">2.2.</span> <span class="nav-text">Redlock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#etcd、zk"><span class="nav-number">2.3.</span> <span class="nav-text">etcd、zk</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="lqsss"
+      src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+  <p class="site-author-name" itemprop="name">lqsss</p>
+  <div class="site-description" itemprop="description">There's no place like 127.0.0.1</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">232k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">3:31</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

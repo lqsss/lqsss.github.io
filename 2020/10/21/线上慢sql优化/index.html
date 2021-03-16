@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="最近即将双11，收到slow sql的邮件，进行一波优化">
+<meta property="og:type" content="article">
+<meta property="og:title" content="线上慢sql优化">
+<meta property="og:url" content="http://yoursite.com/2020/10/21/%E7%BA%BF%E4%B8%8A%E6%85%A2sql%E4%BC%98%E5%8C%96/index.html">
+<meta property="og:site_name" content="Lqsss&#39;s Blog">
+<meta property="og:description" content="最近即将双11，收到slow sql的邮件，进行一波优化">
+<meta property="article:published_time" content="2020-10-21T07:50:36.631Z">
+<meta property="article:modified_time" content="2020-10-21T09:43:14.127Z">
+<meta property="article:author" content="lqsss">
+<meta property="article:tag" content="sql">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2020/10/21/%E7%BA%BF%E4%B8%8A%E6%85%A2sql%E4%BC%98%E5%8C%96/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+
+  <title>线上慢sql优化 | Lqsss's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Lqsss's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/10/21/%E7%BA%BF%E4%B8%8A%E6%85%A2sql%E4%BC%98%E5%8C%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+      <meta itemprop="name" content="lqsss">
+      <meta itemprop="description" content="There's no place like 127.0.0.1">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Lqsss's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          线上慢sql优化
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-10-21 15:50:36 / Modified: 17:43:14" itemprop="dateCreated datePublished" datetime="2020-10-21T15:50:36+08:00">2020-10-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/database/" itemprop="url" rel="index"><span itemprop="name">database</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>3.5k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>3 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>最近即将双11，收到slow sql的邮件，进行一波优化</p>
+<a id="more"></a>
+
+<h2 id="优化器对于where与order-by索引列的选择"><a href="#优化器对于where与order-by索引列的选择" class="headerlink" title="优化器对于where与order by索引列的选择"></a>优化器对于where与order by索引列的选择</h2><h3 id="实验测试"><a href="#实验测试" class="headerlink" title="实验测试"></a>实验测试</h3><p>1.1 <code>chat_session</code>的索引如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">PRIMARY KEY (&#96;id&#96;),</span><br><span class="line">UNIQUE KEY &#96;uk_sub_session&#96; (&#96;sub_session_id&#96;),</span><br><span class="line">KEY &#96;idx_sso_user&#96; (&#96;sso_id&#96;,&#96;user_id&#96;),</span><br><span class="line">KEY &#96;idx_third_user&#96; (&#96;third_code&#96;,&#96;user_id&#96;),</span><br><span class="line">KEY &#96;idx_session_id&#96; (&#96;session_id&#96;)</span><br></pre></td></tr></table></figure>
+
+
+
+<p>1.2 explain分析</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">explain SELECT id, sub_session_id, session_id, user_id, third_code, start_time, end_time, channel_code, queue_id, queue_start_time, kefu_join_time, sso_id, score, min_msg_id, max_msg_id, create_time, update_time FROM chat_session WHERE sso_id &#x3D; &#39;4E5CE40451534858AE1A1C7993E75EF5&#39; AND sso_id NOT IN ( &#39;v001@robot&#39; , &#39;&#39; ) AND start_time &gt;&#x3D; &#39;2020-09-09 11:38:56.949&#39; AND start_time &lt; &#39;2020-10-09 11:38:57.949&#39; AND end_time !&#x3D; &#39;1970-01-01 00:00:00&#39; AND id &lt; 9223372036854775807 order by id desc LIMIT 30</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>select_type</th>
+<th>table</th>
+<th>partitions</th>
+<th>type</th>
+<th>possible_keys</th>
+<th>key</th>
+<th>key_len</th>
+<th>ref</th>
+<th>rows</th>
+<th>filtered</th>
+<th>Extra</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>SIMPLE</td>
+<td>chat_session</td>
+<td></td>
+<td>range</td>
+<td>PRIMARY,idx_sso_user</td>
+<td>PRIMARY</td>
+<td>8</td>
+<td></td>
+<td>19779213</td>
+<td>0.01</td>
+<td>Using where</td>
+</tr>
+</tbody></table>
+<p><code>possible_keys</code>:执行器可能走到的索引，PRIMARY,idx_sso_user  </p>
+<p><code>key</code> :实际使用的索引，PRIMARY</p>
+<p><code>rows</code>:mysql认为必须要逐行去检查和判断的记录的条数，这里是19779213</p>
+<p><code>filtered</code>:此查询条件所过滤的数据的百分比，这里最终从将近两千万里查出了4行数据，4/19779213</p>
+<p>Q：这里为什么走了<code>idx_sso_user</code>索引，而走了主键？为了解答这个问题，尝试了几个测试对比</p>
+<p>1.3 order by id desc 去除</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>select_type</th>
+<th>table</th>
+<th>partitions</th>
+<th>type</th>
+<th>possible_keys</th>
+<th>key</th>
+<th>key_len</th>
+<th>ref</th>
+<th>rows</th>
+<th>filtered</th>
+<th>Extra</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>SIMPLE</td>
+<td>chat_session</td>
+<td></td>
+<td>ref</td>
+<td>PRIMARY,idx_sso_user</td>
+<td>idx_sso_user</td>
+<td>152</td>
+<td>const</td>
+<td>47788</td>
+<td>5.00</td>
+<td>Using index  condition; Using where</td>
+</tr>
+</tbody></table>
+<p>结果：order by 的索引列被去掉了，此时只能走到idx_sso_user索引</p>
+<p>1.4 改成order by id asc</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>select_type</th>
+<th>table</th>
+<th>partitions</th>
+<th>type</th>
+<th>possible_keys</th>
+<th>key</th>
+<th>key_len</th>
+<th>ref</th>
+<th>rows</th>
+<th>filtered</th>
+<th>Extra</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>SIMPLE</td>
+<td>chat_session</td>
+<td></td>
+<td>range</td>
+<td>PRIMARY,idx_sso_user</td>
+<td>PRIMARY</td>
+<td>8</td>
+<td></td>
+<td>19784763</td>
+<td>0.01</td>
+<td>Using where</td>
+</tr>
+</tbody></table>
+<p>猜想：mysql8.0前构建的都是正向索引树，这里desc会进行反向扫描。</p>
+<blockquote>
+<p>在理论上，反向检索与正向检索的速度一样的快。但是在某些操作系统上面，并不支持反向的read-ahead预读，所以反向检索会略慢。</p>
+</blockquote>
+<p>结果：正向排序跟反向排序一样，所以问题不在正反向扫描</p>
+<p>1.5 数据量少的测试环境运行同样的sql</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>select_type</th>
+<th>table</th>
+<th>partitions</th>
+<th>type</th>
+<th>possible_keys</th>
+<th>key</th>
+<th>key_len</th>
+<th>ref</th>
+<th>rows</th>
+<th>filtered</th>
+<th>Extra</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>SIMPLE</td>
+<td>chat_session</td>
+<td></td>
+<td>ref</td>
+<td>PRIMARY,idx_sso_user</td>
+<td>idx_sso_user</td>
+<td>152</td>
+<td>const</td>
+<td>291</td>
+<td>5.00</td>
+<td>Using index condition; Using where; Using filesort</td>
+</tr>
+</tbody></table>
+<p>结果：同样的sql在数据量少的情况下走到了idx_sso_user索引</p>
+<p>1.6 线上数据清理</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>select_type</th>
+<th>table</th>
+<th>partitions</th>
+<th>type</th>
+<th>possible_keys</th>
+<th>key</th>
+<th>key_len</th>
+<th>ref</th>
+<th>rows</th>
+<th>filtered</th>
+<th>Extra</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SIMPLE</td>
+<td>chat_session</td>
+<td>ref</td>
+<td>PRIMARY,idx_sso_user</td>
+<td>idx_sso_user</td>
+<td>152</td>
+<td>const</td>
+<td>691</td>
+<td>5.00</td>
+<td>Using index  condition; Using where; Using filesort</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<p>结果：因为这是历史会话数据表，之前有6千万的数据一直未清理，近期进行了数据归档，数据只有一千万后，索引如期走到了我们所希望的。</p>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>order by 使用的是主键索引，where里使用的是 KEY <code>idx_sso_user</code> (<code>sso_id</code>,<code>user_id</code>)，虽然说order by id是在where之后执行，但也会影响执行计划，where中的联合索引只使用了部分，sql优化器觉得优化效率没有主键索引高，没有走我们期望的’idx_sso_user’索引，最终扫描了这个时间段的数据根据ssoId进行过滤，随后根据主键排序。</p>
+<p>有的时候，sql优化器并非如我们所愿去选择，可以使用use(‘idx_sso_user’)强制使用idx_sso_user索引</p>
+<h2 id="type-range与-type-ref"><a href="#type-range与-type-ref" class="headerlink" title="type = range与 type = ref"></a>type = range与 type = ref</h2><h3 id="实验测试-1"><a href="#实验测试-1" class="headerlink" title="实验测试"></a>实验测试</h3><p>1.1 <code>offline_message_dispatched</code>的索引如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">PRIMARY KEY (&#96;id&#96;),</span><br><span class="line">KEY &#96;idx_sso_id&#96; (&#96;sso_id&#96;),</span><br><span class="line">KEY &#96;idx_user_third&#96; (&#96;user_id&#96;,&#96;third_code&#96;)</span><br></pre></td></tr></table></figure>
+
+
+
+<p>1.2 explain分析</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">explain</span> <span class="keyword">SELECT</span> <span class="keyword">id</span>, user_id, third_code, queue_id, sso_id, db_state, create_time, update_time <span class="keyword">FROM</span> offline_message_dispatched <span class="keyword">WHERE</span> sso_id = <span class="string">'4D9289CEA8B44398AD955DBDFA4E4810'</span> <span class="keyword">AND</span> <span class="keyword">id</span> &gt; <span class="number">0</span> <span class="keyword">AND</span> db_state <span class="keyword">in</span> ( <span class="number">0</span> , <span class="number">1</span> ) <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">id</span> <span class="keyword">ASC</span> <span class="keyword">LIMIT</span> <span class="number">20</span></span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>select_type</th>
+<th>table</th>
+<th>partitions</th>
+<th>type</th>
+<th>possible_keys</th>
+<th>key</th>
+<th>key_len</th>
+<th>ref</th>
+<th>rows</th>
+<th>filtered</th>
+<th>Extra</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>SIMPLE</td>
+<td>offline_message_dispatched</td>
+<td></td>
+<td>range</td>
+<td>PRIMARY,idx_sso_id</td>
+<td>PRIMARY</td>
+<td>8</td>
+<td></td>
+<td>402840</td>
+<td>2.00</td>
+<td>Using where</td>
+</tr>
+</tbody></table>
+<p>这里查询类型是range，sql优化器选择了<code>PRIMARY</code>，没有走到了我们期望的<code>idx_sso_id</code>索引</p>
+<p>1.3 id &gt; 0去掉</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>select_type</th>
+<th>table</th>
+<th>partitions</th>
+<th>type</th>
+<th>possible_keys</th>
+<th>key</th>
+<th>key_len</th>
+<th>ref</th>
+<th>rows</th>
+<th>filtered</th>
+<th>Extra</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>SIMPLE</td>
+<td>offline_message_dispatched</td>
+<td></td>
+<td>ref</td>
+<td>idx_sso_id</td>
+<td>idx_sso_id</td>
+<td>202</td>
+<td>const</td>
+<td>10782</td>
+<td>20.00</td>
+<td>Using index  condition; Using where</td>
+</tr>
+</tbody></table>
+<p>id &gt; 0是可以直接去掉不影响sql的查询结果，看到type又是range，这里是没必要的</p>
+<blockquote>
+<p>ALL &lt; index &lt; range ~ index_merge &lt; ref &lt; eq_ref &lt; const &lt; system</p>
+</blockquote>
+<p>结果：type改为ref，走到了<code>idx_sso_id</code>索引</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="http://mysql.taobao.org/monthly/2015/05/04/" target="_blank" rel="noopener">MySQL · 答疑解惑 · InnoDB 预读 VS Oracle 多块读</a></p>
+<p><a href="https://segmentfault.com/a/1190000015987895?utm_source=weekly&utm_medium=email&utm_campaign=email_weekly" target="_blank" rel="noopener">order by详解</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1181275" target="_blank" rel="noopener">order by 主键id导致全表扫描的问题</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/sql/" rel="tag"># sql</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/02/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(9)%E2%80%94%E2%80%94Netty%E8%A7%A3%E7%A0%81%E5%99%A8/" rel="prev" title="毕业前夕提升系列(二)：Netty总结(9)——Netty解码器">
+      <i class="fa fa-chevron-left"></i> 毕业前夕提升系列(二)：Netty总结(9)——Netty解码器
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/10/26/%E6%AF%95%E4%B8%9A%E5%89%8D%E5%A4%95%E6%8F%90%E5%8D%87%E7%B3%BB%E5%88%97(%E4%BA%8C)%EF%BC%9ANetty%E6%80%BB%E7%BB%93(1)%E2%80%94%E2%80%94%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%9A%84%E5%90%AF%E5%8A%A8/" rel="next" title="毕业前夕提升系列(二)：Netty总结(1)——服务端的启动">
+      毕业前夕提升系列(二)：Netty总结(1)——服务端的启动 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#优化器对于where与order-by索引列的选择"><span class="nav-number">1.</span> <span class="nav-text">优化器对于where与order by索引列的选择</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实验测试"><span class="nav-number">1.1.</span> <span class="nav-text">实验测试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结论"><span class="nav-number">1.2.</span> <span class="nav-text">结论</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#type-range与-type-ref"><span class="nav-number">2.</span> <span class="nav-text">type &#x3D; range与 type &#x3D; ref</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实验测试-1"><span class="nav-number">2.1.</span> <span class="nav-text">实验测试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="lqsss"
+      src="https://blog-1257900554.cos.ap-beijing.myqcloud.com/100807cd4jj1cfzf7jkjkj.jpg">
+  <p class="site-author-name" itemprop="name">lqsss</p>
+  <div class="site-description" itemprop="description">There's no place like 127.0.0.1</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+            <div id="music163player">
+              <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=517346741&auto=1&height=66"></iframe>
+            </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">lqsss</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">232k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">3:31</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
